@@ -13,6 +13,8 @@ class Summary(BaseModel):
     harness: str
     n_trials: int
     n_infra_errors: int
+    n_verifier_errors: int
+    n_agent_errors: int
     n_graded: int
     n_solved: int
     pass_at_1: float | None
@@ -52,7 +54,9 @@ def _cell(dataset: str, harness: str, trials: list[TrialResult]) -> Summary:
         dataset=dataset,
         harness=harness,
         n_trials=len(trials),
-        n_infra_errors=len(trials) - len(graded),
+        n_infra_errors=sum(t.outcome is Outcome.INFRA_ERROR for t in trials),
+        n_verifier_errors=sum(t.outcome is Outcome.VERIFIER_ERROR for t in trials),
+        n_agent_errors=sum(t.outcome is Outcome.AGENT_ERROR for t in trials),
         n_graded=len(graded),
         n_solved=n_solved,
         pass_at_1=sum(t.outcome is Outcome.SOLVED for t in first) / len(first) if first else None,

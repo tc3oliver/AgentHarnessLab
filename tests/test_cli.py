@@ -46,11 +46,7 @@ def test_quick_start(demo: Path) -> None:
             3,
             "joint multi-harness RL is not implemented",
         ),
-        (
-            ("eval", "-c", "configs/experiments/baseline.yaml"),
-            3,
-            "Harbor evaluation runner is not implemented",
-        ),
+        (("eval", "-c", "configs/experiments/baseline.yaml"), 2, "AGENTLAB_API_KEY is not set"),
         (("eval", "-c", "configs/experiments/joint_rl.yaml"), 2, "training config"),
         (("train", "-c", "configs/experiments/mock_base.yaml"), 2, "evaluation config"),
         (("eval", "-c", "missing.yaml"), 2, "cannot read"),

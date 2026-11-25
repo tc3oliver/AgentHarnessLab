@@ -30,12 +30,12 @@ their own `base.py`; they do not import each other's implementations. `core.expe
 | Module | Interface | Implemented (Verified) | Planned |
 |---|---|---|---|
 | Core | `Registry`, `Manifest`, config models | config, includes, manifest, lifecycle | |
-| Harness | `HarnessAdapter.harbor_agent()` | names registered only | Pi and OpenCode via Harbor, v0.1 |
+| Harness | `HarnessAdapter.harbor_agent()` | Harbor agent configs: oracle, nop, Pi, OpenCode v1 and v2 | |
 | Dataset | `DatasetLoader.load()` -> `LoadedDataset` | local Harbor directories, hashing, audit | Hugging Face and git, v0.1 |
-| Inference | `InferenceBackend.probe()` | config validation only | endpoint probe, v0.1 |
+| Inference | `InferenceBackend.probe()` | OpenAI-compatible and vLLM probe | |
 | Rollout | `Trajectory`, `Turn` | schema and invariants | OpenEnv capture, v0.2 |
 | Training | `TrainingBackend.train()`, `AdapterMerger.merge()` | config validation only | TRL v0.2, joint v0.3, merge v0.4 |
-| Evaluation | `EvaluationRunner.preflight()` / `.run()` | mock runner, metrics, paired comparison | Harbor runner, v0.1 |
+| Evaluation | `EvaluationRunner.preflight()` / `.run()` | mock and Harbor runners, metrics, paired comparison | |
 | Reporting | `ResultWriter`, `write_reports()` | JSONL, Parquet, Markdown | |
 
 ## Evaluation data flow
@@ -61,10 +61,13 @@ sequenceDiagram
   E->>F: manifest.json (completed or failed)
 ```
 
-Planned real path (Unverified): `HarborRunner` writes a Harbor `JobConfig`, Harbor starts each sandbox and unmodified
-agent against the model endpoint and runs the verifier, and the runner maps Harbor's `TrialResult` to ours. For training,
-OpenEnv's capture proxy sits between agent and vLLM and TRL consumes its `TrainingTrace`. Reused upstream APIs and their
-limits: [UPSTREAM.md](UPSTREAM.md).
+`HarborRunner` writes a Harbor `JobConfig` to `<run>/harbor/`, starts Harbor as a subprocess with a minimal environment
+and telemetry off, reads each trial's `result.json` as it appears and maps it to `TrialResult`. Harbor keeps its raw
+outputs there; they are traces, so review them before sharing. On an error, Ctrl-C or SIGTERM Harbor is interrupted so
+that it can remove its containers. Why a subprocess: [ADR 0006](DECISIONS/0006-harbor-subprocess.md).
+
+For training (Planned), OpenEnv's capture proxy sits between agent and vLLM and TRL consumes its `TrainingTrace`. Reused
+upstream APIs and their limits: [UPSTREAM.md](UPSTREAM.md).
 
 ## Reproducibility
 

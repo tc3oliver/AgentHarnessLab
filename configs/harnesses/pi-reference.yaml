@@ -1,0 +1,5 @@
+# The Pi version the reference release used.
+name: pi
+version: 1.5.2
+max_turns: 100
+timeout_s: 3600

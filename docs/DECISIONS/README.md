@@ -7,3 +7,4 @@
 | [0003](0003-unknown-is-not-zero.md) | Unknown values stay unknown; infrastructure errors are not failures |
 | [0004](0004-task-harness-groups.md) | Advantage groups are Task x Harness |
 | [0005](0005-explicit-not-implemented.md) | Planned features fail before any work, and simulated data is labelled |
+| [0006](0006-harbor-subprocess.md) | Run Harbor as a subprocess |

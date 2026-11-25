@@ -3,6 +3,9 @@
 Milestone: **v0.1**
 Depends on: none
 
+> **Status:** runner, outcome mapping, fixtures and control runs are done. Open: one Pi and one OpenCode trial against a
+> real model endpoint ([EVALUATION_GUIDE.md](../EVALUATION_GUIDE.md)).
+
 ## Context
 
 The mock runner and schemas exist; nothing runs a real harness. Harbor 0.25.0 is the pinned version (see ../UPSTREAM.md, Constraints 1). Each trial writes a `result.json` (`TrialResult`).

@@ -21,7 +21,7 @@ def test_run_is_deterministic_and_complete(config: EvalConfig) -> None:
     assert manifest.status == "completed" and manifest.simulated
     assert manifest.n_planned == manifest.n_recorded == 12
     assert manifest.datasets[0].revision.startswith("sha256:")
-    assert manifest.harnesses[0].observed_versions == ["mock-1.0"]
+    assert manifest.harnesses[0].observed_versions == ["mock-1.0.0"]
     assert len(manifest.config_hash) == 64
     assert "SIMULATED" in (run_dir / "report.md").read_text()
     run_evaluation(config, overwrite=True)
@@ -98,7 +98,7 @@ def test_nothing_is_written_when_preflight_fails(config: EvalConfig) -> None:
 
 def test_unknown_harness_lists_choices(config: EvalConfig) -> None:
     bad = config.model_copy(update={"harnesses": [config.harnesses[0].model_copy(update={"name": "nope"})]})
-    with pytest.raises(ConfigError, match="available: opencode, pi"):
+    with pytest.raises(ConfigError, match="available: nop, opencode, opencode-v2, oracle, pi"):
         run_evaluation(bad)
 
 

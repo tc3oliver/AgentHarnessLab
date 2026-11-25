@@ -1,0 +1,113 @@
+{
+ "schema_version": 1,
+ "id": "8a8ebd60-0cad-49d9-b2d1-f3cffc7b5a5d",
+ "task_name": "build-failure",
+ "trial_name": "build-failure__XkfY6C8",
+ "trial_uri": "file:///run/trial",
+ "task_id": {
+  "path": "/work/ft/build-failure"
+ },
+ "source": "f",
+ "task_checksum": "ea22cf30a7eb0d3d5df6792610d6407e346bc129ba7332e19103335c1f0a9b88",
+ "config": {
+  "schema_version": 1,
+  "task": {
+   "path": "/work/ft/build-failure",
+   "git_url": null,
+   "git_commit_id": null,
+   "name": null,
+   "ref": null,
+   "overwrite": false,
+   "download_dir": null,
+   "source": "f"
+  },
+  "trial_name": "build-failure__XkfY6C8",
+  "trials_dir": "/work/live/faults-0.27.0/harbor/oracle-attempt1",
+  "install_only": false,
+  "timeout_multiplier": 1.0,
+  "agent_timeout_multiplier": null,
+  "verifier_timeout_multiplier": null,
+  "agent_setup_timeout_multiplier": null,
+  "environment_build_timeout_multiplier": null,
+  "agent": {
+   "name": "oracle",
+   "import_path": null,
+   "model_name": null,
+   "base_url": null,
+   "model_api_key_name": null,
+   "model_api_format": null,
+   "skip_model_parsing": false,
+   "n_concurrent": null,
+   "concurrency_group": null,
+   "skills": [],
+   "override_timeout_sec": null,
+   "override_setup_timeout_sec": null,
+   "max_timeout_sec": null,
+   "resume_trajectory": false,
+   "load_trajectory": null,
+   "extra_allowed_hosts": [],
+   "kwargs": {},
+   "mcp_servers": []
+  },
+  "user_agent": null,
+  "environment": {
+   "type": "docker",
+   "import_path": null,
+   "force_build": false,
+   "delete": true,
+   "stream": false,
+   "cpu_enforcement_policy": "auto",
+   "memory_enforcement_policy": "auto",
+   "override_cpus": null,
+   "override_memory_mb": null,
+   "override_storage_mb": null,
+   "override_gpus": null,
+   "override_tpu": null,
+   "mounts": null,
+   "extra_docker_compose": [],
+   "kwargs": {},
+   "extra_allowed_hosts": []
+  },
+  "verifier": {
+   "override_timeout_sec": null,
+   "max_timeout_sec": null,
+   "disable": false
+  },
+  "override_error_policy": {},
+  "artifacts": [],
+  "extra_instruction_paths": [],
+  "extra_instructions": [],
+  "job_id": "fe693948-c81e-4474-a5d2-f1b6f1161f2d",
+  "source_trial": null
+ },
+ "agent_info": {
+  "name": "oracle",
+  "version": "1.0.0",
+  "model_info": null
+ },
+ "agent_result": null,
+ "verifier_result": null,
+ "verifier_environment_mode": "shared",
+ "exception_info": {
+  "exception_type": "RuntimeError",
+  "exception_message": "Docker compose command failed for environment build-failure. Command: docker compose --project-name build-failure__xkfy6c8__env --project-directory /work/ft/build-failure/environment -f /tmp/tmpye10z4oq/build-failure__XkfY6C8__env-docker-compose-resources.json -f /work/hv/.venv/lib/python3.12/site-p",
+  "exception_traceback": "",
+  "occurred_at": "2026-11-25T06:43:26.783831Z",
+  "policy": {
+   "should_retry": true,
+   "should_grade": true,
+   "has_valid_reward": true
+  }
+ },
+ "started_at": "2026-11-25T06:43:26.100920Z",
+ "finished_at": "2026-11-25T06:43:27.095203Z",
+ "environment_setup": {
+  "started_at": "2026-11-25T06:43:26.237052Z",
+  "finished_at": "2026-11-25T06:43:26.782779Z"
+ },
+ "agent_setup": null,
+ "agent_execution": null,
+ "verifier": null,
+ "step_results": null,
+ "reward_valid": false
+}

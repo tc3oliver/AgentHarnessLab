@@ -60,7 +60,7 @@ def test_sign_test(wins: int, losses: int, p: float) -> None:
 
 
 def manifest(config: EvalConfig, **over: object) -> Manifest:
-    m = new_manifest(config, [], 0, simulated=True)
+    m = new_manifest(config, [], 0, simulated=True, runtime={})
     return m.model_copy(update={"status": "completed", **over})
 
 

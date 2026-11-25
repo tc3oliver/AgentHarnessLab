@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import signal
 import sys
 from pathlib import Path
 from typing import Annotated
@@ -43,7 +44,7 @@ def eval_(
     config: ConfigOption,
     overwrite: Annotated[bool, typer.Option(help="Replace an earlier run of the same name.")] = False,
 ) -> None:
-    """Run an evaluation. Only the mock runner is implemented."""
+    """Run an evaluation with the mock or the Harbor runner."""
     experiment = load_experiment(config)
     if not isinstance(experiment, EvalConfig):
         raise ConfigError(f"{config} is a training config; use 'agentlab train'")
@@ -110,7 +111,15 @@ def audit(
         typer.echo("warning: some tasks declare no repository; the repository check is incomplete", err=True)
 
 
+def _terminate(signum: int, frame: object) -> None:
+    """Unwind instead of dying, so that a runner can stop Harbor and Harbor can remove its containers."""
+    raise SystemExit(128 + signum)
+
+
 def main() -> None:
+    for number in (signal.SIGTERM, signal.SIGHUP):
+        if signal.getsignal(number) is not signal.SIG_IGN:  # respect nohup
+            signal.signal(number, _terminate)
     try:
         app()
     except AgentLabError as exc:

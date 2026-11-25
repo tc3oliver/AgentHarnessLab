@@ -12,4 +12,4 @@ Harbor runs tasks, sandboxes, agents and verifiers. OpenEnv captures tokens for 
 
 ## Consequences
 
-OpenCode v1 only: 0.25.0 has no `opencode-v2` agent and OpenEnv has no seam for it. Our OpenCode numbers will not be comparable with the OpenCode 2.2.7 release results. Revisit when OpenEnv lifts its `harbor<0.26` cap. Trainer and inference server will use separate environments, so their dependency ranges do not have to agree.
+OpenCode v1 only for anything that trains (evaluation can use v2, see [0006](0006-harbor-subprocess.md)): 0.25.0 has no `opencode-v2` agent and OpenEnv has no seam for it. Our OpenCode numbers will not be comparable with the OpenCode 2.2.7 release results. Revisit when OpenEnv lifts its `harbor<0.26` cap. Trainer and inference server will use separate environments, so their dependency ranges do not have to agree.

@@ -1,0 +1,5 @@
+# OpenCode v2 (`@opencode/cli`), the version the reference release used. Needs Harbor 0.27.0; evaluation only.
+name: opencode-v2
+version: 2.2.7
+timeout_s: 3600
+setup_timeout_s: 1800
