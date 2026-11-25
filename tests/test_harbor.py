@@ -667,7 +667,7 @@ def test_real_harness_against_a_scripted_endpoint(
 def test_exit_after_a_normal_end_is_graded(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, command: str, solved: bool, bait: str
 ) -> None:
-    """OpenCode 1.19.6 often, but not always, exits 1 after a normal end (a race on its output pipe). Harbor then
+    """OpenCode 1.19.6 often, but not always, exits 1 after a normal end (an output race). Harbor then
     guesses the exception from the output. Either way the trial must be graded."""
     monkeypatch.setenv("K", KEY)
     with ScriptedEndpoint(GATEWAY, f"{command}\necho '{bait}'") as endpoint:

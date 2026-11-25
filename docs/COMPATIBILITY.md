@@ -56,9 +56,9 @@ network: the high values were measured while the link was busy with a large down
 
 | Harness | Harbor | Installed per trial | Prebuilt |
 |---|---|---|---|
-| Pi | 0.25.0 and 0.27.0 | 107 s to 650 s | about 2 s |
-| OpenCode 1.18.30 | 0.25.0 and 0.27.0 | 94 s, or over 1800 s (timeout) | about 2 s |
-| OpenCode 2.2.7 | 0.27.0 | 198 s to 955 s | 1.6 s to 1.8 s |
+| Pi | 0.25.0 and 0.27.0 | 35 s to 650 s | about 2 s |
+| OpenCode 1.18.30 | 0.25.0 and 0.27.0 | 94 s to 99 s, or over 1800 s (timeout) | about 2 s |
+| OpenCode 2.2.7 | 0.27.0 | 137 s to 955 s | 1.6 s to 1.8 s |
 
 ## Known problems
 
