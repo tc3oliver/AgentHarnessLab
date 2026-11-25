@@ -1,5 +1,5 @@
-# The smoke run in docs/reports/overnight-development.md. Needs Harbor 0.27.0 (its own environment; set runner.command),
-# the images from `agentlab images -c` this file, and an endpoint started with scripts/serve_vllm_rocm.sh.
+# Close to the smoke run in docs/reports/overnight-development.md. Needs Harbor 0.27.0 (its own environment; set runner.command),
+# the images from `agentlab images -c` this file, and an endpoint started with scripts/serve_vllm_rocm.sh. The run itself set no setup_timeout_s.
 kind: eval
 name: real-smoke
 seed: 0

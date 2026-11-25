@@ -60,7 +60,7 @@ Initialization is sandbox start plus harness setup (`setup_s`, or Harbor timesta
 Sources: `p0-*`, `p0b-*`, `p1-*` and [data/](data/). The high installed values were measured during the download. The first build of 3 harnesses and 12 tasks took
 28 min, including the waiting for that link (`logs/p1-images-build.log`); rebuilding the task images took 94 s (`logs/p1-images-build2.log`).
 gitleaks 8.28.0 on three exported harness images: one finding each, a C++ constant in a Node header. It skips some vendored paths, so the
-token formats `hf_`, `ghp_` and `npm_` and the endpoint key were also searched for: none found (seen in the session, no log kept).
+token formats `hf_`, `ghp_` and `npm_` and the endpoint key were also searched for: none found (neither scan left a log).
 
 ## 5. MI325X, ROCm, vLLM
 
@@ -77,7 +77,7 @@ asked, greedy output stable over 4 calls. No out-of-memory error or traceback in
 Kernel logs were searched once with no amdgpu error (no log kept; the account may not see all kernel messages).
 Every agent request in the base runs used temperature 0.8, top-p 1.0 and **top-k 20**, which comes from the model's `generation_config` (`logs/vllm-base.log`).
 vLLM reported that it cannot use the ROCm paged-attention kernel for this model and falls back to Triton.
-Throughput: short agent trials reached at least 53 tokens/s end to end including tool time. During one 14,034-token trial running alone it fell from
+Throughput: the fastest of 122 trials (Pi, `real-single`) averaged 53 tokens/s including tool time. During one 14,034-token trial running alone it fell from
 about 43 to 18 tokens/s (`logs/vllm-base.log`, 10:43 to 10:52); cause unknown. The log also says `--mamba-cache-mode` is deprecated and has no effect in 0.33.0.
 
 ## 6. Pi and OpenCode, real tasks
