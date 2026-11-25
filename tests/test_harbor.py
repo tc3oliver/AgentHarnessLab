@@ -310,6 +310,9 @@ for i, task in enumerate(tasks):
     base.update(trial_name="t%d" % i, task_id=dict(path=task["path"]))
     version = dict(drift="9.9").get(mode, "1.0.0")
     base["agent_info"] = dict(name=job["agents"][0]["name"] or "pi", version=version)
+    if mode == "setup-failed":
+        base.update(agent_execution=None, verifier_result=None)
+        base["exception_info"] = dict(exception_type="RuntimeError", exception_message="wrong version")
     if mode == "unknown-version":
         base["agent_info"]["version"] = "unknown"
     if mode.startswith("no-usage") and mode != "no-usage-solved":

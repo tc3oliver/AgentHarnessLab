@@ -9,14 +9,14 @@ from agent_harness_lab.core.config import DatasetConfig, LocalSource, canonical_
 from agent_harness_lab.dataset.base import LoadedDataset, TaskRef
 from agent_harness_lab.errors import ConfigError, FeatureNotImplementedError
 
-_IGNORED = {"__pycache__", ".DS_Store"}
+IGNORED = {"__pycache__", ".DS_Store"}
 
 
 def task_files(task_dir: Path) -> list[Path]:
     files = []
     for path in sorted(task_dir.rglob("*")):
         relative = path.relative_to(task_dir)
-        if _IGNORED.intersection(relative.parts):
+        if IGNORED.intersection(relative.parts):
             continue
         if path.is_symlink():
             raise ConfigError(f"task {task_dir.name} contains a symlink: {relative}")

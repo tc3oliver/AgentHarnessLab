@@ -66,9 +66,9 @@ def run_evaluation(config: EvalConfig, *, overwrite: bool = False) -> Path:
         loaded.append(loader.load(dataset))
     adapters: dict[str, HarnessAdapter] = {h.name: HARNESSES.get(h.name)() for h in config.harnesses}
     runner: EvaluationRunner = RUNNERS.get(config.runner.type)()
-    runtime = runner.preflight(config, adapters)
-    check_formats(config.report.formats)
     plan = build_plan(config, loaded)
+    runtime = runner.preflight(config, adapters, plan)
+    check_formats(config.report.formats)
 
     run_dir = Path(config.output_dir) / config.name
     _prepare_dir(run_dir, overwrite)

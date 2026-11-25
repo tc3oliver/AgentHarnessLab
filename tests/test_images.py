@@ -38,7 +38,8 @@ def task(root: Path, name: str = "t", toml: str = "", dockerfile: bool = True) -
     return _task_ref(path)
 
 
-def test_tags_name_their_content(tmp_path: Path) -> None:
+def test_tags_name_their_content(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(images, "image_id", lambda tag: tag)
     first = task(tmp_path, "My_Task")
     tag = images.task_tag(first, harness())
     assert tag.startswith("agentlab/task-my-task:pi-") and tag == images.task_tag(first, harness())
@@ -48,7 +49,17 @@ def test_tags_name_their_content(tmp_path: Path) -> None:
     assert tag != images.task_tag(first, harness())
 
 
-def test_tests_do_not_change_the_image(tmp_path: Path) -> None:
+def test_a_rebuilt_part_replaces_the_task_image(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    ref = task(tmp_path)
+    tags = set()
+    for rebuilt in ("", "harness-", "base-"):
+        monkeypatch.setattr(images, "image_id", lambda tag, r=rebuilt: f"{tag}{bool(r) and r in tag}")
+        tags.add(images.task_tag(ref, harness()))
+    assert len(tags) == 3
+
+
+def test_tests_do_not_change_the_image(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(images, "image_id", lambda tag: tag)
     ref = task(tmp_path)
     tag = images.task_tag(ref, harness())
     (ref.path / "tests" / "test.sh").write_text("exit 1\n")
@@ -95,6 +106,13 @@ def test_unsupported_environments(tmp_path: Path) -> None:
     ref = task(tmp_path, "b")
     (ref.path / "environment" / "docker-compose.yaml").write_text("services: {}\n")
     with pytest.raises(ConfigError, match="compose"):
+        images.check_task(ref)
+
+
+def test_files_the_hash_ignores_are_refused(tmp_path: Path) -> None:
+    ref = task(tmp_path)
+    (ref.path / "environment" / "__pycache__").mkdir()
+    with pytest.raises(ConfigError, match="__pycache__"):
         images.check_task(ref)
 
 
@@ -184,6 +202,7 @@ def test_run_uses_pinned_images(
     assert {r.outcome for r in results} == {Outcome.SOLVED}
     assert all(r.image and r.image.startswith("sha256:agentlab/task-") for r in results)
     assert all(r.setup_s is not None for r in results)
+    assert len(Manifest.read(run_dir).runtime["task_images.pi"]) == 64
     assert Manifest.read(run_dir).runtime["image.pi"].startswith("sha256:agentlab/harness-pi:1-0-0")
     job = json.loads((run_dir / "harbor/pi-attempt1.config.json").read_text())
     assert job["agents"][0]["import_path"] == "agentlab_prebuilt:PrebuiltPi"
@@ -192,6 +211,11 @@ def test_run_uses_pinned_images(
         assert toml["environment"]["docker_image"].startswith("sha256:")
     path = json.loads((fake / "env.json").read_text())["PYTHONPATH"]
     assert (Path(path) / "agentlab_prebuilt.py").is_file()
+
+    (fake / "mode").write_text("setup-failed")
+    failed = read_results(evaluate(root, tmp_path / "runs3", fake, endpoint.url))
+    assert {(r.outcome, r.harness_version) for r in failed} == {(Outcome.INFRA_ERROR, None)}
+    assert all("wrong version" in (r.error or "") for r in failed)
 
     (fake / "mode").write_text("unknown-version")
     unknown = read_results(evaluate(root, tmp_path / "runs2", fake, endpoint.url))
@@ -213,6 +237,10 @@ def test_missing_images_stop_before_anything_is_written(
     monkeypatch.setattr(harbor, "_output", fake_docker(harbor._output))
     monkeypatch.setattr(images, "image_id", lambda tag: None)
     with pytest.raises(ConfigError, match="agentlab images"):
+        evaluate(tmp_path / "tasks", tmp_path / "runs", fake, endpoint.url)
+    assert not (tmp_path / "runs").exists()
+    monkeypatch.setattr(images, "image_id", lambda tag: None if "/task-" in tag else "sha256:1")
+    with pytest.raises(ConfigError, match="agentlab/task-t0"):
         evaluate(tmp_path / "tasks", tmp_path / "runs", fake, endpoint.url)
     assert not (tmp_path / "runs").exists()
     with pytest.raises(ConfigError, match="docker environment"):

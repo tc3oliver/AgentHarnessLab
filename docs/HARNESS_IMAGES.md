@@ -27,8 +27,8 @@ With prebuilt images an unreadable or different version is an `infra_error`, nev
 ## What is pinned
 
 The harness version, Node, nvm and the installer's base image are pinned. npm dependencies and apt packages resolve at build time;
-the image ids in `manifest.json` (`runtime.image.<harness>`) and in each result identify the outcome of that build.
-To compare runs, use the same images.
+the image ids in `manifest.json` (`runtime.image.<harness>`, and one hash over all task images) and in each result identify the outcome of that build.
+`agentlab compare` refuses runs that used different images.
 
 ## Limits
 

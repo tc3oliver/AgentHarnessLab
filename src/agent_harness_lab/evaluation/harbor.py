@@ -15,7 +15,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
-from agent_harness_lab.core.config import EvalConfig, HarborRunnerConfig
+from agent_harness_lab.core.config import EvalConfig, HarborRunnerConfig, canonical_hash
 from agent_harness_lab.core.results import Outcome, TrialResult
 from agent_harness_lab.dataset.loaders import hash_task
 from agent_harness_lab.errors import ConfigError, RunError
@@ -115,7 +115,9 @@ def job_config(
 class HarborRunner:
     simulated = False
 
-    def preflight(self, config: EvalConfig, adapters: Mapping[str, HarnessAdapter]) -> dict[str, str]:
+    def preflight(
+        self, config: EvalConfig, adapters: Mapping[str, HarnessAdapter], plan: Sequence[TrialSpec]
+    ) -> dict[str, str]:
         runner = _harbor(config)
         if runner.version not in SUPPORTED_HARBOR:
             raise ConfigError(
@@ -143,7 +145,12 @@ class HarborRunner:
             runtime["docker"] = _output(["docker", "version", "--format", "{{.Server.Version}}"], env)
         for harness in config.harnesses:
             if _prebuilt(config, harness.name):
+                used = {s.task.path: s.task for s in plan if s.harness.name == harness.name}
+                for task in used.values():
+                    images.check_task(task)
                 runtime[f"image.{harness.name}"] = images.required_id(images.harness_tag(harness))
+                ids = sorted(f"{t.task_id}={images.prebuilt_image(t, harness)}" for t in used.values())
+                runtime[f"task_images.{harness.name}"] = canonical_hash(ids)
         if config.inference.backend != "none":
             runtime.update(self._probe(config))
         return runtime
@@ -286,7 +293,8 @@ def convert(
     if version is not None and version != spec.harness.version:
         outcome = Outcome.INFRA_ERROR
         error = f"harness version is {version}, not the pinned {spec.harness.version}"
-    elif version is None and image is not None:
+    elif image is not None and (version is None or not trial.agent_started):
+        version = None  # if setup failed, Harbor only repeats the pin
         error = f"cannot read the harness version in the image ({error or outcome})"
         outcome = Outcome.INFRA_ERROR
     input_tokens, output_tokens = trial.tokens

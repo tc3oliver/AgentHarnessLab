@@ -20,7 +20,7 @@ from pathlib import Path
 
 from agent_harness_lab.core.config import HarnessConfig
 from agent_harness_lab.dataset.base import TaskRef
-from agent_harness_lab.dataset.loaders import hash_task
+from agent_harness_lab.dataset.loaders import IGNORED, hash_task
 from agent_harness_lab.errors import ConfigError, RunError
 
 BASE = "python:3.12-slim@sha256:191083cdf6c7bda8c76158983163ead5d5cf7b77cf3033e805bb0f5296f51b4b"
@@ -84,7 +84,9 @@ def _base_tag(task: TaskRef) -> str:
 
 
 def task_tag(task: TaskRef, harness: HarnessConfig) -> str:
-    key = _digest(_base_tag(task), harness_tag(harness), _dockerfile("task.Dockerfile"))
+    """Derived from image ids, so rebuilding the harness or the base also replaces the task image."""
+    parts = (required_id(_base_tag(task)), required_id(harness_tag(harness)))
+    key = _digest(*parts, _dockerfile("task.Dockerfile"))
     return f"agentlab/task-{_tag_part(task.task_id)}:{harness.name}-{key}"
 
 
@@ -95,6 +97,9 @@ def check_task(task: TaskRef) -> None:
         raise ConfigError(f"task {task.task_id}: prebuilt images need environment/Dockerfile")
     if any(environment.glob("*compose*.y*ml")):
         raise ConfigError(f"task {task.task_id}: prebuilt images do not support compose tasks")
+    # Docker would copy these, but task hashes ignore them.
+    if any(p.name in IGNORED for p in environment.rglob("*")):
+        raise ConfigError(f"task {task.task_id}: remove {' and '.join(sorted(IGNORED))} from environment/")
     meta = tomllib.loads((task.path / "task.toml").read_text(encoding="utf-8"))
     if meta.get("environment", {}).get("docker_image"):
         raise ConfigError(f"task {task.task_id}: already uses environment.docker_image")

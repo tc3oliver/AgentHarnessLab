@@ -25,7 +25,9 @@ class EvaluationRunner(Protocol):
 
     simulated: bool
 
-    def preflight(self, config: EvalConfig, adapters: Mapping[str, HarnessAdapter]) -> dict[str, str]:
+    def preflight(
+        self, config: EvalConfig, adapters: Mapping[str, HarnessAdapter], plan: Sequence[TrialSpec]
+    ) -> dict[str, str]:
         """Return runtime versions for the manifest. Raise if the plan cannot run; nothing is written yet."""
         ...
 
