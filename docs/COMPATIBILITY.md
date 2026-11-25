@@ -49,9 +49,20 @@ thinking off, and ran its trials through OpenEnv in remote sandboxes.
 
 Until the gaps are closed, our numbers must be labelled "not protocol-matched".
 
+## Prebuilt images: initialization time
+
+Sandbox start plus harness setup, one trial, same host ([HARNESS_IMAGES.md](HARNESS_IMAGES.md)). Install times depend on the
+network: the high values were measured while the link was busy with a large download.
+
+| Harness | Harbor | Installed per trial | Prebuilt |
+|---|---|---|---|
+| Pi | 0.25.0 and 0.27.0 | 107 s to 650 s | about 2 s |
+| OpenCode 1.18.30 | 0.25.0 and 0.27.0 | 94 s, or over 1800 s (timeout) | about 2 s |
+| OpenCode 2.2.7 | 0.27.0 | 198 s to 955 s | 1.6 s to 1.8 s |
+
 ## Known problems
 
-- **OpenCode 1.19.6 exits with status 1** after a normal finish (`EPIPE: broken pipe`, through Harbor's output pipe).
+- **OpenCode 1.19.6 often exits with status 1** after a normal finish, a race (7 of 8 runs installed by Harbor, none in prebuilt images) (`EPIPE: broken pipe`, through Harbor's output pipe).
   Harbor raises `NonZeroAgentExitCodeError`, or another type when the output happens to contain a phrase such as "rate
   limit". If OpenCode itself recorded a normal stop we treat both alike: the verifier decides, so pass@1 is unaffected, but
   a wrong solution is reported as `agent_error` instead of `failed`.

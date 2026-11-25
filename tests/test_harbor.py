@@ -659,21 +659,21 @@ def test_real_harness_against_a_scripted_endpoint(
 
 @pytest.mark.docker
 @pytest.mark.parametrize(
-    ("command", "outcome"),
-    [(FIX_MEDIAN, Outcome.SOLVED), ("true", Outcome.AGENT_ERROR)],
+    ("command", "solved"),
+    [(FIX_MEDIAN, True), ("true", False)],
     ids=["right", "wrong"],
 )
 @pytest.mark.parametrize("bait", ["rate limit", "Invalid API key"])
 def test_exit_after_a_normal_end_is_graded(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, command: str, outcome: Outcome, bait: str
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, command: str, solved: bool, bait: str
 ) -> None:
-    """OpenCode 1.19.6 exits 1 after a normal end; Harbor then guesses the exception from the output."""
+    """OpenCode 1.19.6 often, but not always, exits 1 after a normal end (a race on its output pipe). Harbor then
+    guesses the exception from the output. Either way the trial must be graded."""
     monkeypatch.setenv("K", KEY)
     with ScriptedEndpoint(GATEWAY, f"{command}\necho '{bait}'") as endpoint:
-        over = agent_overrides(endpoint.url, "opencode", "1.19.6", True)
-        config = EvalConfig.model_validate(eval_dict(ROOT / "examples/smoke_tasks/tasks", tmp_path, **over))
-        tasks = [t for d in config.datasets for t in LocalDataset().load(d).tasks]
-        list(build_images(config.harnesses, tasks))
-        [result] = read_results(real(tmp_path, **over))
-    assert result.outcome is outcome, result.error
-    assert result.error and "Command failed (exit 1)" in result.error
+        run_dir = real(tmp_path, **agent_overrides(endpoint.url, "opencode", "1.19.6", False))
+    [result] = read_results(run_dir)
+    exited = result.error is not None
+    wrong = Outcome.AGENT_ERROR if exited else Outcome.FAILED
+    assert result.outcome is (Outcome.SOLVED if solved else wrong), result.error
+    assert not exited or "Command failed (exit 1)" in (result.error or "")
