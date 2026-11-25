@@ -116,7 +116,8 @@ tool output and model text, for phrases such as "rate limit"."""
 
 
 def _type(exc: _Exception, finished: bool) -> str:
-    if finished and exc.exception_message.startswith(_EXIT_PREFIX):
+    matched = exc.exception_message.startswith(_EXIT_PREFIX) and exc.exception_type not in _GRADED
+    if finished and matched:
         return "NonZeroAgentExitCodeError"  # the agent was done, so no provider error ended it
     return exc.exception_type
 
@@ -152,17 +153,21 @@ def classify(
     return (Outcome.FAILED if kind is None else _GRADED[kind]), error
 
 
-def agent_finished(path: Path) -> bool:
-    """Whether the trajectory ends with a final answer: text, no tool call and no abnormal stop."""
+def agent_finished(agent_dir: Path) -> bool:
+    """Whether the harness itself recorded a normal end of the agent's last turn. Unknown means no."""
+    raw = next((p for n in ("opencode.txt", "opencode-v2.txt") if (p := agent_dir / n).is_file()), None)
     try:
-        last = json.loads(path.read_text(encoding="utf-8"))["steps"][-1]
-        stop = (last.get("extra") or {}).get("stop_reason", "stop")
-        return (
-            last["source"] == "agent"
-            and bool(last.get("message"))
-            and not last.get("tool_calls")
-            and stop == "stop"
-        )
+        if raw is not None:
+            events = [
+                json.loads(line) for line in raw.read_text("utf-8").splitlines() if line.startswith("{")
+            ]
+            return (
+                all(e["type"] != "error" for e in events)
+                and events[-1]["type"] == "step_finish"
+                and events[-1]["part"]["reason"] == "stop"
+            )
+        last = json.loads((agent_dir / "trajectory.json").read_text("utf-8"))["steps"][-1]
+        return last["source"] == "agent" and (last.get("extra") or {}).get("stop_reason") == "stop"
     except (OSError, ValueError, KeyError, TypeError, IndexError, AttributeError):
         return False
 

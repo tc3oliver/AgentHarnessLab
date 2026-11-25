@@ -30,6 +30,7 @@ Rules:
 - After a graded exception the verifier decides: a trial that timed out but passes is `solved`. Harbor does the same, except that 0.25.0 does not accept the reward after a non-zero agent exit; we do, so that both versions are treated alike.
 - Ungraded outcomes are never hidden: reports show infra, verifier and agent error counts next to pass@1.
 - Unknown exceptions are `infra_error`. Harbor 0.25.0 does the same; 0.27.0 would accept their reward. This can drop hard tasks, so a run with more than 5% ungraded trials must not be reported as a result. The automatic check is Planned.
+- When an agent command exits non-zero, Harbor picks the exception type by searching the whole output, including what tools and the model wrote, for phrases such as "rate limit". If the harness itself recorded a normal end of its last turn (OpenCode: `step_finish` with reason `stop` and no error event; Pi: stop reason `stop`), such a type counts as `agent_error` when unsolved, never as `infra_error`.
 - A policy could in principle avoid a failure by making the verifier hang. Verifier errors need a manual look before a run is reported.
 - Harbor retries are off (`max_retries: 0`): a retry would hide the cost and failure of the first try.
 - A Pi run stopped by `max_turns` has no exception in Harbor and shows up as `failed`.

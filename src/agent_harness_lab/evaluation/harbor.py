@@ -40,6 +40,13 @@ _STOP_S = 120.0
 # Harbor forwards variables it recognises into sandboxes, so it only gets what it needs.
 _ENV = ("PATH", "HOME", "LANG", "LC_ALL", "TMPDIR", "XDG_RUNTIME_DIR", "XDG_CACHE_HOME", "SSL_CERT_FILE")
 _ENV_PREFIXES = ("DOCKER_",)
+_NOT_VERIFIED = (
+    "AgentAuthenticationError",
+    "AgentVersionTooOldError",
+    "ApiProviderResourceNotFoundError",
+    "ModelNotFoundError",
+)
+"""Harbor 0.27.0 skips the verifier after these, which it may only have guessed from the agent's output."""
 
 
 def _harbor(config: EvalConfig) -> HarborRunnerConfig:
@@ -71,7 +78,9 @@ def job_config(
     config: EvalConfig, agent: dict[str, Any], specs: Sequence[TrialSpec], name: str, jobs_dir: Path
 ) -> dict[str, Any]:
     runner = _harbor(config)
+    policy = {} if runner.version == "0.25.0" else {n: {"should_grade": True} for n in _NOT_VERIFIED}
     return {
+        **({"override_error_policy": policy} if policy else {}),
         "job_name": name,
         "jobs_dir": str(jobs_dir),
         "n_attempts": 1,
@@ -214,7 +223,7 @@ def convert(config: EvalConfig, spec: TrialSpec, trial: HarborTrial, trial_dir: 
     runner = _harbor(config)
     trajectory = trial_dir / "agent" / "trajectory.json"
     outcome, error = classify(
-        trial, runner.reward_key, runner.pass_threshold, finished=agent_finished(trajectory)
+        trial, runner.reward_key, runner.pass_threshold, finished=agent_finished(trajectory.parent)
     )
     version = trial.observed_version
     if trial.agent_info.name != spec.harness.name:

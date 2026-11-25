@@ -71,7 +71,6 @@ def test_exit_after_a_final_answer_is_graded(kind: str, reward: float, outcome: 
     data["exception_info"]["exception_type"] = kind
     data["verifier_result"]["rewards"]["reward"] = reward
     trial = HarborTrial.model_validate(data)
-    assert agent_finished(FIXTURES / "0.25.0-opencode" / "trajectory.json")
     assert classify(trial, "reward", 1.0, finished=True)[0] is outcome
     if kind != "NonZeroAgentExitCodeError":
         assert classify(trial, "reward", 1.0)[0] is Outcome.INFRA_ERROR
@@ -80,18 +79,38 @@ def test_exit_after_a_final_answer_is_graded(kind: str, reward: float, outcome: 
         assert classify(trial, "reward", 1.0, finished=True)[0] is Outcome.INFRA_ERROR
 
 
+STOP = {"type": "step_finish", "part": {"reason": "stop"}}
+
+
 @pytest.mark.parametrize(
-    "change",
-    [{"message": ""}, {"tool_calls": [{}]}, {"source": "user"}, {"extra": {"stop_reason": "error"}}],
+    ("events", "finished"),
+    [
+        ([STOP], True),
+        ([{"type": "text"}], False),
+        ([STOP, {"type": "step_start"}], False),
+        ([{"type": "error"}, STOP], False),
+        ([{"type": "step_finish", "part": {"reason": "length"}}], False),
+        ([], False),
+    ],
 )
-def test_unfinished_trajectories(tmp_path: Path, change: dict[str, Any]) -> None:
-    path = tmp_path / "trajectory.json"
-    assert not agent_finished(path)
-    step = {"source": "agent", "message": "Done."}
-    path.write_text(json.dumps({"steps": [step]}))
-    assert agent_finished(path)
-    path.write_text(json.dumps({"steps": [{**step, **change}]}))
-    assert not agent_finished(path)
+@pytest.mark.parametrize("name", ["opencode.txt", "opencode-v2.txt"])
+def test_opencode_finished(tmp_path: Path, name: str, events: list[Any], finished: bool) -> None:
+    lines = ["error: EPIPE", *(json.dumps(e) for e in events), "error: EPIPE"]
+    (tmp_path / name).write_text("\n".join(lines))
+    assert agent_finished(tmp_path) is finished
+
+
+def test_opencode_truncated_stream_is_not_finished(tmp_path: Path) -> None:
+    (tmp_path / "opencode.txt").write_text(json.dumps(STOP) + '\n{"type": "te')
+    assert not agent_finished(tmp_path)
+
+
+def test_pi_finished(tmp_path: Path) -> None:
+    assert not agent_finished(tmp_path)
+    assert agent_finished(FIXTURES / "0.25.0-pi") and agent_finished(FIXTURES / "0.27.0-pi")
+    step = {"source": "agent", "message": "compacted", "extra": {"pi_event_type": "compaction"}}
+    (tmp_path / "trajectory.json").write_text(json.dumps({"steps": [step]}))
+    assert not agent_finished(tmp_path)
 
 
 def test_agent_exit_differs_between_harbor_versions() -> None:
@@ -356,6 +375,10 @@ def run(tasks: Path, tmp_path: Path, fake: Path, mode: str = "ok", **over: Any) 
     return run_evaluation(EvalConfig.model_validate(harbor_dict(tasks, tmp_path / "runs", fake, **over)))
 
 
+def config_for(version: str, config: EvalConfig) -> EvalConfig:
+    return config.model_copy(update={"runner": config.runner.model_copy(update={"version": version})})
+
+
 def test_run(tasks: Path, tmp_path: Path, fake: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("UNRELATED_SECRET", "x")
     run_dir = run(tasks, tmp_path, fake, n_attempts=2)
@@ -368,6 +391,10 @@ def test_run(tasks: Path, tmp_path: Path, fake: Path, monkeypatch: pytest.Monkey
     assert manifest.harnesses[0].observed_versions == ["1.0.0"]
     job = json.loads((run_dir / "harbor/oracle-attempt1.config.json").read_text())
     assert job["retry"] == {"max_retries": 0} and job["n_attempts"] == 1
+    assert "override_error_policy" not in job
+    newer = config_for("0.27.0", manifest.config)
+    policy = harbor.job_config(newer, {}, [], "n", tmp_path)["override_error_policy"]
+    assert policy["AgentAuthenticationError"] == {"should_grade": True}
     env = json.loads((fake / "env.json").read_text())
     assert "UNRELATED_SECRET" not in env and env["HARBOR_TELEMETRY"] == "off"
     with pytest.raises(RunError, match="other files"):

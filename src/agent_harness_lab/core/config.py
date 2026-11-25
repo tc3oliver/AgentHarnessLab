@@ -215,7 +215,8 @@ class HarborRunnerConfig(Strict):
     version: str
     """Exact Harbor version. Checked against `command --version` before anything runs."""
     command: list[str] = Field(default=["harbor"], min_length=1)
-    """Harbor runs as a subprocess, so it may live in its own environment."""
+    """Harbor runs as a subprocess, so it may live in its own environment.
+    A wrapper must exec Harbor or forward SIGTERM to it, or an interrupted run leaves Harbor behind."""
     environment: str = "docker"
     n_concurrent: int = Field(1, gt=0)
     reward_key: str = "reward"
