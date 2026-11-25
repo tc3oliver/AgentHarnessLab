@@ -40,6 +40,9 @@ _PKG = "agent_harness_lab"
 HARNESSES = Registry(
     "harness",
     {
+        "oracle": f"{_PKG}.harness.harbor:OracleHarness",
+        "nop": f"{_PKG}.harness.harbor:NopHarness",
+        "opencode-v2": f"{_PKG}.harness.harbor:OpenCodeV2Harness",
         "pi": f"{_PKG}.harness.harbor:PiHarness",
         "opencode": f"{_PKG}.harness.harbor:OpenCodeHarness",
     },
@@ -56,7 +59,7 @@ RUNNERS = Registry(
     "runner",
     {
         "mock": f"{_PKG}.evaluation.runners:MockRunner",
-        "harbor": f"{_PKG}.evaluation.runners:HarborRunner",
+        "harbor": f"{_PKG}.evaluation.harbor:HarborRunner",
     },
 )
 TRAINERS = Registry("trainer", {"trl": f"{_PKG}.training.backends:TrlBackend"})

@@ -1,4 +1,6 @@
-# OpenCode v1 (`opencode-ai`); Harbor 0.25.0 has no v2 agent, and v1 has no max_turns option. Not yet run.
+# OpenCode v1 (`opencode-ai`), the version OpenEnv qualified. 1.19.6 exits 1 under Harbor (docs/COMPATIBILITY.md).
+# v1 has no max_turns option in Harbor. Not yet run on a real model.
 name: opencode
-version: 1.19.6
+version: 1.18.30
 timeout_s: 3600
+setup_timeout_s: 1800

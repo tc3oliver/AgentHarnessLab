@@ -1,0 +1,11 @@
+# Control run: needs Docker and Harbor 0.25.0 (`uv sync --extra harbor`), no model and no GPU.
+kind: eval
+name: smoke-oracle
+seed: 0
+model: {id: none}
+inference: {backend: none}
+harnesses:
+  - {name: oracle, version: 1.0.0}
+datasets:
+  - {include: ../datasets/smoke.yaml}
+runner: {type: harbor, version: 0.25.0, n_concurrent: 4}

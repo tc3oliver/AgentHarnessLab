@@ -13,12 +13,15 @@ class Outcome(StrEnum):
     FAILED = "failed"
     TIMEOUT = "timeout"
     BUDGET_EXHAUSTED = "budget_exhausted"
+    AGENT_ERROR = "agent_error"
+    """The harness process failed. Graded: it belongs to the system under evaluation."""
     INFRA_ERROR = "infra_error"
+    VERIFIER_ERROR = "verifier_error"
 
     @property
     def graded(self) -> bool:
-        """Infrastructure errors say nothing about the policy, so they leave every denominator."""
-        return self is not Outcome.INFRA_ERROR
+        """Infrastructure and verifier errors say nothing about the policy, so they are never counted."""
+        return self not in {Outcome.INFRA_ERROR, Outcome.VERIFIER_ERROR}
 
 
 class TrialResult(BaseModel):
@@ -31,9 +34,11 @@ class TrialResult(BaseModel):
     task_hash: str
     harness: str
     harness_version: str | None
-    """Version observed at run time, not the one requested."""
+    """As reported by the runner. For Pi and OpenCode v1 Harbor repeats the pin, which npm installs;
+    for OpenCode v2 it checks the installed binary."""
     attempt: int = Field(ge=1)
-    seed: int
+    seed: int | None
+    """Seed that reached the sampler. Null when the harness offers no way to set one."""
     outcome: Outcome
     rewards: dict[str, float] | None = None
     input_tokens: int | None = Field(None, ge=0)
@@ -48,8 +53,8 @@ class TrialResult(BaseModel):
     def _check(self) -> TrialResult:
         if self.outcome is Outcome.SOLVED and not self.rewards:
             raise ValueError("a solved trial needs verifier rewards")
-        if self.outcome is Outcome.INFRA_ERROR and not self.error:
-            raise ValueError("an infrastructure error needs an error message")
+        if not self.outcome.graded and not self.error:
+            raise ValueError("an ungraded trial needs an error message")
         return self
 
     @property

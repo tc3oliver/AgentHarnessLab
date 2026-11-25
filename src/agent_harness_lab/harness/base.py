@@ -9,6 +9,8 @@ class HarnessAdapter(Protocol):
     """Describes one unmodified agent harness. It never implements an agent loop."""
 
     name: str
+    harbor_versions: frozenset[str]
+    """Harbor versions this adapter was checked against."""
 
     def harbor_agent(
         self, harness: HarnessConfig, model: ModelConfig, inference: InferenceConfig

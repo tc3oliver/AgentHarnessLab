@@ -60,11 +60,14 @@ def test_missing_file(tmp_path: Path) -> None:
         {"unknown_key": 1},
         {"name": "../escape"},
         {"harnesses": []},
-        *({"harnesses": [{"name": "pi", "version": v}]} for v in ("latest", "^1", "main", "beta", "1.x", "")),
-        {"harnesses": [{"name": "pi", "version": "1.0", "options": {"api_key": "x"}}]},
-        {"harnesses": [{"name": "pi", "version": "1"}, {"name": "pi", "version": "2"}]},
+        *(
+            {"harnesses": [{"name": "pi", "version": v}]}
+            for v in ("latest", "1.6", "^1", "main", "beta", "1.x", "")
+        ),
+        {"harnesses": [{"name": "pi", "version": "1.0.0", "options": {"api_key": "x"}}]},
+        {"harnesses": [{"name": "pi", "version": "1.0.0"}, {"name": "pi", "version": "2.0.0"}]},
         {"model": {"id": "m", "revision": "main"}},
-        {"runner": {"type": "harbor"}},
+        {"runner": {"type": "harbor", "version": "0.25.0"}},
     ],
 )
 def test_rejected_eval_configs(tmp_path: Path, over: dict[str, object]) -> None:
@@ -74,7 +77,7 @@ def test_rejected_eval_configs(tmp_path: Path, over: dict[str, object]) -> None:
 
 def test_real_runs_need_a_pinned_model_and_no_train_split(tmp_path: Path) -> None:
     real = {
-        "runner": {"type": "harbor"},
+        "runner": {"type": "harbor", "version": "0.25.0"},
         "inference": {"backend": "vllm", "base_url": "http://localhost:8000/v1"},
     }
     with pytest.raises(ValidationError, match="revision"):

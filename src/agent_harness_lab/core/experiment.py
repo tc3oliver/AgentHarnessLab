@@ -66,20 +66,20 @@ def run_evaluation(config: EvalConfig, *, overwrite: bool = False) -> Path:
         loaded.append(loader.load(dataset))
     adapters: dict[str, HarnessAdapter] = {h.name: HARNESSES.get(h.name)() for h in config.harnesses}
     runner: EvaluationRunner = RUNNERS.get(config.runner.type)()
-    runner.preflight(config, adapters)
+    runtime = runner.preflight(config, adapters)
     check_formats(config.report.formats)
     plan = build_plan(config, loaded)
 
     run_dir = Path(config.output_dir) / config.name
     _prepare_dir(run_dir, overwrite)
-    manifest = new_manifest(config, loaded, len(plan), runner.simulated)
+    manifest = new_manifest(config, loaded, len(plan), runner.simulated, runtime)
     manifest.write(run_dir)
 
     results: list[TrialResult] = []
     expected = {(s.dataset, s.task.task_id, s.harness.name, s.attempt) for s in plan}
     try:
         with ResultWriter(run_dir / RESULTS_FILE) as writer:
-            for result in runner.run(config, plan, adapters):
+            for result in runner.run(config, plan, adapters, run_dir):
                 if result.key not in expected:
                     raise RunError(f"runner returned an unplanned or duplicate trial: {result.key}")
                 if result.simulated != runner.simulated:

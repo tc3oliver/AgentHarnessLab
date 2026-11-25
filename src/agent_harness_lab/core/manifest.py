@@ -62,12 +62,15 @@ class Manifest(BaseModel):
     python: str
     platform: str
     packages: dict[str, str]
+    runtime: dict[str, str]
+    """Versions reported by the runner at preflight: Harbor, Docker, served model, engine."""
 
     def comparability(self) -> dict[str, Any]:
         """Everything that must match between two arms. Model and adapter are the variable under test."""
         c = self.config
         return {
             "simulated": self.simulated,
+            "package_version": self.code.package_version,
             "seed": self.seed,
             "n_attempts": c.n_attempts,
             "datasets": sorted((d.name, d.split, d.revision, d.tasks_hash) for d in self.datasets),
@@ -79,6 +82,7 @@ class Manifest(BaseModel):
             "cost": c.cost.model_dump() if c.cost else None,
             "hardware": c.hardware.model_dump(),
             "packages": self.packages,
+            "runtime": {k: v for k, v in self.runtime.items() if k != "served_model"},
         }
 
     def write(self, run_dir: Path) -> None:
@@ -137,7 +141,11 @@ def installed_packages() -> dict[str, str]:
 
 
 def new_manifest(
-    config: EvalConfig, datasets: list[LoadedDataset], n_planned: int, simulated: bool
+    config: EvalConfig,
+    datasets: list[LoadedDataset],
+    n_planned: int,
+    simulated: bool,
+    runtime: dict[str, str],
 ) -> Manifest:
     return Manifest(
         name=config.name,
@@ -164,4 +172,5 @@ def new_manifest(
         python=platform.python_version(),
         platform=f"{platform.system()}-{platform.machine()}",
         packages=installed_packages(),
+        runtime=runtime,
     )

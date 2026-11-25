@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import random
 from collections.abc import Iterator, Mapping, Sequence
+from pathlib import Path
 
 from agent_harness_lab.core.config import CostConfig, EvalConfig, MockRunnerConfig
 from agent_harness_lab.core.results import Outcome, TrialResult
-from agent_harness_lab.errors import ConfigError, FeatureNotImplementedError
+from agent_harness_lab.errors import ConfigError
 from agent_harness_lab.evaluation.base import TrialSpec
 from agent_harness_lab.harness.base import HarnessAdapter
 
@@ -21,7 +22,7 @@ class MockRunner:
 
     simulated = True
 
-    def preflight(self, config: EvalConfig, adapters: Mapping[str, HarnessAdapter]) -> None:
+    def preflight(self, config: EvalConfig, adapters: Mapping[str, HarnessAdapter]) -> dict[str, str]:
         runner = config.runner
         if not isinstance(runner, MockRunnerConfig):
             raise ConfigError("MockRunner needs runner.type 'mock'")
@@ -30,9 +31,14 @@ class MockRunner:
             raise ConfigError(f"solve_rate_by_harness names unknown harnesses: {unknown}")
         if any(not 0 <= rate <= 1 for rate in rates.values()):
             raise ConfigError("solve_rate_by_harness values must be between 0 and 1")
+        return {}
 
     def run(
-        self, config: EvalConfig, plan: Sequence[TrialSpec], adapters: Mapping[str, HarnessAdapter]
+        self,
+        config: EvalConfig,
+        plan: Sequence[TrialSpec],
+        adapters: Mapping[str, HarnessAdapter],
+        run_dir: Path,
     ) -> Iterator[TrialResult]:
         runner = config.runner
         if not isinstance(runner, MockRunnerConfig):
@@ -74,17 +80,3 @@ class MockRunner:
                 "cost_usd": price(config.cost, input_tokens, output_tokens),
             }
         )
-
-
-class HarborRunner:
-    """Not implemented. Will write a Harbor `JobConfig` and map Harbor's `TrialResult` onto ours."""
-
-    simulated = False
-
-    def preflight(self, config: EvalConfig, adapters: Mapping[str, HarnessAdapter]) -> None:
-        raise FeatureNotImplementedError("the Harbor evaluation runner", "v0.1")
-
-    def run(
-        self, config: EvalConfig, plan: Sequence[TrialSpec], adapters: Mapping[str, HarnessAdapter]
-    ) -> Iterator[TrialResult]:
-        raise FeatureNotImplementedError("the Harbor evaluation runner", "v0.1")

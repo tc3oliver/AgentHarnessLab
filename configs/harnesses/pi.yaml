@@ -1,4 +1,4 @@
-# Version on npm on 2026-11-25. Not yet run by this project.
+# Run against a scripted endpoint only (docs/COMPATIBILITY.md).
 name: pi
 version: 1.6.0
 max_turns: 100

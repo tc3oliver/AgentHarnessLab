@@ -35,7 +35,7 @@ def eval_dict(tasks: Path, out: Path, **over: Any) -> dict[str, Any]:
         "output_dir": str(out),
         "model": {"id": "mock/m"},
         "inference": {"backend": "mock"},
-        "harnesses": [{"name": "pi", "version": "1.0"}, {"name": "opencode", "version": "1.0"}],
+        "harnesses": [{"name": "pi", "version": "1.0.0"}, {"name": "opencode", "version": "1.0.0"}],
         "datasets": [{"name": "d", "source": {"type": "local", "path": str(tasks)}, "split": "smoke"}],
         "runner": {"type": "mock"},
         **over,

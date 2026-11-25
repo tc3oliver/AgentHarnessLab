@@ -10,16 +10,11 @@ from agent_harness_lab.core.config import InferenceConfig
 class EndpointInfo:
     served_models: tuple[str, ...]
     engine_version: str | None
-    returns_token_ids: bool
-    returns_logprobs: bool
 
 
 class InferenceBackend(Protocol):
-    """Read-only view of a running OpenAI-compatible server. Harnesses send the completions, not us.
-
-    No implementation exists yet (planned for v0.1: an `openai_compatible` and `vllm` endpoint probe).
-    """
+    """Read-only view of a running OpenAI-compatible server. Harnesses send the completions, not us."""
 
     def probe(self, config: InferenceConfig) -> EndpointInfo:
-        """Raise `RunError` when the server is unreachable or does not serve the configured model."""
+        """Raise `RunError` when the server is unreachable or does not answer like an OpenAI server."""
         ...

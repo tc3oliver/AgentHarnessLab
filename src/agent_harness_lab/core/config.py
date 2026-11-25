@@ -26,6 +26,7 @@ from pydantic import (
 
 from agent_harness_lab.errors import ConfigError
 
+CONTROL_HARNESSES = frozenset({"oracle", "nop"})
 _COMMIT = re.compile(r"[0-9a-f]{40}")
 
 
@@ -86,19 +87,27 @@ class SamplingConfig(Strict):
 class InferenceConfig(Strict):
     """An OpenAI-compatible endpoint. Secrets are referenced by environment variable name, never stored."""
 
-    backend: Literal["mock", "openai_compatible", "vllm"]
+    backend: Literal["none", "mock", "openai_compatible", "vllm"]
+    """`none` is only for the oracle and nop control agents, which call no model."""
     base_url: str | None = None
+    agent_base_url: str | None = None
+    """The endpoint as seen from inside a sandbox, where localhost is the sandbox. Defaults to base_url."""
+    served_model: str | None = None
+    """Name the server uses for the model or adapter. Defaults to model.id."""
     api_key_env: str | None = Field(None, pattern=r"^[A-Za-z_][A-Za-z0-9_]*$")
     sampling: SamplingConfig = SamplingConfig()
+    """Declared, not enforced: harnesses choose their own request parameters, so the server must apply these
+    (vLLM: --override-generation-config and --default-chat-template-kwargs)."""
     server_args: dict[str, str | int | float | bool] = Field(default_factory=dict)
     """Serving flags to record for reproducibility. This project does not start servers."""
 
     @model_validator(mode="after")
     def _check(self) -> InferenceConfig:
-        if self.backend != "mock" and self.base_url is None:
+        if self.backend not in {"none", "mock"} and self.base_url is None:
             raise ValueError(f"base_url is required for backend '{self.backend}'")
-        if self.base_url is not None:
-            _clean_url(self.base_url, {"http", "https"})
+        for url in (self.base_url, self.agent_base_url):
+            if url is not None:
+                _clean_url(url, {"http", "https"})
         _reject_secrets(self.server_args)
         return self
 
@@ -151,6 +160,8 @@ class HarnessConfig(Strict):
     version: str
     max_turns: int | None = Field(None, gt=0)
     timeout_s: float | None = Field(None, gt=0)
+    setup_timeout_s: float | None = Field(None, gt=0)
+    """Installing a harness into each sandbox can exceed Harbor's default of 360 s."""
     options: dict[str, str | int | float | bool] = Field(default_factory=dict)
 
     _options = field_validator("options")(_reject_secrets)
@@ -158,8 +169,8 @@ class HarnessConfig(Strict):
     @field_validator("version")
     @classmethod
     def _version(cls, value: str) -> str:
-        if not re.fullmatch(r"\d+(\.\d+)*([-+][0-9A-Za-z.+-]+)?", value):
-            raise ValueError("pin an exact harness version, not a tag or range")
+        if not re.fullmatch(r"\d+\.\d+\.\d+([-+][0-9A-Za-z.+-]+)?", value):
+            raise ValueError("pin an exact harness version (x.y.z), not a tag or range")
         return value
 
 
@@ -201,8 +212,14 @@ class MockRunnerConfig(Strict):
 
 class HarborRunnerConfig(Strict):
     type: Literal["harbor"]
+    version: str
+    """Exact Harbor version. Checked against `command --version` before anything runs."""
+    command: list[str] = Field(default=["harbor"], min_length=1)
+    """Harbor runs as a subprocess, so it may live in its own environment."""
     environment: str = "docker"
     n_concurrent: int = Field(1, gt=0)
+    reward_key: str = "reward"
+    pass_threshold: float = Field(1.0, gt=0)
 
 
 type RunnerConfig = Annotated[MockRunnerConfig | HarborRunnerConfig, Field(discriminator="type")]
@@ -254,9 +271,14 @@ class EvalConfig(_Experiment):
             raise ValueError("dataset names must be unique")
         if (self.runner.type == "mock") != (self.inference.backend == "mock"):
             raise ValueError("runner 'mock' and inference backend 'mock' must be used together")
+        controls = [h.name for h in self.harnesses if h.name in CONTROL_HARNESSES]
         if self.runner.type != "mock":
-            if self.model.revision is None:
-                raise ValueError("model.revision is required unless the runner is 'mock'")
+            if (self.inference.backend == "none") != (len(controls) == len(self.harnesses)):
+                raise ValueError("inference backend 'none' is for runs where every harness is oracle or nop")
+            if controls and len(controls) != len(self.harnesses):
+                raise ValueError("do not mix oracle or nop with model-driven harnesses in one run")
+            if self.inference.backend != "none" and self.model.revision is None:
+                raise ValueError("model.revision is required for model-driven runs")
             train = [d.name for d in self.datasets if d.split == "train"]
             if train:
                 raise ValueError(f"evaluation must not use train splits: {train}")
