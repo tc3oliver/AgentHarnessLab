@@ -23,6 +23,7 @@ Ordered work items. Milestones are described in [../ROADMAP.md](../ROADMAP.md). 
 | [017](017-joint-mixed-ablation.md) | Joint-mixed group ablation | v0.4 | 014, 007 |
 | [018](018-large-moe-flash-next.md) | Qwen3.8-Flash-Next feasibility and reduced benchmark | v0.5 | 016 |
 | [019](019-huggingface-and-git-dataset-loaders.md) | Hugging Face and git dataset loaders | v0.1 | none |
+| [020](020-smoke-task-duration-spec.md) | Smoke task ahl-fix-duration-parse tests more than it states | v0.1 | none |
 
 ```mermaid
 graph TD

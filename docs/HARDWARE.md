@@ -1,6 +1,6 @@
 # Hardware plan
 
-Target: one node with 4 AMD Instinct MI325X GPUs, 256 GB HBM each. Nothing here has been run on this hardware: every statement is **Planned** or **Unverified**, and LoRA forward/backward on MI325X is explicitly **Unverified** ([UPSTREAM.md](UPSTREAM.md#constraints), item 7). GPU assignment is configuration (device lists in the experiment config), never hard-coded.
+Target: one node with 4 AMD Instinct MI325X GPUs, 256 GB HBM each. Serving (rungs 0 to 2, partly) was run on one MI325X on 2026-11-25 ([report](reports/overnight-development.md)); every other statement is **Planned** or **Unverified**, and LoRA forward/backward on MI325X is explicitly **Unverified** ([UPSTREAM.md](UPSTREAM.md#constraints), item 7). GPU assignment is configuration (device lists in the experiment config), never hard-coded.
 
 ## Memory arithmetic (estimate)
 

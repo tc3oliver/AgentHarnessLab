@@ -1,0 +1,84 @@
+{
+ "run": "real-single",
+ "created_at": "2026-11-25T10:29:16.897045Z",
+ "finished_at": "2026-11-25T10:30:20.110403Z",
+ "code": {
+  "package_version": "0.1.0.dev0",
+  "commit": "9e13877e6e7b565ac221c2be1ce49d5f5d1745b3",
+  "dirty": false
+ },
+ "config_hash": "9821a62edb247f7b3bb1f9f7bf57dfccf1baa29b09c414f981888829401c4ee0",
+ "model": {
+  "id": "Qwen/Qwen3.8-27B",
+  "revision": "37561816e66b5b9153b1b64c10968c18c1e6f4a0",
+  "adapter": null
+ },
+ "sampling": {
+  "temperature": 0.8,
+  "top_p": 1.0,
+  "max_output_tokens": null,
+  "enable_thinking": false
+ },
+ "server_args": {
+  "image": "vllm/vllm-openai-rocm@sha256:4fcd39b758b660c4e9c345c021e2ea8f0ccdb31e3c32507d676cc3005ae83fba",
+  "language-model-only": true,
+  "max-model-len": 131072,
+  "gpu-memory-utilization": 0.85,
+  "enable-prefix-caching": true,
+  "mamba-cache-mode": "align",
+  "tool-call-parser": "qwen3_xml",
+  "reasoning-parser": "qwen3",
+  "default-chat-template-kwargs": "{\"enable_thinking\": false}",
+  "override-generation-config": "{\"temperature\": 0.8, \"top_p\": 1.0}",
+  "effective-top-k": 20
+ },
+ "harnesses": [
+  {
+   "name": "pi",
+   "version": "1.5.2",
+   "max_turns": 100,
+   "timeout_s": 1800.0,
+   "setup_timeout_s": null,
+   "options": {}
+  },
+  {
+   "name": "opencode-v2",
+   "version": "2.2.7",
+   "max_turns": null,
+   "timeout_s": 1800.0,
+   "setup_timeout_s": null,
+   "options": {}
+  }
+ ],
+ "observed": [
+  [
+   "pi",
+   [
+    "1.5.2"
+   ]
+  ],
+  [
+   "opencode-v2",
+   [
+    "2.2.7"
+   ]
+  ]
+ ],
+ "n_attempts": 1,
+ "runtime": {
+  "harbor": "0.27.0",
+  "docker": "29.6.1",
+  "image.pi": "sha256:b8ce9e077076f8fa67115c8f4a9f289dbe931d4ec4f717dd2a454c6fd26eb1ab",
+  "task_images.pi": "e8423077062a9ee2a629b04dc851c1ba56f7cf80abd58c24bf8b7f226ed20c68",
+  "image.opencode-v2": "sha256:6cb60d8ad895cea06c27a514d93dbbb56ad7ba9b958a0b03dff802b0d9776186",
+  "task_images.opencode-v2": "efa54efbd537e184debebadfab3ae6c464fdcdb585ec0fb32c1285589a0f46dc",
+  "served_model": "Qwen/Qwen3.8-27B",
+  "engine": "0.33.0"
+ },
+ "datasets": [
+  {
+   "name": "smoke",
+   "tasks_hash": "23ea219718eadb91a975b9bd84476eb1e0f4e0c0ef30d45a83c44816595d3268"
+  }
+ ]
+}

@@ -1,7 +1,7 @@
 # Compatibility
 
 Checked 2026-11-25. **Run** = executed by us; **read** = read in source or metadata; **-** = not available.
-No cell says anything about model quality, and nothing here ran on a GPU.
+No cell says anything about model quality. Only the real-model row used a GPU.
 
 ## Evaluation: harness x Harbor
 
@@ -16,7 +16,7 @@ tool call on one smoke task. It checks installation, endpoint wiring, the tool l
 | `opencode` 1.19.6 (v1) | Run: scripted, solved, often exits 1 (below) | Run: scripted, solved, often exits 1 |
 | `opencode` 1.18.30 (v1, OpenEnv's qualification pin) | Run: scripted, solved, exits 0 (default pin) | Run: scripted, solved, exits 0 |
 | `opencode-v2` 2.2.7 (reference release) | - (no such agent) | Run: scripted, solved |
-| Any agent on a real model | **not run** | **not run** |
+| Real model (Qwen3.8-27B, vLLM 0.33.0, one MI325X) | **not run** | Run: `pi` 1.5.2 and `opencode-v2` 2.2.7, 12 smoke tasks ([report](reports/overnight-development.md)) |
 
 `SUPPORTED_HARBOR` and each adapter's `harbor_versions` encode the Harbor versions; others are rejected at preflight. Any exact
 harness version is accepted, so check this table before changing a pin.
@@ -41,7 +41,7 @@ thinking off, and ran its trials through OpenEnv in remote sandboxes.
 |---|---|
 | Harness versions | `configs/harnesses/pi-reference.yaml`, `opencode-v2.yaml`, both with Harbor 0.27.0 |
 | 100 steps | Pi: `max_turns: 100`. OpenCode: Harbor has no step limit; the reference capped it in OpenEnv's proxy. **Gap** |
-| Sampling, thinking | server flags ([EVALUATION_GUIDE.md](EVALUATION_GUIDE.md)); not checked by us |
+| Sampling, thinking | server flags; server log shows temperature 0.8, top-p 1.0 on every agent call. **top-k 20** comes from the model's generation_config; the reference is unknown to us |
 | Output limit per call | Pi requested 16,384 and OpenCode 32,000 tokens in our runs; the reference card reports a 32k cap. **Gap for Pi** |
 | Context window | Harbor 0.27.0 has a Pi `context_window` option we do not set; compaction may differ. **Gap** |
 | Tools | OpenEnv disables OpenCode v1's `task`, `question`, `webfetch` in training; the plain agent has them (v2 also `websearch`). **Gap** |

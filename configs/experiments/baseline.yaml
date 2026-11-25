@@ -1,4 +1,5 @@
-# Needs Docker, Harbor 0.25.0 and a running endpoint. NOT RUN against a real model yet (docs/EVALUATION_GUIDE.md).
+# Needs Docker, Harbor 0.25.0 and a running endpoint (docs/EVALUATION_GUIDE.md). For the variant that was run, see
+# real_smoke.yaml.
 kind: eval
 name: baseline
 seed: 0
@@ -9,7 +10,7 @@ inference:
   # localhost inside a sandbox is the sandbox; 172.17.0.1 is Docker's default bridge gateway on Linux.
   agent_base_url: http://172.17.0.1:8000/v1
   api_key_env: AGENTLAB_API_KEY
-  sampling: {temperature: 0.8, top_p: 1.0, enable_thinking: false}
+  sampling: {temperature: 0.8, top_p: 1.0, top_k: 20, enable_thinking: false}
   server_args:
     override-generation-config: '{"temperature": 0.8, "top_p": 1.0}'
     default-chat-template-kwargs: '{"enable_thinking": false}'

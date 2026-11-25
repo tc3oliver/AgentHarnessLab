@@ -1,0 +1,48 @@
+{
+ "version": {
+  "version": "0.33.0"
+ },
+ "models": [
+  "Qwen/Qwen3.8-27B"
+ ],
+ "no_key": {
+  "http": 401
+ },
+ "chat": [
+  "391",
+  {
+   "prompt_tokens": 26,
+   "total_tokens": 30,
+   "completion_tokens": 4,
+   "prompt_tokens_details": null,
+   "completion_tokens_details": {
+    "reasoning_tokens": 0
+   }
+  },
+  0.08
+ ],
+ "thinking_on": [
+  true,
+  "\n\n391"
+ ],
+ "thinking_default_off": [
+  null,
+  false
+ ],
+ "tools_ok": 10,
+ "tool_example": [
+  "tool_calls",
+  [
+   [
+    "bash",
+    {
+     "command": "ls -la /app"
+    }
+   ]
+  ]
+ ],
+ "tool_followup": "The files in `/app` are:\n\n- `main.py`\n- `tests`",
+ "default_sampling_distinct": 3,
+ "greedy_distinct": 1,
+ "logprobs": true
+}
