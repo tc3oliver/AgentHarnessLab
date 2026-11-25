@@ -4,7 +4,8 @@
 under several unmodified agent harnesses. Model-, harness- and hardware-agnostic by design.
 
 > **Pre-alpha.** Evaluations run through a *mock* runner or through Harbor. The Harbor path is verified with control
-> agents and with real harnesses against a *scripted* endpoint. No model has been evaluated yet, and nothing trains.
+> agents and with real harnesses against a *scripted* endpoint. A real model has run only on the
+> smoke tasks ([report](docs/reports/overnight-development.md)), and nothing trains.
 
 ## Status
 
@@ -15,7 +16,7 @@ under several unmodified agent harnesses. Model-, harness- and hardware-agnostic
 | Local Harbor task loading, content hashing, leakage audit | Implemented, CPU-tested |
 | 12 smoke tasks in Harbor format | Verified: oracle 12/12, nop 0/12 on Harbor 0.25.0 and 0.27.0, local Docker ([details](examples/smoke_tasks/README.md)) |
 | Harbor runner | Verified: `agentlab eval` gives oracle 12/12 and nop 0/12 on Harbor 0.25.0 and 0.27.0 |
-| Pi and OpenCode through Harbor | Wiring status in [COMPATIBILITY.md](docs/COMPATIBILITY.md); no model-backed run yet |
+| Pi and OpenCode through Harbor | Wiring status in [COMPATIBILITY.md](docs/COMPATIBILITY.md); Pi and OpenCode v2 ran with a real model |
 | Single-harness RL (TRL AsyncGRPO + LoRA) | Planned, v0.2 |
 | Joint multi-harness RL | Planned, v0.3 |
 | Adapter merging and the full research comparison | Planned, v0.4 |

@@ -1,7 +1,7 @@
 # Evaluating Pi and OpenCode on a real endpoint
 
-Status: the wiring is tested with a scripted endpoint (see [COMPATIBILITY.md](COMPATIBILITY.md)). **No real model has been
-evaluated with this guide yet.**
+Status: Qwen3.8-27B was run on the smoke tasks with Pi 1.5.2 and OpenCode 2.2.7
+([report](reports/overnight-development.md)). These runs check the pipeline; they are not a benchmark.
 
 ## Before you start
 
@@ -13,8 +13,8 @@ evaluated with this guide yet.**
 
 ## 1. Serve the model
 
-Flags for `Qwen/Qwen3.8-27B` follow the reference adapter card; the ROCm build is **Unverified**
-([HARDWARE.md](HARDWARE.md)). The server must listen on an address that containers can reach, and must require a key.
+Flags for `Qwen/Qwen3.8-27B` follow the reference adapter card; the ROCm build was run on one MI325X with vLLM
+0.33.0 (`scripts/serve_vllm_rocm.sh`, pinned image). The server must listen on an address that containers can reach, and must require a key.
 
 ```bash
 export VLLM_API_KEY="$AGENTLAB_API_KEY"   # not --api-key: arguments are visible in ps

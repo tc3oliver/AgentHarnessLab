@@ -80,6 +80,8 @@ class ModelConfig(Strict):
 class SamplingConfig(Strict):
     temperature: float = Field(0.8, ge=0)
     top_p: float = Field(1.0, gt=0, le=1)
+    top_k: int | None = Field(None, ge=0)
+    """Null: not declared. vLLM takes it from the model's generation_config unless overridden."""
     max_output_tokens: int | None = Field(None, gt=0)
     enable_thinking: bool = False
 

@@ -1,0 +1,71 @@
+{
+ "run": "ab-base",
+ "created_at": "2026-11-25T10:56:21.300185Z",
+ "finished_at": "2026-11-25T11:02:27.459338Z",
+ "code": {
+  "package_version": "0.1.0.dev0",
+  "commit": "68f665ce345ef91bbe4e1ea31bae4b703801dc5b",
+  "dirty": true
+ },
+ "config_hash": "25b0c97bce6203246d4a84e0c1aa23cddcf5a5b550ca6e302b2c44e1d611add2",
+ "model": {
+  "id": "Qwen/Qwen3.8-27B",
+  "revision": "37561816e66b5b9153b1b64c10968c18c1e6f4a0",
+  "adapter": null
+ },
+ "sampling": {
+  "temperature": 0.8,
+  "top_p": 1.0,
+  "max_output_tokens": null,
+  "enable_thinking": false
+ },
+ "server_args": {
+  "image": "vllm/vllm-openai-rocm@sha256:4fcd39b758b660c4e9c345c021e2ea8f0ccdb31e3c32507d676cc3005ae83fba",
+  "language-model-only": true,
+  "max-model-len": 131072,
+  "gpu-memory-utilization": 0.85,
+  "enable-prefix-caching": true,
+  "mamba-cache-mode": "align",
+  "tool-call-parser": "qwen3_xml",
+  "reasoning-parser": "qwen3",
+  "default-chat-template-kwargs": "{\"enable_thinking\": false}",
+  "override-generation-config": "{\"temperature\": 0.8, \"top_p\": 1.0}",
+  "effective-top-k": 20,
+  "enable-lora": true,
+  "max-lora-rank": 32,
+  "lora-modules": "pi-adapted=harness-hub/Qwen3.8-27B-pi-adapted"
+ },
+ "harnesses": [
+  {
+   "name": "pi",
+   "version": "1.5.2",
+   "max_turns": 100,
+   "timeout_s": 1800.0,
+   "setup_timeout_s": null,
+   "options": {}
+  }
+ ],
+ "observed": [
+  [
+   "pi",
+   [
+    "1.5.2"
+   ]
+  ]
+ ],
+ "n_attempts": 3,
+ "runtime": {
+  "harbor": "0.27.0",
+  "docker": "29.6.1",
+  "image.pi": "sha256:b8ce9e077076f8fa67115c8f4a9f289dbe931d4ec4f717dd2a454c6fd26eb1ab",
+  "task_images.pi": "ab2173e1e3b30b7c5114dbb07d1c2cb0752dc9aed4b89eadb5bc6c3500a9e499",
+  "served_model": "Qwen/Qwen3.8-27B",
+  "engine": "0.33.0"
+ },
+ "datasets": [
+  {
+   "name": "smoke",
+   "tasks_hash": "abcf0e4a542c4996862397524adab3383a5a0615a32c9ff5c2da4bb7cae2c50c"
+  }
+ ]
+}

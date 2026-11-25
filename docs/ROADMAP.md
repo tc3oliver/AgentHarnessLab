@@ -4,7 +4,7 @@ Statuses: **Verified** (we ran it), **Planned**, **Unverified**. As of the date 
 
 ## v0.1 Reproducible Evaluation
 
-- **Exists today (no model-backed run yet):** the Harbor runner with Pi and OpenCode configurations, config validation with revision pins, local dataset loading, leakage-audit core, manifests, the mock runner, metrics aggregation, paired comparison with an exact sign test, Markdown reports, Harbor oracle/nop smoke tasks. Nothing has run against a real model or dataset.
+- **Exists today:** the Harbor runner with Pi and OpenCode configurations, config validation with revision pins, local dataset loading, leakage-audit core, manifests, the mock runner, metrics aggregation, paired comparison with an exact sign test, Markdown reports, Harbor oracle/nop smoke tasks. Pi and OpenCode v2 ran with a real model on the smoke tasks only.
 - **Scope:** run Pi and OpenCode through Harbor from one config against a vLLM endpoint; parse results; manifests; pinned data splits and leakage audit; baseline (E0) and reference-adapter re-measurement (E1); report with CIs.
 - **Acceptance:** E0 and E1 complete on the validation split; every run has a complete manifest; infra-error rate reported per harness; a rerun from the manifest lands inside the first run's interval; statistics code passes unit tests with known answers.
 - **Test method:** unit tests with the mock runner; Harbor oracle/nop smoke tasks; validation ladder rungs 0-3 ([HARDWARE.md](HARDWARE.md)); rerun comparison.

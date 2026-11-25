@@ -1,0 +1,29 @@
+# Close to the smoke run in docs/reports/overnight-development.md. Needs Harbor 0.27.0 (its own environment; set runner.command),
+# the images from `agentlab images -c` this file, and an endpoint started with scripts/serve_vllm_rocm.sh. The run itself set no setup_timeout_s.
+kind: eval
+name: real-smoke
+seed: 0
+model: {include: ../models/qwen3.8-27b.yaml}
+inference:
+  backend: vllm
+  base_url: http://127.0.0.1:8100/v1
+  agent_base_url: http://172.17.0.1:8100/v1
+  api_key_env: AGENTLAB_API_KEY
+  sampling: {temperature: 0.8, top_p: 1.0, top_k: 20, enable_thinking: false}
+  server_args:
+    image: vllm/vllm-openai-rocm@sha256:4fcd39b758b660c4e9c345c021e2ea8f0ccdb31e3c32507d676cc3005ae83fba
+    language-model-only: true
+    max-model-len: 131072
+    gpu-memory-utilization: 0.85
+    enable-prefix-caching: true
+    mamba-cache-mode: align
+    tool-call-parser: qwen3_xml
+    reasoning-parser: qwen3
+    default-chat-template-kwargs: '{"enable_thinking": false}'
+    override-generation-config: '{"temperature": 0.8, "top_p": 1.0}'
+harnesses:
+  - {include: ../harnesses/pi-reference.yaml, timeout_s: 1800}
+  - {include: ../harnesses/opencode-v2.yaml, timeout_s: 1800}
+datasets:
+  - {include: ../datasets/smoke.yaml}
+runner: {type: harbor, version: 0.27.0, n_concurrent: 4, prebuilt: true}

@@ -1,0 +1,1 @@
+{"tokens": 40, "base_repeat": 0.0, "zero": 0.0, "full": 0.0719, "q_proj": 0.02528, "k_proj": 0.03407, "v_proj": 0.03072, "o_proj": 0.02676, "gate_proj": 0.03176, "up_proj": 0.04264, "down_proj": 0.04241}
