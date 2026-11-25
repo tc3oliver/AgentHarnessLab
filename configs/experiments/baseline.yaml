@@ -1,0 +1,24 @@
+# NOT RUNNABLE YET: the Harbor runner is planned for v0.1, so `agentlab eval` exits with code 3.
+kind: eval
+name: baseline
+seed: 0
+model: {include: ../models/qwen3.8-27b.yaml}
+inference:
+  backend: vllm
+  base_url: http://localhost:8000/v1
+  api_key_env: AGENTLAB_API_KEY
+  sampling: {temperature: 0.8, top_p: 1.0, enable_thinking: false}
+  server_args:
+    max-model-len: 131072
+    language-model-only: true
+    enable-prefix-caching: true
+    mamba-cache-mode: align
+    tool-call-parser: qwen3_xml
+    reasoning-parser: qwen3
+harnesses:
+  - {include: ../harnesses/pi.yaml}
+  - {include: ../harnesses/opencode.yaml}
+datasets:
+  - {include: ../datasets/smoke.yaml}
+runner: {type: harbor, environment: docker, n_concurrent: 4}
+hardware: {include: ../hardware/mi325x-4.yaml}

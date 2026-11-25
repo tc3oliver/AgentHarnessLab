@@ -1,0 +1,41 @@
+__pycache__/
+*.py[cod]
+.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+dist/
+build/
+*.egg-info/
+
+# Run outputs and execution traces
+/runs/
+/jobs/
+/trials/
+*.trajectory.json
+
+# Weights, checkpoints and downloaded datasets
+/data/
+/models/
+/checkpoints/
+*.safetensors
+*.gguf
+*.bin
+*.pt
+*.pth
+*.parquet
+*.arrow
+
+# Credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials*.json
+
+# Local agent/editor state
+.claude/
+.idea/
+.vscode/

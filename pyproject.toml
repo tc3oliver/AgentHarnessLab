@@ -1,0 +1,65 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agent-harness-lab"
+version = "0.1.0.dev0"
+description = "Reproducible cross-harness agent post-training: evaluation, comparison and experiment manifests."
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+requires-python = ">=3.12"
+authors = [{ name = "Oliver Yu" }]
+dependencies = [
+  "pydantic>=2.12,<3",
+  "pyyaml>=6.0.2,<7",
+  "typer>=0.16,<1",
+]
+
+[project.optional-dependencies]
+parquet = ["pyarrow>=18"]
+# Pinned to the version openenv[harbor]==0.14.0 resolves to (docs/UPSTREAM.md, constraint 1).
+# The Harbor integration is not implemented yet; the extra only fixes the version.
+harbor = ["harbor==0.25.0"]
+
+[project.scripts]
+agentlab = "agent_harness_lab.cli:main"
+
+[dependency-groups]
+dev = ["mypy>=1.15", "pyarrow>=18", "pytest>=8.3", "pytest-cov>=6", "ruff>=0.11", "types-pyyaml>=6"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agent_harness_lab"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src", "tests", "configs", "README.md", "LICENSE"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+extend-exclude = ["examples/smoke_tasks/tasks"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF", "PTH", "S", "C4"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101"]
+
+[tool.mypy]
+strict = true
+packages = ["agent_harness_lab"]
+mypy_path = "src"
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = "pyarrow.*"
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers -m 'not gpu and not docker'"
+markers = [
+  "gpu: needs a GPU; never runs in default CI",
+  "docker: needs Docker and the harbor extra",
+]

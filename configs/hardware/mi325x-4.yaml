@@ -1,0 +1,6 @@
+# Example layout, recorded only. Device ids are logical ids inside the visible set.
+vendor: amd
+device: MI325X
+allocations:
+  - {role: inference, device_ids: [0, 1]}
+  - {role: training, device_ids: [2, 3]}

@@ -1,0 +1,9 @@
+name: swebench-pro-hard51
+source:
+  type: huggingface
+  repo: ScaleAI/SWE-bench_Pro
+  revision: 2d52cb3df914a3fcf80c7f66738b3a88ae37fc50
+  config_name: hard
+split: test
+license: null
+notes: Task content keeps 11 upstream repository licences. Harbor task directories are in scaleapi/SWE-bench_Pro-os v2/tasks.

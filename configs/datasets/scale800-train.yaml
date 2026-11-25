@@ -1,0 +1,8 @@
+name: scale800-train
+source:
+  type: huggingface
+  repo: harness-hub/scale800-harbor
+  revision: 65940b91855c085398f24c010068da6f724074d5
+split: train
+license: null
+notes: 750 tasks, 22 repositories. No licence declared; local research use only, do not redistribute.

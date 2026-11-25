@@ -1,0 +1,4 @@
+# OpenCode v1 (`opencode-ai`); Harbor 0.25.0 has no v2 agent, and v1 has no max_turns option. Not yet run.
+name: opencode
+version: 1.19.6
+timeout_s: 3600

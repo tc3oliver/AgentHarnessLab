@@ -1,0 +1,28 @@
+name: CI
+on:
+  push: {branches: [main]}
+  pull_request:
+permissions: {contents: read}
+concurrency: {group: "ci-${{ github.ref }}", cancel-in-progress: true}
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: {python: ["3.12", "3.13"]}
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: astral-sh/setup-uv@v6
+        with: {python-version: "${{ matrix.python }}"}
+      - run: uv sync --locked --all-groups
+      - run: uv run ruff format --check .
+      - run: uv run ruff check .
+      - run: uv run mypy
+      - run: uv run pytest --cov=agent_harness_lab
+      - name: CPU demo
+        run: |
+          uv run agentlab eval -c configs/experiments/mock_base.yaml
+          uv run agentlab eval -c configs/experiments/mock_joint.yaml
+          uv run agentlab compare runs/base runs/joint
+      - run: uv build

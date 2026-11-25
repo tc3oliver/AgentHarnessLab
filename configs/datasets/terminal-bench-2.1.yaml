@@ -1,0 +1,8 @@
+name: terminal-bench-2.1
+source:
+  type: huggingface
+  repo: harborframework/terminal-bench-2.1
+  revision: 3e235dff6880252a587fa479c09bcb1e16edf2eb
+split: test
+license: Apache-2.0
+notes: 89 tasks with training canaries. Never train on it.

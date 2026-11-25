@@ -1,0 +1,8 @@
+name: termgrade-train
+source:
+  type: huggingface
+  repo: harness-hub/termgrade-train-harbor
+  revision: 151205e3714d8d1cec6b7d5770d344853e11d7aa
+split: train
+license: Apache-2.0
+notes: 904 tasks without repository identity. The card asks to keep it out of training corpora; see docs/DATASETS.md.

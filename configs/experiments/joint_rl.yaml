@@ -1,0 +1,25 @@
+# NOT RUNNABLE YET: `agentlab train` validates this file and exits with code 3 (planned for v0.3).
+# Values follow the Pi adapter card where it states them; max_steps is a placeholder.
+kind: train
+name: joint-rl
+seed: 0
+model: {include: ../models/qwen3.8-27b.yaml}
+harnesses:
+  - {include: ../harnesses/pi.yaml, max_turns: 50, timeout_s: 1800}
+  - {include: ../harnesses/opencode.yaml, timeout_s: 1800}
+train_datasets:
+  - {include: ../datasets/scale800-train.yaml}
+  # The reference recipe also used 300 TermGrade tasks; left out until its terms are clear (docs/DATASETS.md).
+hardware: {include: ../hardware/mi325x-4.yaml}
+trainer:
+  group_by: task_harness
+  learning_rate: 2.0e-5
+  max_steps: 160
+  num_generations: 8
+  temperature: 0.8
+  max_staleness: 16
+  tool_efficiency_weight: 0.1
+  lora:
+    r: 32
+    alpha: 64
+    target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]

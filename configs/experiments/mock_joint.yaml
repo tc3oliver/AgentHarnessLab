@@ -1,0 +1,15 @@
+# Simulated results: no model, harness or container runs.
+kind: eval
+name: joint
+seed: 0
+model: {id: mock/joint}
+inference: {backend: mock}
+harnesses:
+  - {include: ../harnesses/pi.yaml}
+  - {include: ../harnesses/opencode.yaml}
+datasets:
+  - {include: ../datasets/smoke.yaml}
+runner: {type: mock, solve_rate: 0.6, infra_error_rate: 0.05, effort: 0.6}
+trained_on: [pi, opencode]
+cost: {usd_per_million_input: 0.1, usd_per_million_output: 0.4}
+report: {formats: [jsonl, markdown]}
