@@ -52,13 +52,13 @@ Until the gaps are closed, our numbers must be labelled "not protocol-matched".
 ## Prebuilt images: initialization time
 
 Sandbox start plus harness setup, one trial, same host ([HARNESS_IMAGES.md](HARNESS_IMAGES.md)). Install times depend on the
-network: the high values were measured during a 52 GB download on the same host.
+network: the high values were measured during a 55.6 GB download on the same host.
 
 | Harness | Harbor | Installed per trial | Prebuilt |
 |---|---|---|---|
-| Pi | 0.25.0 and 0.27.0 | 35 s to 650 s | about 2 s |
+| Pi | 0.25.0 and 0.27.0 | 35 s to 650 s | 1.5 s to 2.8 s |
 | OpenCode 1.18.30 | 0.25.0 and 0.27.0 | 84 s to 99 s, or over 1800 s (timeout) | about 2 s |
-| OpenCode 2.2.7 | 0.27.0 | 137 s to 955 s | 1.6 s to 1.8 s |
+| OpenCode 2.2.7 | 0.27.0 | 137 s to 955 s | 1.6 s to 1.9 s |
 
 ## Known problems
 

@@ -6,7 +6,7 @@ Depends on: none
 ## Context
 
 The hidden test expects `ValueError` for `1.5h`; the instruction does not say that decimals are invalid. On 2026-11-25 this
-task failed in 9 of 10 Qwen3.8-27B trials (data in [../reports/data](../reports/data)); the trials whose verifier output we read failed on `1.5h`.
+task failed in 9 of 10 Qwen3.8-27B trials (data in [../reports/data](../reports/data)); all nine failed on `1.5h`.
 The results were kept as failures.
 
 ## Scope

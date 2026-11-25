@@ -22,8 +22,8 @@ inference:
     default-chat-template-kwargs: '{"enable_thinking": false}'
     override-generation-config: '{"temperature": 0.8, "top_p": 1.0}'
 harnesses:
-  - {include: ../harnesses/pi-reference.yaml}
-  - {include: ../harnesses/opencode-v2.yaml}
+  - {include: ../harnesses/pi-reference.yaml, timeout_s: 1800}
+  - {include: ../harnesses/opencode-v2.yaml, timeout_s: 1800}
 datasets:
   - {include: ../datasets/smoke.yaml}
 runner: {type: harbor, version: 0.27.0, n_concurrent: 4, prebuilt: true}
