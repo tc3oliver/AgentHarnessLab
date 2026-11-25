@@ -47,6 +47,11 @@ def test_invalid_tasks(tasks: Path, tmp_path: Path) -> None:
     (tasks / "t0/link").symlink_to("/etc/hostname")
     with pytest.raises(ConfigError, match="symlink"):
         LocalDataset().load(cfg(tasks))
+    make_task(tmp_path / "multi", "m")
+    with (tmp_path / "multi/m/task.toml").open("a") as f:
+        f.write('\n[[steps]]\nname = "one"\n')
+    with pytest.raises(ConfigError, match="multi-step"):
+        LocalDataset().load(cfg(tmp_path / "multi"))
 
 
 def test_remote_sources_are_not_implemented() -> None:

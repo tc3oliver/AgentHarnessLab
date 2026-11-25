@@ -52,8 +52,9 @@ Until the gaps are closed, our numbers must be labelled "not protocol-matched".
 ## Known problems
 
 - **OpenCode 1.19.6 exits with status 1** after a normal finish (`EPIPE: broken pipe`, through Harbor's output pipe).
-  Harbor raises `NonZeroAgentExitCodeError`. pass@1 is unaffected (the verifier decides), but a wrong solution is reported
-  as `agent_error` instead of `failed`.
+  Harbor raises `NonZeroAgentExitCodeError`, or another type when the output happens to contain a phrase such as "rate
+  limit". If the trajectory ends with a final answer we treat both alike: the verifier decides, so pass@1 is unaffected, but
+  a wrong solution is reported as `agent_error` instead of `failed`.
 - **Reported versions.** For Pi and OpenCode v1 Harbor repeats the requested version, so the drift check can only fire for
   other agents. Versions must be full `x.y.z`, which npm installs exactly. Harbor checks OpenCode v2's binary itself.
 - **Model name prefix.** Pi needs `openai/`: Harbor only strips providers that LiteLLM knows, and would otherwise send

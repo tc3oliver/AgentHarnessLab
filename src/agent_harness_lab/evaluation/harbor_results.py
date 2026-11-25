@@ -110,23 +110,38 @@ _GRADED = {
 }
 
 
-def classify(trial: HarborTrial, reward_key: str, threshold: float) -> tuple[Outcome, str | None]:
+_EXIT_PREFIX = "Command failed (exit "
+"""How Harbor words a non-zero exit. It then picks the exception type by searching the whole output, including
+tool output and model text, for phrases such as "rate limit"."""
+
+
+def _type(exc: _Exception, finished: bool) -> str:
+    if finished and exc.exception_message.startswith(_EXIT_PREFIX):
+        return "NonZeroAgentExitCodeError"  # the agent was done, so no provider error ended it
+    return exc.exception_type
+
+
+def classify(
+    trial: HarborTrial, reward_key: str, threshold: float, *, finished: bool = False
+) -> tuple[Outcome, str | None]:
     """Sandbox, provider, Harbor and unknown exceptions are infrastructure errors: visible, but not graded.
 
     After a graded exception the verifier has the last word: an agent that ran out of time may have solved
     the task. Harbor does the same, except that 0.25.0 does not accept the reward after a non-zero agent exit.
+    `finished` means that the agent had ended its turn normally before the exception.
     """
     # One ungraded exception among several decides.
     exc = next(
-        (e for e in trial.exceptions if e.exception_type not in _GRADED),
+        (e for e in trial.exceptions if _type(e, finished) not in _GRADED),
         trial.exceptions[0] if trial.exceptions else None,
     )
+    kind = _type(exc, finished) if exc else None
     error = f"{exc.exception_type}: {exc.exception_message}" if exc else None
     if exc and not trial.agent_started:  # e.g. installing the harness failed
         return Outcome.INFRA_ERROR, error
-    if exc and exc.exception_type in _VERIFIER:
+    if kind in _VERIFIER:
         return Outcome.VERIFIER_ERROR, error
-    if exc and exc.exception_type not in _GRADED:
+    if kind is not None and kind not in _GRADED:
         return Outcome.INFRA_ERROR, error
     rewards = trial.verifier_result.rewards if trial.verifier_result else None
     if not rewards or reward_key not in rewards:
@@ -134,7 +149,22 @@ def classify(trial: HarborTrial, reward_key: str, threshold: float) -> tuple[Out
         return Outcome.VERIFIER_ERROR, f"{missing}; {error}" if error else missing
     if rewards[reward_key] >= threshold:
         return Outcome.SOLVED, error
-    return (_GRADED[exc.exception_type] if exc else Outcome.FAILED), error
+    return (Outcome.FAILED if kind is None else _GRADED[kind]), error
+
+
+def agent_finished(path: Path) -> bool:
+    """Whether the trajectory ends with a final answer: text, no tool call and no abnormal stop."""
+    try:
+        last = json.loads(path.read_text(encoding="utf-8"))["steps"][-1]
+        stop = (last.get("extra") or {}).get("stop_reason", "stop")
+        return (
+            last["source"] == "agent"
+            and bool(last.get("message"))
+            and not last.get("tool_calls")
+            and stop == "stop"
+        )
+    except (OSError, ValueError, KeyError, TypeError, IndexError, AttributeError):
+        return False
 
 
 def agent_acted(path: Path) -> bool:

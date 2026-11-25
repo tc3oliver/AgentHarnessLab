@@ -38,9 +38,12 @@ def hash_task(task_dir: Path) -> str:
 
 def _task_ref(task_dir: Path) -> TaskRef:
     try:
-        meta = tomllib.loads((task_dir / "task.toml").read_text(encoding="utf-8")).get("metadata", {})
+        task = tomllib.loads((task_dir / "task.toml").read_text(encoding="utf-8"))
     except (tomllib.TOMLDecodeError, UnicodeDecodeError) as exc:
         raise ConfigError(f"invalid task.toml in {task_dir}: {exc}") from exc
+    if "steps" in task:
+        raise ConfigError(f"task {task_dir.name}: multi-step tasks are not supported")
+    meta = task.get("metadata", {})
     try:
         instruction = (task_dir / "instruction.md").read_text(encoding="utf-8")
     except (OSError, UnicodeDecodeError) as exc:

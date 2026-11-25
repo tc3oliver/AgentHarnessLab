@@ -20,7 +20,13 @@ from agent_harness_lab.core.results import Outcome, TrialResult
 from agent_harness_lab.dataset.loaders import hash_task
 from agent_harness_lab.errors import ConfigError, RunError
 from agent_harness_lab.evaluation.base import TrialSpec
-from agent_harness_lab.evaluation.harbor_results import HarborTrial, agent_acted, classify, trajectory_counts
+from agent_harness_lab.evaluation.harbor_results import (
+    HarborTrial,
+    agent_acted,
+    agent_finished,
+    classify,
+    trajectory_counts,
+)
 from agent_harness_lab.evaluation.runners import price
 from agent_harness_lab.harness.base import HarnessAdapter
 from agent_harness_lab.inference.openai import OpenAICompatibleBackend, api_key
@@ -206,7 +212,10 @@ class HarborRunner:
 
 def convert(config: EvalConfig, spec: TrialSpec, trial: HarborTrial, trial_dir: Path) -> TrialResult:
     runner = _harbor(config)
-    outcome, error = classify(trial, runner.reward_key, runner.pass_threshold)
+    trajectory = trial_dir / "agent" / "trajectory.json"
+    outcome, error = classify(
+        trial, runner.reward_key, runner.pass_threshold, finished=agent_finished(trajectory)
+    )
     version = trial.observed_version
     if trial.agent_info.name != spec.harness.name:
         raise RunError(f"asked Harbor for '{spec.harness.name}', got '{trial.agent_info.name}'")
@@ -214,7 +223,6 @@ def convert(config: EvalConfig, spec: TrialSpec, trial: HarborTrial, trial_dir: 
         outcome = Outcome.INFRA_ERROR
         error = f"harness version is {version}, not the pinned {spec.harness.version}"
     input_tokens, output_tokens = trial.tokens
-    trajectory = trial_dir / "agent" / "trajectory.json"
     if (
         config.inference.backend != "none"
         and outcome in {Outcome.AGENT_ERROR, Outcome.FAILED}
@@ -276,12 +284,15 @@ def _result(spec: TrialSpec, outcome: Outcome, error: str | None, **values: Any)
 
 
 def _stop(process: subprocess.Popen[Any]) -> None:
-    """Harbor removes its containers on SIGTERM. SIGINT may be ignored when inherited from a script."""
-    for sig in (signal.SIGTERM, signal.SIGKILL):
+    """Harbor removes its containers on SIGTERM. SIGINT may be ignored when inherited from a script.
+
+    SIGTERM goes to Harbor alone: the same group holds the `docker compose down` that does the removing.
+    """
+    for stop in (process.terminate, lambda: os.killpg(process.pid, signal.SIGKILL)):
         if process.poll() is not None:
             return
         with suppress(ProcessLookupError):
-            os.killpg(process.pid, sig)
+            stop()
         try:
             process.wait(_STOP_S)
         except subprocess.TimeoutExpired:

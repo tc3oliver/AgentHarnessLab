@@ -20,7 +20,13 @@ from agent_harness_lab.core.registry import HARNESSES
 from agent_harness_lab.core.results import Outcome
 from agent_harness_lab.errors import AgentLabError, ConfigError, RunError
 from agent_harness_lab.evaluation import harbor
-from agent_harness_lab.evaluation.harbor_results import HarborTrial, agent_acted, classify, trajectory_counts
+from agent_harness_lab.evaluation.harbor_results import (
+    HarborTrial,
+    agent_acted,
+    agent_finished,
+    classify,
+    trajectory_counts,
+)
 from agent_harness_lab.inference.openai import OpenAICompatibleBackend
 from agent_harness_lab.reporting.writers import read_results
 
@@ -55,6 +61,37 @@ def test_recorded_outcomes(version: str, name: str, outcome: Outcome) -> None:
     got, error = classify(load(f"{version}-{name}"), "reward", 1.0)
     assert got is outcome
     assert bool(error) == (name not in {"oracle", "nop", "pi"})
+
+
+@pytest.mark.parametrize("kind", ["NonZeroAgentExitCodeError", "ApiRateLimitError", "NetworkConnectionError"])
+@pytest.mark.parametrize(("reward", "outcome"), [(1.0, Outcome.SOLVED), (0.0, Outcome.AGENT_ERROR)])
+def test_exit_after_a_final_answer_is_graded(kind: str, reward: float, outcome: Outcome) -> None:
+    """OpenCode 1.19.6: Harbor searches the whole output of a failed command for provider errors."""
+    data = json.loads((FIXTURES / "0.25.0-opencode" / "result.json").read_text())
+    data["exception_info"]["exception_type"] = kind
+    data["verifier_result"]["rewards"]["reward"] = reward
+    trial = HarborTrial.model_validate(data)
+    assert agent_finished(FIXTURES / "0.25.0-opencode" / "trajectory.json")
+    assert classify(trial, "reward", 1.0, finished=True)[0] is outcome
+    if kind != "NonZeroAgentExitCodeError":
+        assert classify(trial, "reward", 1.0)[0] is Outcome.INFRA_ERROR
+        data["exception_info"]["exception_message"] = "provider said no"
+        trial = HarborTrial.model_validate(data)
+        assert classify(trial, "reward", 1.0, finished=True)[0] is Outcome.INFRA_ERROR
+
+
+@pytest.mark.parametrize(
+    "change",
+    [{"message": ""}, {"tool_calls": [{}]}, {"source": "user"}, {"extra": {"stop_reason": "error"}}],
+)
+def test_unfinished_trajectories(tmp_path: Path, change: dict[str, Any]) -> None:
+    path = tmp_path / "trajectory.json"
+    assert not agent_finished(path)
+    step = {"source": "agent", "message": "Done."}
+    path.write_text(json.dumps({"steps": [step]}))
+    assert agent_finished(path)
+    path.write_text(json.dumps({"steps": [{**step, **change}]}))
+    assert not agent_finished(path)
 
 
 def test_agent_exit_differs_between_harbor_versions() -> None:
