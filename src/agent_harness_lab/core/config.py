@@ -219,6 +219,8 @@ class HarborRunnerConfig(Strict):
     A wrapper must exec Harbor or forward SIGTERM to it, or an interrupted run leaves Harbor behind."""
     environment: str = "docker"
     n_concurrent: int = Field(1, gt=0)
+    prebuilt: bool = False
+    """Use images from `agentlab images` instead of installing the harness in every trial."""
     reward_key: str = "reward"
     pass_threshold: float = Field(1.0, gt=0)
 

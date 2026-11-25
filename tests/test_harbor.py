@@ -18,6 +18,7 @@ from agent_harness_lab.core.experiment import run_evaluation
 from agent_harness_lab.core.manifest import Manifest
 from agent_harness_lab.core.registry import HARNESSES
 from agent_harness_lab.core.results import Outcome
+from agent_harness_lab.dataset.loaders import LocalDataset
 from agent_harness_lab.errors import AgentLabError, ConfigError, RunError
 from agent_harness_lab.evaluation import harbor
 from agent_harness_lab.evaluation.harbor_results import (
@@ -27,6 +28,7 @@ from agent_harness_lab.evaluation.harbor_results import (
     classify,
     trajectory_counts,
 )
+from agent_harness_lab.evaluation.images import build_images
 from agent_harness_lab.inference.openai import OpenAICompatibleBackend
 from agent_harness_lab.reporting.writers import read_results
 
@@ -306,7 +308,10 @@ for i, task in enumerate(tasks):
     d = pathlib.Path(job["jobs_dir"], job["job_name"], "t%d" % i)
     d.mkdir(parents=True)
     base.update(trial_name="t%d" % i, task_id=dict(path=task["path"]))
-    base["agent_info"] = dict(name=job["agents"][0]["name"], version="9.9" if mode == "drift" else "1.0.0")
+    version = dict(drift="9.9").get(mode, "1.0.0")
+    base["agent_info"] = dict(name=job["agents"][0]["name"] or "pi", version=version)
+    if mode == "unknown-version":
+        base["agent_info"]["version"] = "unknown"
     if mode.startswith("no-usage") and mode != "no-usage-solved":
         kind = "AgentTimeoutError" if mode.endswith("timeout") else "NonZeroAgentExitCodeError"
         base["exception_info"] = dict(exception_type=kind, exception_message="m")
@@ -508,9 +513,9 @@ def test_results_settle_before_they_are_read(
     collect = harbor.HarborRunner._collect
     seen: set[Path] = set()
     (job / "t" / "result.json").write_text(json.dumps({"not": "harbor"}))
-    assert list(collect(config, job, {}, seen, 3600)) == []
+    assert list(collect(config, job, {}, seen, 3600, {})) == []
     with pytest.raises(RunError, match="unexpected Harbor result"):
-        list(collect(config, job, {}, seen, 0))
+        list(collect(config, job, {}, seen, 0, {}))
 
 
 def test_agent_activity_without_usage_stays_graded(tmp_path: Path) -> None:
@@ -601,30 +606,71 @@ if HARBOR_VERSION == "0.27.0":
     AGENTS += [("pi", "1.5.2"), ("opencode-v2", "2.2.7")]
 
 
+def agent_overrides(
+    url: str, name: str, version: str, prebuilt: bool, task: str = "ahl-fix-median"
+) -> dict[str, Any]:
+    return {
+        "model": {"id": MODEL, "revision": "a" * 40},
+        "inference": {"backend": "vllm", "base_url": url, "api_key_env": "K"},
+        "harnesses": [{"name": name, "version": version, "timeout_s": 300, "setup_timeout_s": 1800}],
+        "runner": {"type": "harbor", "version": HARBOR_VERSION, "command": [HARBOR], "prebuilt": prebuilt},
+        "datasets": [
+            {
+                "name": "smoke",
+                "source": {"type": "local", "path": str(ROOT / "examples/smoke_tasks/tasks")},
+                "split": "smoke",
+                "task_names": [task],
+            }
+        ],
+    }
+
+
 @pytest.mark.docker
 @pytest.mark.parametrize(("name", "version"), AGENTS)
+@pytest.mark.parametrize("prebuilt", [False, True], ids=["install", "prebuilt"])
 def test_real_harness_against_a_scripted_endpoint(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, name: str, version: str
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, name: str, version: str, prebuilt: bool
 ) -> None:
     monkeypatch.setenv("K", KEY)
     with ScriptedEndpoint(GATEWAY, FIX_MEDIAN) as endpoint:
-        run_dir = real(
-            tmp_path,
-            model={"id": MODEL, "revision": "a" * 40},
-            inference={"backend": "vllm", "base_url": endpoint.url, "api_key_env": "K"},
-            harnesses=[{"name": name, "version": version, "timeout_s": 300, "setup_timeout_s": 1800}],
-            datasets=[
-                {
-                    "name": "smoke",
-                    "source": {"type": "local", "path": str(ROOT / "examples/smoke_tasks/tasks")},
-                    "split": "smoke",
-                    "task_names": ["ahl-fix-median"],
-                }
-            ],
-        )
+        over = agent_overrides(endpoint.url, name, version, prebuilt)
+        if prebuilt:
+            config = EvalConfig.model_validate(
+                eval_dict(ROOT / "examples/smoke_tasks/tasks", tmp_path, **over)
+            )
+            tasks = [t for d in config.datasets for t in LocalDataset().load(d).tasks]
+            list(build_images(config.harnesses, tasks))
+        run_dir = real(tmp_path, **over)
     [result] = read_results(run_dir)
     assert result.outcome is Outcome.SOLVED, result.error
     assert result.harness_version == version
     assert result.tool_calls == 1 and result.model_calls == 2
     assert (result.input_tokens, result.output_tokens) == (200, 20)
     assert {r["path"] for r in endpoint.requests} == {"/v1/chat/completions"}
+    assert bool(result.image) is prebuilt and result.setup_s is not None
+    if prebuilt:
+        assert result.setup_s < 30
+    else:
+        assert result.setup_s > 0
+
+
+@pytest.mark.docker
+@pytest.mark.parametrize(
+    ("command", "outcome"),
+    [(FIX_MEDIAN, Outcome.SOLVED), ("true", Outcome.AGENT_ERROR)],
+    ids=["right", "wrong"],
+)
+@pytest.mark.parametrize("bait", ["rate limit", "Invalid API key"])
+def test_exit_after_a_normal_end_is_graded(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, command: str, outcome: Outcome, bait: str
+) -> None:
+    """OpenCode 1.19.6 exits 1 after a normal end; Harbor then guesses the exception from the output."""
+    monkeypatch.setenv("K", KEY)
+    with ScriptedEndpoint(GATEWAY, f"{command}\necho '{bait}'") as endpoint:
+        over = agent_overrides(endpoint.url, "opencode", "1.19.6", True)
+        config = EvalConfig.model_validate(eval_dict(ROOT / "examples/smoke_tasks/tasks", tmp_path, **over))
+        tasks = [t for d in config.datasets for t in LocalDataset().load(d).tasks]
+        list(build_images(config.harnesses, tasks))
+        [result] = read_results(real(tmp_path, **over))
+    assert result.outcome is outcome, result.error
+    assert result.error and "Command failed (exit 1)" in result.error

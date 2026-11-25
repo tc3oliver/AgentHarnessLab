@@ -52,6 +52,7 @@ Pi and OpenCode against your own endpoint: [EVALUATION_GUIDE.md](docs/EVALUATION
 | `agentlab eval -c FILE` | run an evaluation with the mock or the Harbor runner |
 | `agentlab compare BASE CANDIDATE` | compare two run directories, paired by task |
 | `agentlab validate -c FILE` | check a config |
+| `agentlab images -c FILE` | build task images with the harness preinstalled ([details](docs/HARNESS_IMAGES.md)) |
 | `agentlab audit --train D.yaml --eval D.yaml` | look for train/evaluation leakage in local datasets |
 | `agentlab train -c FILE` | validate a training config, then exit with code 3: not implemented |
 

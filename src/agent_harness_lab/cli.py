@@ -16,6 +16,7 @@ from agent_harness_lab.dataset.audit import audit as run_audit
 from agent_harness_lab.dataset.base import LoadedDataset
 from agent_harness_lab.errors import AgentLabError, ConfigError, LeakageError
 from agent_harness_lab.evaluation.compare import compare as compare_runs
+from agent_harness_lab.evaluation.images import build_images
 from agent_harness_lab.reporting.writers import read_results, render_comparison, render_run
 
 app = typer.Typer(
@@ -51,6 +52,17 @@ def eval_(
     run_dir = run_evaluation(experiment, overwrite=overwrite)
     typer.echo(render_run(Manifest.read(run_dir), read_results(run_dir)))
     typer.echo(f"Wrote {run_dir}")
+
+
+@app.command()
+def images(config: ConfigOption) -> None:
+    """Build the task images that `runner.prebuilt` uses. Existing images are kept."""
+    experiment = load_experiment(config)
+    if not isinstance(experiment, EvalConfig):
+        raise ConfigError(f"{config} is a training config")
+    tasks = [t for d in experiment.datasets for t in DATASETS.get(d.source.type)().load(d).tasks]
+    for tag, built in build_images(experiment.harnesses, tasks):
+        typer.echo(f"{'built ' if built else 'exists'} {tag}")
 
 
 @app.command()

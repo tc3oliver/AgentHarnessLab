@@ -60,7 +60,7 @@ Until the gaps are closed, our numbers must be labelled "not protocol-matched".
 - **Model name prefix.** Pi needs `openai/`: Harbor only strips providers that LiteLLM knows, and would otherwise send
   `agentlab/<model>` to the server. OpenCode must not use `openai/`, which selects the Responses API.
 - **Install time.** Agents are installed into every sandbox. OpenCode needs `apt` and `npm`; on our network that took more
-  than Harbor's 360 s limit, hence `setup_timeout_s: 1800`. Task images with the harness baked in would remove this cost.
+  than Harbor's 360 s limit, hence `setup_timeout_s: 1800`. [Prebuilt images](HARNESS_IMAGES.md) remove this cost.
 - **Token accounting.** OpenCode sends a session-title request that Harbor does not count. Subagent calls are missing from
   ATIF, so tool and model call counts become null when a subagent ran. Whether output tokens include reasoning tokens for
   every harness is **unverified**.
