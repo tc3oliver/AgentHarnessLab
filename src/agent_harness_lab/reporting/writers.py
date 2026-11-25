@@ -94,6 +94,8 @@ def _write_parquet(path: Path, results: Sequence[TrialResult]) -> None:
             ("rewards", pa.map_(s, f)),
             *((n, i) for n in ("input_tokens", "output_tokens", "tool_calls", "model_calls")),
             ("latency_s", f),
+            ("setup_s", f),
+            ("image", s),
             ("cost_usd", f),
             ("error", s),
         ]

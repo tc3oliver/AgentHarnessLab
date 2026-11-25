@@ -9,7 +9,7 @@ evaluated with this guide yet.**
    and change its cache and latency. Use dedicated GPUs, and check that they are free first.
 2. Harbor in the version the config names: `uv sync --extra harbor` for 0.25.0, or any other environment through
    `runner.command`.
-3. Docker, and about 1 GB of downloads per trial unless the harness is baked into the task image.
+3. Docker. Without [prebuilt images](HARNESS_IMAGES.md) every trial downloads and installs the harness.
 
 ## 1. Serve the model
 

@@ -54,6 +54,8 @@ class HarborTrial(BaseModel):
     agent_result: _Agent | None = None
     verifier_result: _Verifier | None = None
     exception_info: _Exception | None = None
+    environment_setup: _Timing | None = None
+    agent_setup: _Timing | None = None
     agent_execution: _Timing | None = None
     finished_at: datetime
     step_results: list[_Step] | None = None
@@ -73,6 +75,13 @@ class HarborTrial(BaseModel):
         if t is None or t.started_at is None or t.finished_at is None:
             return None
         return max(0.0, (t.finished_at - t.started_at).total_seconds())
+
+    @property
+    def setup_s(self) -> float | None:
+        first, last = self.environment_setup, self.agent_setup
+        if first is None or last is None or first.started_at is None or last.finished_at is None:
+            return None
+        return max(0.0, (last.finished_at - first.started_at).total_seconds())
 
     @property
     def observed_version(self) -> str | None:
@@ -158,9 +167,8 @@ def agent_finished(agent_dir: Path) -> bool:
     raw = next((p for n in ("opencode.txt", "opencode-v2.txt") if (p := agent_dir / n).is_file()), None)
     try:
         if raw is not None:
-            events = [
-                json.loads(line) for line in raw.read_text("utf-8").splitlines() if line.startswith("{")
-            ]
+            lines = raw.read_text("utf-8").split("\n")  # JSON strings may hold U+2028
+            events = [json.loads(line) for line in lines if line.startswith("{")]
             return (
                 all(e["type"] != "error" for e in events)
                 and events[-1]["type"] == "step_finish"

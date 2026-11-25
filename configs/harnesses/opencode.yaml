@@ -1,4 +1,4 @@
-# OpenCode v1 (`opencode-ai`), the version OpenEnv qualified. 1.19.6 exits 1 under Harbor (docs/COMPATIBILITY.md).
+# OpenCode v1 (`opencode-ai`), the version OpenEnv qualified. 1.19.6 often exits 1 under Harbor (docs/COMPATIBILITY.md).
 # v1 has no max_turns option in Harbor. Not yet run on a real model.
 name: opencode
 version: 1.18.30

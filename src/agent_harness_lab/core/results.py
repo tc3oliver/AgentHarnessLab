@@ -46,6 +46,10 @@ class TrialResult(BaseModel):
     tool_calls: int | None = Field(None, ge=0)
     model_calls: int | None = Field(None, ge=0)
     latency_s: float | None = Field(None, ge=0)
+    setup_s: float | None = Field(None, ge=0)
+    """Starting the sandbox and preparing the harness; not part of latency_s."""
+    image: str | None = None
+    """Id of the prebuilt image, when one was used."""
     cost_usd: float | None = Field(None, ge=0)
     error: str | None = None
 

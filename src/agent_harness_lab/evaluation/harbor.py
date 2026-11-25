@@ -15,10 +15,11 @@ from typing import Any
 
 from pydantic import ValidationError
 
-from agent_harness_lab.core.config import EvalConfig, HarborRunnerConfig
+from agent_harness_lab.core.config import EvalConfig, HarborRunnerConfig, canonical_hash
 from agent_harness_lab.core.results import Outcome, TrialResult
 from agent_harness_lab.dataset.loaders import hash_task
 from agent_harness_lab.errors import ConfigError, RunError
+from agent_harness_lab.evaluation import images
 from agent_harness_lab.evaluation.base import TrialSpec
 from agent_harness_lab.evaluation.harbor_results import (
     HarborTrial,
@@ -47,6 +48,9 @@ _NOT_VERIFIED = (
     "ModelNotFoundError",
 )
 """Harbor 0.27.0 skips the verifier after these, which it may only have guessed from the agent's output."""
+_PLUGIN_DIR = Path(__file__).parents[1] / "harbor_plugin"
+_PLUGINS = {"pi": "agentlab_prebuilt:PrebuiltPi", "opencode": "agentlab_prebuilt:PrebuiltOpenCode"}
+"""Harbor 0.25.0 has no skip_install."""
 
 
 def _harbor(config: EvalConfig) -> HarborRunnerConfig:
@@ -61,6 +65,9 @@ def harbor_env(config: EvalConfig) -> dict[str, str]:
     key = api_key(config.inference)
     if key is not None and config.inference.api_key_env is not None:
         env[config.inference.api_key_env] = key
+    runner = _harbor(config)
+    if runner.prebuilt and runner.version == "0.25.0":
+        env["PYTHONPATH"] = str(_PLUGIN_DIR)
     return env
 
 
@@ -74,8 +81,19 @@ def _output(command: Sequence[str], env: dict[str, str]) -> str:
     return out.stdout.strip()
 
 
+def _prebuilt(config: EvalConfig, harness_name: str) -> bool:
+    return _harbor(config).prebuilt and harness_name in images.RECIPES
+
+
+def prebuilt_agent(agent: dict[str, Any], harbor_version: str) -> dict[str, Any]:
+    """Use the installed harness, whose version Harbor then reads instead of repeating the pin."""
+    if harbor_version == "0.25.0":
+        return {**agent, "name": None, "import_path": _PLUGINS[agent["name"]]}
+    return {**agent, "kwargs": {**agent["kwargs"], "skip_install": True}}
+
+
 def job_config(
-    config: EvalConfig, agent: dict[str, Any], specs: Sequence[TrialSpec], name: str, jobs_dir: Path
+    config: EvalConfig, agent: dict[str, Any], paths: Sequence[tuple[Path, str]], name: str, jobs_dir: Path
 ) -> dict[str, Any]:
     runner = _harbor(config)
     policy = {} if runner.version == "0.25.0" else {n: {"should_grade": True} for n in _NOT_VERIFIED}
@@ -90,14 +108,16 @@ def job_config(
         "retry": {"max_retries": 0},
         "environment": {"type": runner.environment},
         "agents": [agent],
-        "tasks": [{"path": str(s.task.path.resolve()), "source": s.dataset} for s in specs],
+        "tasks": [{"path": str(path), "source": dataset} for path, dataset in paths],
     }
 
 
 class HarborRunner:
     simulated = False
 
-    def preflight(self, config: EvalConfig, adapters: Mapping[str, HarnessAdapter]) -> dict[str, str]:
+    def preflight(
+        self, config: EvalConfig, adapters: Mapping[str, HarnessAdapter], plan: Sequence[TrialSpec]
+    ) -> dict[str, str]:
         runner = _harbor(config)
         if runner.version not in SUPPORTED_HARBOR:
             raise ConfigError(
@@ -111,6 +131,8 @@ class HarborRunner:
                     f"not {runner.version}"
                 )
             adapter.harbor_agent(harness, config.model, config.inference)
+        if runner.prebuilt and runner.environment != "docker":
+            raise ConfigError("runner.prebuilt needs the docker environment")
         for dataset in config.datasets:
             if dataset.source.type != "local":
                 raise ConfigError(f"dataset '{dataset.name}': the Harbor runner needs a local source")
@@ -121,6 +143,14 @@ class HarborRunner:
         runtime = {"harbor": runner.version}
         if runner.environment == "docker":
             runtime["docker"] = _output(["docker", "version", "--format", "{{.Server.Version}}"], env)
+        for harness in config.harnesses:
+            if _prebuilt(config, harness.name):
+                used = {s.task.path: s.task for s in plan if s.harness.name == harness.name}
+                for task in used.values():
+                    images.check_task(task)
+                runtime[f"image.{harness.name}"] = images.required_id(images.harness_tag(harness))
+                ids = sorted(f"{t.task_id}={images.prebuilt_image(t, harness)}" for t in used.values())
+                runtime[f"task_images.{harness.name}"] = canonical_hash(ids)
         if config.inference.backend != "none":
             runtime.update(self._probe(config))
         return runtime
@@ -148,22 +178,50 @@ class HarborRunner:
         groups: dict[tuple[str, int], list[TrialSpec]] = {}
         for spec in plan:
             groups.setdefault((spec.harness.name, spec.attempt), []).append(spec)
+        # Look up every image before the first job, and pin ids: a tag could move while the run is going on.
+        pinned = {
+            (s.harness.name, s.task.task_id, s.dataset): images.prebuilt_image(s.task, s.harness)
+            for s in plan
+            if _prebuilt(config, s.harness.name)
+        }
         for (name, attempt), specs in groups.items():
             agent = adapters[name].harbor_agent(specs[0].harness, config.model, config.inference)
+            if _prebuilt(config, name):
+                agent = prebuilt_agent(agent, _harbor(config).version)
+            used = {
+                s.task.path.resolve(): pinned[name, s.task.task_id, s.dataset]
+                for s in specs
+                if _prebuilt(config, name)
+            }
             yield from self._job(
-                config, agent, specs, f"{name}-attempt{attempt}", run_dir.resolve() / "harbor"
+                config, agent, specs, f"{name}-attempt{attempt}", run_dir.resolve() / "harbor", used
             )
 
     def _job(
-        self, config: EvalConfig, agent: dict[str, Any], specs: Sequence[TrialSpec], name: str, jobs_dir: Path
+        self,
+        config: EvalConfig,
+        agent: dict[str, Any],
+        specs: Sequence[TrialSpec],
+        name: str,
+        jobs_dir: Path,
+        prebuilt: Mapping[Path, str],
     ) -> Iterator[TrialResult]:
+        """`prebuilt` maps a task directory to the image to use for it."""
         jobs_dir.mkdir(parents=True, exist_ok=True)
         job_file = jobs_dir / f"{name}.config.json"
-        body = job_config(config, agent, specs, name, jobs_dir)
+        pending: dict[Path, TrialSpec] = {}
+        image: dict[Path, str] = {}
+        for i, spec in enumerate(specs):
+            path = spec.task.path.resolve()
+            if path in prebuilt:
+                target = jobs_dir / "tasks" / name / str(i) / spec.task.task_id
+                image[target] = prebuilt[path]
+                path = images.stage_task(spec.task, prebuilt[path], target)
+            if path in pending:
+                raise ConfigError("two datasets contain the same task directory")
+            pending[path] = spec
+        body = job_config(config, agent, [(p, s.dataset) for p, s in pending.items()], name, jobs_dir)
         job_file.write_text(json.dumps(body, indent=2) + "\n", encoding="utf-8")
-        pending = {s.task.path.resolve(): s for s in specs}
-        if len(pending) != len(specs):
-            raise ConfigError("two datasets contain the same task directory")
         seen: set[Path] = set()
         log = jobs_dir / f"{name}.log"
         with log.open("w", encoding="utf-8") as out:
@@ -177,9 +235,9 @@ class HarborRunner:
             )
             try:
                 while process.poll() is None:
-                    yield from self._collect(config, jobs_dir / name, pending, seen, _SETTLE_S)
+                    yield from self._collect(config, jobs_dir / name, pending, seen, _SETTLE_S, image)
                     time.sleep(_POLL_S)
-                yield from self._collect(config, jobs_dir / name, pending, seen, 0)
+                yield from self._collect(config, jobs_dir / name, pending, seen, 0, image)
             finally:
                 _stop(process)
         if len(pending) == len(specs):
@@ -200,6 +258,7 @@ class HarborRunner:
         pending: dict[Path, TrialSpec],
         seen: set[Path],
         settle_s: float,
+        image: Mapping[Path, str],
     ) -> Iterator[TrialResult]:
         for path in sorted(job_dir.glob("*/result.json")):
             if path in seen or time.time() - path.stat().st_mtime < settle_s:
@@ -213,13 +272,16 @@ class HarborRunner:
             except ValidationError as exc:
                 raise RunError(f"unexpected Harbor result {path}: {exc}") from exc
             seen.add(path)
-            spec = pending.pop(trial.task_id.path.resolve(), None)
+            task_path = trial.task_id.path.resolve()
+            spec = pending.pop(task_path, None)
             if spec is None:
                 raise RunError(f"Harbor returned an unplanned or repeated trial: {trial.trial_name}")
-            yield convert(config, spec, trial, path.parent)
+            yield convert(config, spec, trial, path.parent, image.get(task_path))
 
 
-def convert(config: EvalConfig, spec: TrialSpec, trial: HarborTrial, trial_dir: Path) -> TrialResult:
+def convert(
+    config: EvalConfig, spec: TrialSpec, trial: HarborTrial, trial_dir: Path, image: str | None = None
+) -> TrialResult:
     runner = _harbor(config)
     trajectory = trial_dir / "agent" / "trajectory.json"
     outcome, error = classify(
@@ -231,6 +293,10 @@ def convert(config: EvalConfig, spec: TrialSpec, trial: HarborTrial, trial_dir: 
     if version is not None and version != spec.harness.version:
         outcome = Outcome.INFRA_ERROR
         error = f"harness version is {version}, not the pinned {spec.harness.version}"
+    elif image is not None and (version is None or not trial.agent_started):
+        version = None  # if setup failed, Harbor only repeats the pin
+        error = f"cannot read the harness version in the image ({error or outcome})"
+        outcome = Outcome.INFRA_ERROR
     input_tokens, output_tokens = trial.tokens
     if (
         config.inference.backend != "none"
@@ -258,6 +324,8 @@ def convert(config: EvalConfig, spec: TrialSpec, trial: HarborTrial, trial_dir: 
         tool_calls=tool_calls,
         model_calls=model_calls,
         latency_s=trial.latency_s,
+        setup_s=trial.setup_s,
+        image=image,
         # Harnesses report 0 for models they have no price for, so only configured prices are used.
         cost_usd=price(config.cost, input_tokens, output_tokens),
     )

@@ -22,7 +22,9 @@ class MockRunner:
 
     simulated = True
 
-    def preflight(self, config: EvalConfig, adapters: Mapping[str, HarnessAdapter]) -> dict[str, str]:
+    def preflight(
+        self, config: EvalConfig, adapters: Mapping[str, HarnessAdapter], plan: Sequence[TrialSpec]
+    ) -> dict[str, str]:
         runner = config.runner
         if not isinstance(runner, MockRunnerConfig):
             raise ConfigError("MockRunner needs runner.type 'mock'")

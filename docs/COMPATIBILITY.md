@@ -11,10 +11,10 @@ tool call on one smoke task. It checks installation, endpoint wiring, the tool l
 | Agent | Harbor 0.25.0 (default) | Harbor 0.27.0 |
 |---|---|---|
 | `oracle`, `nop` (12 smoke tasks through `agentlab eval`) | Run: 12/12, 0/12 | Run: 12/12, 0/12 |
-| `pi` 1.6.0 | Run: scripted, solved | read |
+| `pi` 1.6.0 | Run: scripted, solved | Run: scripted, solved |
 | `pi` 1.5.2 (reference release) | read | Run: scripted, solved |
-| `opencode` 1.19.6 (v1) | Run: scripted, solved, exits 1 (below) | Run: scripted, solved, exits 1 |
-| `opencode` 1.18.30 (v1, OpenEnv's qualification pin) | Run: scripted, solved, exits 0 (default pin) | read |
+| `opencode` 1.19.6 (v1) | Run: scripted, solved, often exits 1 (below) | Run: scripted, solved, often exits 1 |
+| `opencode` 1.18.30 (v1, OpenEnv's qualification pin) | Run: scripted, solved, exits 0 (default pin) | Run: scripted, solved, exits 0 |
 | `opencode-v2` 2.2.7 (reference release) | - (no such agent) | Run: scripted, solved |
 | Any agent on a real model | **not run** | **not run** |
 
@@ -49,18 +49,29 @@ thinking off, and ran its trials through OpenEnv in remote sandboxes.
 
 Until the gaps are closed, our numbers must be labelled "not protocol-matched".
 
+## Prebuilt images: initialization time
+
+Sandbox start plus harness setup, one trial, same host ([HARNESS_IMAGES.md](HARNESS_IMAGES.md)). Install times depend on the
+network: the high values were measured during a 52 GB download on the same host.
+
+| Harness | Harbor | Installed per trial | Prebuilt |
+|---|---|---|---|
+| Pi | 0.25.0 and 0.27.0 | 35 s to 650 s | about 2 s |
+| OpenCode 1.18.30 | 0.25.0 and 0.27.0 | 84 s to 99 s, or over 1800 s (timeout) | about 2 s |
+| OpenCode 2.2.7 | 0.27.0 | 137 s to 955 s | 1.6 s to 1.8 s |
+
 ## Known problems
 
-- **OpenCode 1.19.6 exits with status 1** after a normal finish (`EPIPE: broken pipe`, through Harbor's output pipe).
+- **OpenCode 1.19.6 often exits with status 1** after a normal finish, probably a race (7 of 8 runs installed by Harbor, none in prebuilt images) (`EPIPE: broken pipe`, through Harbor's output pipe).
   Harbor raises `NonZeroAgentExitCodeError`, or another type when the output happens to contain a phrase such as "rate
   limit". If OpenCode itself recorded a normal stop we treat both alike: the verifier decides, so pass@1 is unaffected, but
   a wrong solution is reported as `agent_error` instead of `failed`.
-- **Reported versions.** For Pi and OpenCode v1 Harbor repeats the requested version, so the drift check can only fire for
+- **Reported versions.** Without prebuilt images, Harbor repeats the requested version for Pi and OpenCode v1, so the drift check can only fire for
   other agents. Versions must be full `x.y.z`, which npm installs exactly. Harbor checks OpenCode v2's binary itself.
 - **Model name prefix.** Pi needs `openai/`: Harbor only strips providers that LiteLLM knows, and would otherwise send
   `agentlab/<model>` to the server. OpenCode must not use `openai/`, which selects the Responses API.
 - **Install time.** Agents are installed into every sandbox. OpenCode needs `apt` and `npm`; on our network that took more
-  than Harbor's 360 s limit, hence `setup_timeout_s: 1800`. Task images with the harness baked in would remove this cost.
+  than Harbor's 360 s limit, hence `setup_timeout_s: 1800`. [Prebuilt images](HARNESS_IMAGES.md) remove this cost.
 - **Token accounting.** OpenCode sends a session-title request that Harbor does not count. Subagent calls are missing from
   ATIF, so tool and model call counts become null when a subagent ran. Whether output tokens include reasoning tokens for
   every harness is **unverified**.

@@ -56,6 +56,10 @@ plugins = ["pydantic.mypy"]
 module = "pyarrow.*"
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+module = "agent_harness_lab.harbor_plugin.*"  # runs in Harbor's environment
+ignore_errors = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra --strict-markers -m 'not gpu and not docker'"
