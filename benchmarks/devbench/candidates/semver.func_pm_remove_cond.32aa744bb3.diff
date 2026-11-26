@@ -1,0 +1,11 @@
+--- a/src/semver/version.py
++++ b/src/semver/version.py
+@@ -882,8 +882,6 @@
+         >>> Version(1, 0, 0).is_compatible(Version(1, 1, 0))
+         True
+         """
+-        if not isinstance(other, Version):
+-            raise TypeError(f"Expected a Version type but got {type(other)}")
+ 
+         # All major-0 versions should be incompatible with anything but itself
+         if (0 == self.major == other.major) and (self[:4] != other[:4]):

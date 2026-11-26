@@ -1,0 +1,20 @@
+diff --git a/tests/test_more.py b/tests/test_more.py
+index 4a5d7fc..c32a023 100644
+--- a/tests/test_more.py
++++ b/tests/test_more.py
+@@ -1130,15 +1130,6 @@ class BucketTests(TestCase):
+         self.assertEqual(list(D[30]), [30, 31, 33])
+         self.assertEqual(set(D), {10, 20, 30})
+ 
+-    def test_list_validator(self):
+-        iterable = [10, 20, 30, 11, 21, 31, 12, 22, 23, 33]
+-        key = lambda x: 10 * (x // 10)
+-        validator = lambda x: x != 20
+-        D = mi.bucket(iterable, key, validator=validator)
+-        self.assertEqual(set(D), {10, 30})
+-        self.assertEqual(list(D[10]), [10, 11, 12])
+-        self.assertEqual(list(D[20]), [])
+-        self.assertEqual(list(D[30]), [30, 31, 33])
+ 
+     def test_falsey_validator_is_honoured(self):
+         # A falsey callable is still a valid validator and must not be

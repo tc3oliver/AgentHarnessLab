@@ -1,0 +1,23 @@
+{
+  "runner": "pytest",
+  "tests_dir": "tests",
+  "restore_paths": [
+    "tests",
+    "conftest.py",
+    "pytest.ini",
+    ".pytest.ini"
+  ],
+  "fail_to_pass": [
+    "tests/test_tablib.py::DBFTests::test_dbf_export_set",
+    "tests/test_tablib.py::DBFTests::test_dbf_import_set",
+    "tests/test_tablib.py::TablibTestCase::test_auto_format_detect",
+    "tests/test_tablib.py::TablibTestCase::test_datetime_append",
+    "tests/test_tablib.py::TablibTestCase::test_separator_append",
+    "tests/test_tablib.py::TablibTestCase::test_unicode_append",
+    "tests/test_tablib.py::ODSTests::test_ods_export_import_boolean",
+    "tests/test_tablib.py::ODSTests::test_ods_export_import_set",
+    "tests/test_tablib.py::ODSTests::test_ods_import_set_skip_lines"
+  ],
+  "min_passed": 188,
+  "timeout_s": 900
+}

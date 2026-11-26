@@ -1,0 +1,15 @@
+{
+  "runner": "pytest",
+  "tests_dir": "tests",
+  "restore_paths": [
+    "tests",
+    "conftest.py",
+    "pytest.ini",
+    ".pytest.ini"
+  ],
+  "fail_to_pass": [
+    "tests/test_parser.py::TestErrorMessages::test_incomplete_expression_with_missing_paren"
+  ],
+  "min_passed": 991,
+  "timeout_s": 900
+}

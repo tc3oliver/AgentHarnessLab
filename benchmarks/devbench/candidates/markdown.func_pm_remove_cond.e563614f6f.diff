@@ -1,0 +1,14 @@
+--- a/markdown/extensions/smarty.py
++++ b/markdown/extensions/smarty.py
+@@ -171,10 +171,7 @@
+     def handleMatch(self, m: re.Match[str], data: str) -> tuple[str, int, int]:
+         result = ''
+         for part in self.replace:
+-            if isinstance(part, int):
+-                result += m.group(part)
+-            else:
+-                result += self.md.htmlStash.store(part)
++            pass
+         return result, m.start(0), m.end(0)
+ 
+ 

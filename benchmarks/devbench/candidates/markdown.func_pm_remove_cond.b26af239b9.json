@@ -1,0 +1,1 @@
+{"modifier": "func_pm_remove_cond", "file": "markdown/treeprocessors.py", "entity": "__applyPattern", "explanation": "There is one or more missing conditionals that causes the bug."}

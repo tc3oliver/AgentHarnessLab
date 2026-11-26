@@ -1,0 +1,12 @@
+diff --git a/jmespath/parser.py b/jmespath/parser.py
+index cc8e804..e4e7616 100644
+--- a/jmespath/parser.py
++++ b/jmespath/parser.py
+@@ -112,7 +112,6 @@ class Parser(object):
+             e.set_expression(expression)
+             raise
+         except exceptions.ParseError as e:
+-            e.expression = expression
+             raise
+ 
+     def _parse(self, expression):

@@ -1,0 +1,209 @@
+diff --git a/tests/test_tablib.py b/tests/test_tablib.py
+index 6e44783..92d5c8e 100755
+--- a/tests/test_tablib.py
++++ b/tests/test_tablib.py
+@@ -346,31 +346,8 @@ class TablibTestCase(BaseTestCase):
+             'c|3'
+         ])
+ 
+-    def test_unicode_append(self):
+-        """Passes in a single unicode character and exports."""
+ 
+-        new_row = ('å', 'é')
+ 
+-        data.append(new_row)
+-        self._test_export_data_in_all_formats(data)
+-
+-    def test_datetime_append(self):
+-        """Passes in a single datetime and a single date and exports."""
+-
+-        new_row = (
+-            dt.datetime.now(),
+-            dt.datetime.today(),
+-        )
+-
+-        data.append(new_row)
+-        self._test_export_data_in_all_formats(data)
+-
+-    def test_separator_append(self):
+-        for _ in range(3):
+-            data.append_separator('foobar')
+-            for _ in range(5):
+-                data.append(['asdf', 'asdf', 'asdf'])
+-        self._test_export_data_in_all_formats(data)
+ 
+     def test_book_export_no_exceptions(self):
+         """Test that various exports don't error out."""
+@@ -410,40 +387,6 @@ class TablibTestCase(BaseTestCase):
+         dset = tablib.Dataset().load(tmp_file, 'yaml')
+         self.assertEqual(dset.json, '[]')
+ 
+-    def test_auto_format_detect(self):
+-        """Test auto format detection."""
+-        # html, jira, latex, rst are export only.
+-
+-        _xls = self.founders.export('xls')
+-        self.assertEqual(tablib.detect_format(_xls), 'xls')
+-
+-        _xlsx = self.founders.export('xlsx')
+-        self.assertEqual(tablib.detect_format(_xlsx), 'xlsx')
+-
+-        _ods = self.founders.export('ods')
+-        self.assertEqual(tablib.detect_format(_ods), 'ods')
+-
+-        if pandas is not None:
+-            _df = self.founders.export('df')
+-            self.assertEqual(tablib.detect_format(_df), 'df')
+-
+-        _yaml = '- {age: 90, first_name: John, last_name: Adams}'
+-        self.assertEqual(tablib.detect_format(_yaml), 'yaml')
+-
+-        _json = '[{"last_name": "Adams","age": 90,"first_name": "John"}]'
+-        self.assertEqual(tablib.detect_format(_json), 'json')
+-
+-        _csv = '1,2,3\n4,5,6\n7,8,9\n'
+-        self.assertEqual(tablib.detect_format(_csv), 'csv')
+-
+-        _tsv = '1\t2\t3\n4\t5\t6\n7\t8\t9\n'
+-        self.assertEqual(tablib.detect_format(_tsv), 'tsv')
+-
+-        _bunk = StringIO(
+-            '¡¡¡¡¡¡---///\n\n\n'
+-            '¡¡£™∞¢£§∞§¶•¶ª∞¶•ªº••ª–º§•†•§º¶•†¥ª–º•§ƒø¥¨©πƒø†ˆ¥ç©¨√øˆ¥≈†ƒ¥ç©ø¨çˆ¥ƒçø¶'
+-        )
+-        self.assertEqual(tablib.detect_format(_bunk), None)
+ 
+     def test_transpose(self):
+         """Transpose a dataset."""
+@@ -1246,45 +1189,7 @@ class ODSTests(BaseTestCase):
+         'secondslong0': '%S',
+     }
+ 
+-    def test_ods_export_import_set(self):
+-        date = dt.date(2019, 10, 4)
+-        date_time = dt.datetime(2019, 10, 4, 12, 30, 8)
+-        time = dt.time(14, 30)
+-        data.append(('string', '004', 42, 21.55, Decimal('34.5'), date, time, date_time, None, ''))
+-        data.headers = (
+-            'string',
+-            'start0',
+-            'integer',
+-            'float',
+-            'decimal',
+-            'date',
+-            'time',
+-            'date/time',
+-            'None',
+-            'empty',
+-        )
+-        _ods = data.ods
+-        data.ods = _ods
+-        self.assertEqual(data.dict[0]['string'], 'string')
+-        self.assertEqual(data.dict[0]['start0'], '004')
+-        self.assertEqual(data.dict[0]['integer'], 42)
+-        self.assertEqual(data.dict[0]['float'], 21.55)
+-        self.assertEqual(data.dict[0]['decimal'], 34.5)
+-        self.assertEqual(data.dict[0]['date'], date)
+-        self.assertEqual(data.dict[0]['time'], time)
+-        self.assertEqual(data.dict[0]['date/time'], date_time)
+-        self.assertEqual(data.dict[0]['None'], '')
+-        self.assertEqual(data.dict[0]['empty'], '')
+ 
+-    def test_ods_export_import_boolean(self):
+-        data.append(('alice', True))
+-        data.append(('bob', False))
+-        data.headers = ('name', 'flag')
+-        _ods = data.ods
+-        data.ods = _ods
+-        self.assertIs(data.dict[0]['flag'], True)
+-        self.assertIs(data.dict[1]['flag'], False)
+-        self.assertEqual(data.dict[0]['name'], 'alice')
+ 
+     def test_ods_export_display(self):
+         """Test that exported datetime types are displayed correctly in office software"""
+@@ -1326,13 +1231,6 @@ class ODSTests(BaseTestCase):
+         self.assertEqual(len(dbook.sheets()), 2)
+         self.assertEqual(["This", "is", "a", "second", "sheet"], dbook.sheets()[1].headers)
+ 
+-    def test_ods_import_set_skip_lines(self):
+-        data.append(('garbage', 'line', ''))
+-        data.append(('', '', ''))
+-        data.append(('id', 'name', 'description'))
+-        _ods = data.ods
+-        new_data = tablib.Dataset().load(_ods, skip_lines=2)
+-        self.assertEqual(new_data.headers, ['id', 'name', 'description'])
+ 
+     def test_ods_import_set_ragged(self):
+         ods_source = Path(__file__).parent / 'files' / 'ragged.ods'
+@@ -1907,71 +1805,7 @@ class LatexTests(BaseTestCase):
+ 
+ 
+ class DBFTests(BaseTestCase):
+-    def test_dbf_import_set(self):
+-        data.append(self.john)
+-        data.append(self.george)
+-        data.headers = self.headers
+-
+-        _dbf = data.dbf
+-        data.dbf = _dbf
+-
+-        # self.assertEqual(_dbf, data.dbf)
+-        try:
+-            self.assertEqual(_dbf, data.dbf)
+-        except AssertionError:
+-            index = 0
+-            so_far = ''
+-            for reg_char, data_char in zip(_dbf, data.dbf):
+-                so_far += chr(data_char)
+-                if reg_char != data_char and index not in [1, 2, 3]:
+-                    raise AssertionError(
+-                        f'Failing at char {index}: {reg_char} vs {data_char} {so_far}'
+-                    )
+-                index += 1
+-
+-    def test_dbf_export_set(self):
+-        """Test DBF import."""
+-        data.append(self.john)
+-        data.append(self.george)
+-        data.append(self.tom)
+-        data.headers = self.headers
+-
+-        _regression_dbf = (b'\x03r\x06\x06\x03\x00\x00\x00\x81\x00\xab\x00\x00'
+-                           b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+-                           b'\x00\x00\x00FIRST_NAME\x00C\x00\x00\x00\x00P\x00\x00\x00\x00\x00'
+-                           b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00LAST_NAME\x00\x00C\x00'
+-                           b'\x00\x00\x00P\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+-                           b'\x00\x00GPA\x00\x00\x00\x00\x00\x00\x00\x00N\x00\x00\x00\x00\n'
+-                           b'\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\r'
+-                           )
+-        _regression_dbf += b' John' + (b' ' * 75)
+-        _regression_dbf += b' Adams' + (b' ' * 74)
+-        _regression_dbf += b' 90.0000000'
+-        _regression_dbf += b' George' + (b' ' * 73)
+-        _regression_dbf += b' Washington' + (b' ' * 69)
+-        _regression_dbf += b' 67.0000000'
+-        _regression_dbf += b' Thomas' + (b' ' * 73)
+-        _regression_dbf += b' Jefferson' + (b' ' * 70)
+-        _regression_dbf += b' 50.0000000'
+-        _regression_dbf += b'\x1a'
+-
+-        # If in python3, decode regression string to binary.
+-        # _regression_dbf = bytes(_regression_dbf, 'utf-8')
+-        # _regression_dbf = _regression_dbf.replace(b'\n', b'\r')
+ 
+-        try:
+-            self.assertEqual(_regression_dbf, data.dbf)
+-        except AssertionError:
+-            index = 0
+-            found_so_far = ''
+-            for reg_char, data_char in zip(_regression_dbf, data.dbf):
+-                # found_so_far += chr(data_char)
+-                if reg_char != data_char and index not in [1, 2, 3]:
+-                    raise AssertionError(
+-                        f'Failing at char {index}: '
+-                        f'{reg_char} vs {data_char} (found {found_so_far})'
+-                    )
+-                index += 1
+ 
+     def test_dbf_format_detect(self):
+         """Test the DBF format detection."""

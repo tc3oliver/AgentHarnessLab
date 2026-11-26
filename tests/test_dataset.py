@@ -85,3 +85,24 @@ def test_smoke_tasks_load() -> None:
     assert 10 <= len(loaded.tasks) <= 20
     for task in loaded.tasks:
         assert (task.path / "tests/test.sh").is_file() and (task.path / "solution/solve.sh").is_file()
+
+
+def test_devbench_configs_load_with_pinned_hashes() -> None:
+    import yaml
+
+    from agent_harness_lab.dataset.loaders import tasks_hash
+
+    sizes = {"devbench": 30, "devbench-hard": 10}
+    seen: dict[str, set[str]] = {}
+    for name, size in sizes.items():
+        raw = yaml.safe_load((ROOT / f"configs/datasets/{name}.yaml").read_text())
+        raw["source"] = {"type": "local", "path": str(ROOT / "benchmarks/devbench/tasks")}
+        config = DatasetConfig.model_validate(raw)
+        assert config.tasks_hash is not None and config.task_names is not None
+        # the loader re-checks the pinned hash against the task files
+        loaded = LocalDataset().load(config)
+        assert len(loaded.tasks) == size and tasks_hash(loaded.tasks) == config.tasks_hash
+        seen[name] = {t.task_id for t in loaded.tasks}
+    assert not seen["devbench"] & seen["devbench-hard"]
+    assert all(i.startswith("ahl-dev-hard-") for i in seen["devbench-hard"])
+    assert not any(i.startswith("ahl-dev-hard-") for i in seen["devbench"])

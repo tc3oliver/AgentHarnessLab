@@ -1,0 +1,11 @@
+--- a/src/semver/cli.py
++++ b/src/semver/cli.py
+@@ -41,8 +41,6 @@
+         args.parser.parse_args(["bump", "-h"])
+ 
+     ver = Version.parse(args.version)
+-    # get the respective method and call it
+-    func = getattr(ver, maptable[cast(str, args.bump)])
+     return str(func())
+ 
+ 

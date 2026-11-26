@@ -1,0 +1,16 @@
+diff --git a/more_itertools/more.py b/more_itertools/more.py
+index a4545e5..7f435da 100755
+--- a/more_itertools/more.py
++++ b/more_itertools/more.py
+@@ -740,10 +740,7 @@ def strictly_n(iterable, n, too_short=None, too_long=None):
+         )
+ 
+     if too_long is None:
+-        too_long = lambda item_count: raise_(
+-            ValueError,
+-            f'Too many items in iterable (got at least {item_count})',
+-        )
++        pass
+ 
+     it = iter(iterable)
+ 

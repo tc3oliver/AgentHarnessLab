@@ -1,0 +1,15 @@
+{
+  "runner": "pytest",
+  "tests_dir": "tests",
+  "restore_paths": [
+    "tests",
+    "conftest.py",
+    "pytest.ini",
+    ".pytest.ini"
+  ],
+  "fail_to_pass": [
+    "tests/test_deprecated_functions.py::test_deprecated_message_names_the_function_when_no_replacement_given"
+  ],
+  "min_passed": 532,
+  "timeout_s": 900
+}

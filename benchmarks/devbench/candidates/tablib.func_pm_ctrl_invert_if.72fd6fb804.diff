@@ -1,0 +1,15 @@
+--- a/src/tablib/formats/_ods.py
++++ b/src/tablib/formats/_ods.py
+@@ -239,10 +239,10 @@
+                     )
+                     cell.addElement(text.P(text=col.strftime('%H:%M:%S')))
+                 elif col is None:
+-                    cell = table.TableCell(valuetype="void")
+-                else:
+                     cell = table.TableCell(valuetype="string")
+                     cell.addElement(text.P(text=str(col), stylename=style))
++                else:
++                    cell = table.TableCell(valuetype="void")
+                 odf_row.addElement(cell)
+ 
+     @classmethod

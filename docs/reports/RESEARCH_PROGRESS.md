@@ -26,6 +26,20 @@ never committed.
 
 ## Log
 
+### 2026-11-26: devbench hard tier (10 tasks), built, not yet evaluated
+
+The original 30 tasks saturate. Test-repair and refactoring were solved in 124/126 and 59/60 trials across all five
+conditions (`devbench/analysis/combined.md`). The hard tier adds 10 tasks (`configs/datasets/devbench-hard.yaml`):
+5 bug-fix tasks with one single-hunk patch and 1 hidden fail-to-pass test each, and 5 multi-file tasks with 3
+patches in 3 files each. They cover 5 repositories, 2 tasks each.
+- **Selection by construction only.** No model was run on candidates. The rules were fixed first, applied to the
+  validated SWE-smith pool, and the list was frozen. Only oracle and nop checks could exclude a task. Choosing by
+  model failure would bias later base-vs-adapter comparisons. The rules are in `benchmarks/devbench/README.md`.
+- **Checks:** oracle 10/10 and nop 0/10 (`check_task.sh`). The rebuild of all 40 tasks is deterministic.
+  `devbench.yaml` now lists its 30 tasks with the unchanged hash, so earlier results stay comparable.
+- **Review** found one rule violation, which was fixed: a patch in a function already used by an original task.
+  It also found instructions that named internal modules. These now name only the public API.
+
 ### 2026-11-26: RL pilot rung 5, three async GRPO steps through OpenEnv
 
 TRL 1.19.0 `HarnessAsyncGRPOTrainer` (image `agentlab-trainer:trl1.19.0-openenv0.14.0`) on GPU 4 with Qwen3.8-27B
@@ -68,7 +82,7 @@ Adapters and `log_history.json`: `rl/adapters/grpo-pilot/`. OpenEnv server log: 
   - The LoRA targets name the language-model projections explicitly. `all-linear` also matches the vision tower,
     whose modules vLLM rejects.
 - **Wall limit not enforced:** `timeout 5400 docker run ...` killed only the Docker client at 90 minutes, and the
-  container trained on to 105 minutes of training time. This is the same mistake as the round 2 wrapper. `run.sh` now runs
+  container trained on past the 90-minute limit, to 105 minutes of training time. This is the same mistake as the round 2 wrapper. `run.sh` now runs
   `timeout` inside the container (`--init`, entrypoint `timeout -s TERM -k 60 $LIMIT python3 ...`, checked: exit
   124 on a 2 s limit). A host watchdog also runs `docker stop` LIMIT + 300 s after launch. Every later training
   or eval container needs its limit enforced the same way.
@@ -287,7 +301,7 @@ base vs adapter on smoke (no difference shown).
 
 ## Next
 
-1. More hard tasks: most of the set no longer separates conditions.
+1. ~~More hard tasks~~ (10-task hard tier built); evaluate it: Pi vs OpenCode and Pi base vs adapter, 3 attempts each.
 2. Harness configs for rollouts (decision 0010): OpenCode web tools denied (`opencode-v2-noweb.yaml`); Pi unmodified.
 3. RL pilot on GPUs 4 and 5:
    - ~~kernel parity~~ (passed);

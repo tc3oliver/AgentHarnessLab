@@ -263,6 +263,8 @@ def build(task: dict) -> None:
         "fail_to_pass": len(task["fail_to_pass"]),
         "fail_to_pass_visible": len(visible),
     }
+    if task.get("difficulty"):
+        meta["difficulty"] = task["difficulty"]
     if task.get("bug_patches"):
         meta["swe_smith_modifiers"] = sorted({n.split(".")[1] for n in task["bug_patches"]})
     toml = [

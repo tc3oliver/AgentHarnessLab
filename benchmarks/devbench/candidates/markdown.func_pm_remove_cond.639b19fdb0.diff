@@ -1,0 +1,12 @@
+--- a/markdown/blockprocessors.py
++++ b/markdown/blockprocessors.py
+@@ -519,9 +519,6 @@
+             level = 2
+         h = etree.SubElement(parent, 'h%d' % level)
+         h.text = lines[0].strip()
+-        if len(lines) > 2:
+-            # Block contains additional lines. Add to  master blocks for later.
+-            blocks.insert(0, lines[2])
+ 
+ 
+ class HRProcessor(BlockProcessor):

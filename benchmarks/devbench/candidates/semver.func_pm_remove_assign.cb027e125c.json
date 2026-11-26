@@ -1,0 +1,1 @@
+{"modifier": "func_pm_remove_assign", "file": "src/semver/cli.py", "entity": "cmd_bump", "explanation": "There is likely a missing assignment in the code."}

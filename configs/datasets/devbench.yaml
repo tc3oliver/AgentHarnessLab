@@ -1,6 +1,38 @@
 name: devbench
 source: {type: local, path: benchmarks/devbench/tasks}
 split: validation
+task_names:
+  - ahl-dev-markdown-footnote-backrefs
+  - ahl-dev-more-itertools-collapse-levels
+  - ahl-dev-tablib-failing-suite
+  - ahl-dev-jmespath-failing-suite
+  - ahl-dev-markdown-processing-instruction
+  - ahl-dev-markdown-attr-list-class
+  - ahl-dev-tablib-ragged-import
+  - ahl-dev-jmespath-error-messages
+  - ahl-dev-more-itertools-windows-module
+  - ahl-dev-markdown-registry-module
+  - ahl-dev-more-itertools-seekable-index
+  - ahl-dev-more-itertools-gray-product
+  - ahl-dev-more-itertools-distinct-permutations
+  - ahl-dev-tablib-ods-dates
+  - ahl-dev-tablib-sql-commit
+  - ahl-dev-more-itertools-running-max
+  - ahl-dev-more-itertools-running-mean
+  - ahl-dev-tablib-latex-suite
+  - ahl-dev-semver-failing-suite
+  - ahl-dev-itsdangerous-failing-suite
+  - ahl-dev-more-itertools-primes
+  - ahl-dev-markdown-bogus-declaration
+  - ahl-dev-tablib-dbf-export
+  - ahl-dev-semver-match-and-cli
+  - ahl-dev-markdown-wikilinks-meta
+  - ahl-dev-markdown-legacy-attrs
+  - ahl-dev-markdown-md-in-html-hr
+  - ahl-dev-jmespath-function-types
+  - ahl-dev-jmespath-comparisons-module
+  - ahl-dev-tablib-row-module
+tasks_hash: sha256:fffb77f8bb6cfa5159b5cc4ddf139a345dffee28063adb0a0f908bb8f05a2cb1
 license: Apache-2.0 AND MIT AND BSD-3-Clause
 redistributable: true
 notes: >-

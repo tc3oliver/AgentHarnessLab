@@ -1,0 +1,31 @@
+schema_version = "1.4"
+
+[task]
+name = "ahl-devbench/ahl-dev-hard-markdown-ancestors-html-smarty"
+version = "1.0.0"
+authors = []
+keywords = ["devbench"]
+
+[metadata]
+category = "multi-file"
+source = "swe-smith"
+repository = "python-markdown/markdown"
+repository_commit = "27c014198021f71442301319981a3ed366ae2ad1"
+repository_license = "BSD-3-Clause"
+hidden_tests = true
+fail_to_pass = 11
+fail_to_pass_visible = 0
+difficulty = "hard"
+swe_smith_modifiers = ["func_pm_op_change", "func_pm_remove_cond"]
+
+[verifier]
+timeout_sec = 1200.0
+
+[agent]
+timeout_sec = 1800.0
+
+[environment]
+build_timeout_sec = 1200.0
+cpus = 2
+memory_mb = 4096
+gpus = 0

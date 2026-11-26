@@ -1,0 +1,164 @@
+diff --git a/tests/test_deprecated_functions.py b/tests/test_deprecated_functions.py
+index 33b1080..14dc571 100644
+--- a/tests/test_deprecated_functions.py
++++ b/tests/test_deprecated_functions.py
+@@ -27,43 +27,6 @@ from semver import (
+ from semver._deprecated import deprecated
+ 
+ 
+-@pytest.mark.parametrize(
+-    "func, args, kwargs",
+-    [
+-        (bump_build, ("1.2.3",), {}),
+-        (bump_major, ("1.2.3",), {}),
+-        (bump_minor, ("1.2.3",), {}),
+-        (bump_patch, ("1.2.3",), {}),
+-        (bump_prerelease, ("1.2.3",), {}),
+-        (format_version, (3, 4, 5), {}),
+-        (finalize_version, ("1.2.3-rc.5",), {}),
+-        (match, ("1.0.0", ">=1.0.0"), {}),
+-        (parse, ("1.2.3",), {}),
+-        (parse_version_info, ("1.2.3",), {}),
+-        (replace, ("1.2.3",), dict(major=2, patch=10)),
+-        (max_ver, ("1.2.3", "1.2.4"), {}),
+-        (min_ver, ("1.2.3", "1.2.4"), {}),
+-        (cmd_bump, (Namespace(bump="major", version="1.2.3"),), {}),
+-        (cmd_compare, (Namespace(version1="1.2.3", version2="2.1.3"),), {}),
+-        (cmd_check, (Namespace(version="1.2.3"),), {}),
+-        (cmd_nextver, (Namespace(version="1.2.3", part="major"),), {}),
+-        (createparser, (), {}),
+-        (
+-            process,
+-            (Namespace(func=cmd_compare, version1="1.2.3", version2="2.1.3"),),
+-            {},
+-        ),
+-        (main, (["bump", "major", "1.2.3"],), {}),
+-    ],
+-)
+-def test_should_raise_deprecation_warnings(func, args, kwargs):
+-    with pytest.warns(
+-        DeprecationWarning, match=r"Function 'semver.[_a-zA-Z]+' is deprecated."
+-    ) as record:
+-        func(*args, **kwargs)
+-        if not record:
+-            pytest.fail("Expected a DeprecationWarning for {}".format(func.__name__))
+-    assert len(record), "Expected one DeprecationWarning record"
+ 
+ 
+ def test_deprecated_deco_without_argument():
+@@ -75,16 +38,6 @@ def test_deprecated_deco_without_argument():
+         assert mock_func()
+ 
+ 
+-def test_deprecated_message_uses_the_remove_text():
+-    @deprecated(remove="Gone in 99.")
+-    def mock_func():
+-        return True
+-
+-    with pytest.warns(DeprecationWarning) as record:
+-        mock_func()
+-    msg = str(record[0].message)
+-    assert "Gone in 99." in msg
+-    assert "will be removed in semver 3" not in msg
+ 
+ 
+ def test_deprecated_message_names_the_function_when_no_replacement_given():
+diff --git a/tests/test_pysemver-cli.py b/tests/test_pysemver-cli.py
+index 9933b0d..8e0de79 100644
+--- a/tests/test_pysemver-cli.py
++++ b/tests/test_pysemver-cli.py
+@@ -45,71 +45,8 @@ def test_should_parse_cli_arguments(cli, expected):
+     assert result == expected
+ 
+ 
+-@pytest.mark.parametrize(
+-    "func,args,expectation",
+-    [
+-        # bump subcommand
+-        (cmd_bump, Namespace(bump="major", version="1.2.3"), does_not_raise("2.0.0")),
+-        (cmd_bump, Namespace(bump="minor", version="1.2.3"), does_not_raise("1.3.0")),
+-        (cmd_bump, Namespace(bump="patch", version="1.2.3"), does_not_raise("1.2.4")),
+-        (
+-            cmd_bump,
+-            Namespace(bump="prerelease", version="1.2.3-rc1"),
+-            does_not_raise("1.2.3-rc1.0"),
+-        ),
+-        (
+-            cmd_bump,
+-            Namespace(bump="build", version="1.2.3+build.13"),
+-            does_not_raise("1.2.3+build.14"),
+-        ),
+-        # compare subcommand
+-        (
+-            cmd_compare,
+-            Namespace(version1="1.2.3", version2="2.1.3"),
+-            does_not_raise("-1"),
+-        ),
+-        (
+-            cmd_compare,
+-            Namespace(version1="1.2.3", version2="1.2.3"),
+-            does_not_raise("0"),
+-        ),
+-        (
+-            cmd_compare,
+-            Namespace(version1="2.4.0", version2="2.1.3"),
+-            does_not_raise("1"),
+-        ),
+-        # check subcommand
+-        (cmd_check, Namespace(version="1.2.3"), does_not_raise(None)),
+-        (cmd_check, Namespace(version="1.2"), pytest.raises(ValueError)),
+-        # nextver subcommand
+-        (
+-            cmd_nextver,
+-            Namespace(version="1.2.3", part="major"),
+-            does_not_raise("2.0.0"),
+-        ),
+-        (
+-            cmd_nextver,
+-            Namespace(version="1.2", part="major"),
+-            pytest.raises(ValueError),
+-        ),
+-        (
+-            cmd_nextver,
+-            Namespace(version="1.2.3", part="nope"),
+-            pytest.raises(ValueError),
+-        ),
+-    ],
+-)
+-def test_should_process_parsed_cli_arguments(func, args, expectation):
+-    with expectation as expected:
+-        result = func(args)
+-        assert result == expected
+ 
+ 
+-def test_should_process_print(capsys):
+-    rc = main(["bump", "major", "1.2.3"])
+-    assert rc == 0
+-    captured = capsys.readouterr()
+-    assert captured.out.rstrip() == "2.0.0"
+ 
+ 
+ def test_should_process_raise_error(capsys):
+diff --git a/tests/test_semver.py b/tests/test_semver.py
+index 6f0a967..bc0a3fe 100644
+--- a/tests/test_semver.py
++++ b/tests/test_semver.py
+@@ -131,18 +131,6 @@ def test_should_fail_compatible_match(old, new):
+     assert not old.is_compatible(new)
+ 
+ 
+-@pytest.mark.parametrize(
+-    "wrongtype",
+-    [
+-        "wrongtype",
+-        dict(a=2),
+-        list(),
+-    ],
+-)
+-def test_should_fail_with_incompatible_type_for_compatible_match(wrongtype):
+-    with pytest.raises(TypeError, match="Expected a Version type .*"):
+-        v = Version(1, 2, 3)
+-        v.is_compatible(wrongtype)
+ 
+ 
+ def test_should_succeed_with_compatible_subclass_for_is_compatible():

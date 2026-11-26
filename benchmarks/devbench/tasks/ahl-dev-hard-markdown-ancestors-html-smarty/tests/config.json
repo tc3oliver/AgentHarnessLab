@@ -1,0 +1,25 @@
+{
+  "runner": "unittest",
+  "tests_dir": "tests",
+  "restore_paths": [
+    "tests",
+    "conftest.py",
+    "pytest.ini",
+    ".pytest.ini"
+  ],
+  "fail_to_pass": [
+    "test_ancestors (test_apis.TestAncestorExclusion.test_ancestors)",
+    "test_ancestors_tail (test_apis.TestAncestorExclusion.test_ancestors_tail)",
+    "test_inline_html_backslashes (test_syntax.inline.test_raw_html.TestRawHtml.test_inline_html_backslashes)",
+    "testCustomSubstitutions (test_extensions.TestSmarty.testCustomSubstitutions)",
+    "test_angled_quotes (test_syntax.extensions.test_smarty.TestSmartyAngledQuotes.test_angled_quotes)",
+    "test_basic (test_syntax.extensions.test_smarty.TestSmarty.test_basic)",
+    "test_custom_substitutions (test_syntax.extensions.test_smarty.TestSmartyCustomSubstitutions.test_custom_substitutions)",
+    "test_escaped (test_syntax.extensions.test_smarty.TestSmarty.test_escaped)",
+    "test_smarty_and_toc (test_syntax.extensions.test_smarty.TestSmartyAndToc.test_smarty_and_toc)",
+    "test_wrapping_line (test_syntax.extensions.test_smarty.TestSmarty.test_wrapping_line)",
+    "test_years (test_syntax.extensions.test_smarty.TestSmarty.test_years)"
+  ],
+  "min_passed": 1119,
+  "timeout_s": 900
+}

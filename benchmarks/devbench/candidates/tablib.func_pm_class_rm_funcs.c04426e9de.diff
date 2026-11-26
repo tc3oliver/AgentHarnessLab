@@ -1,0 +1,21 @@
+--- a/src/tablib/_vendor/dbfpy/header.py
++++ b/src/tablib/_vendor/dbfpy/header.py
+@@ -240,18 +240,6 @@
+         stream.write(b'\x0D')   # cr at end of all header data
+         self.changed = False
+ 
+-    def toString(self):
+-        """Returned 32 chars length string with encoded header."""
+-        return struct.pack("<4BI2H",
+-                           self.signature,
+-                           self.year - 1900,
+-                           self.month,
+-                           self.day,
+-                           self.recordCount,
+-                           self.headerLength,
+-                           self.recordLength) + (b'\x00' * 20)
+-        # TODO: figure out if bytes(utf-8) is correct here.
+-
+     def setCurrentDate(self):
+         """Update ``self.lastUpdate`` field with current date value."""
+         self.lastUpdate = datetime.date.today()
