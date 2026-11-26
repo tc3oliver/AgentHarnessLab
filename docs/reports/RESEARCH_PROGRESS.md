@@ -32,9 +32,9 @@ Full note: [flash-next-feasibility.md](flash-next-feasibility.md). GPU 6, artifa
 - **Serving with LoRA:** works on one GPU, but only with the Triton FP8 MoE backend. With LoRA on, vLLM refuses the
   AITER MoE backend at startup.
   - An identity adapter matches the base model exactly (Δ logprob 0.0).
-  - A random adapter changes the output, so the adapter is really applied.
-  - Decode speed: 114 tok/s base, 73 tok/s with the adapter (one request).
-- **Training step:** blocked. The FP8 checkpoint loads in the trainer image (169 GB on one GPU). The forward pass
+  - A random adapter shifts log-probs by up to 0.20, so the adapter is really applied.
+  - Decode speed (warm, one 92-token request): 114 tok/s base, 73 tok/s with the adapter.
+- **Training step:** blocked. The FP8 checkpoint loads in the trainer image (169.4 GiB on one GPU). The forward pass
   fails, because transformers' fine-grained FP8 kernel comes from the `kernels` Hub loader, which we do not install
   (same policy as pilot rung 2).
 - **Recommendation:** v0.5 stays evaluation-only until a reviewed, vendored FP8 kernel exists.
