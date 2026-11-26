@@ -24,6 +24,34 @@ never committed.
 
 ## Log
 
+### 2026-11-26: Pi base vs the reference Pi adapter on devbench
+
+Run `devbench/runs/devbench-r3-adapter`, config `devbench/cfg/devbench-r3-adapter.yaml`. It is the same as round 2
+(seed, sampling, images, 1800 s budget, attention backend), with served model `pi-adapted` (adapter `41396a9f14d9`)
+and Pi only. It is paired against round 2's Pi trials. Analysis: `devbench/analysis/devbench-r3-adapter-vs-base.md`.
+
+| Pi 1.5.2 with | Solved / 90 | Rate (Wilson 95%) | pass@1 | Median agent s | Median tokens in per trial | Mean tool calls (solved) | Tokens per solved |
+|---|---|---|---|---|---|---|---|
+| base | 74 | 82% (73-89%) | 80% | 139 | 91k | 20.1 | 573k |
+| adapter | 80 | 89% (81-94%) | 83% | 72 | 28k | 8.9 | 121k |
+
+- **Hypothesis:** the Pi-specific adapter improves Pi on unseen repositories. **Success criterion:** a paired
+  difference whose CI excludes 0. **Not met:**
+  - the adapter is better on 6 tasks, the base on 2, and 22 are tied;
+  - mean difference +6.7 points, bootstrap 95% CI [-2.2, +15.6], sign test p = 0.29.
+- **The efficiency difference is large and consistent:**
+  - the adapter makes less than half as many tool calls per solved task;
+  - it uses a third of the input tokens per trial;
+  - it uses 4.7 times fewer tokens per solved task;
+  - it has half the median wall time.
+
+  Failed adapter trials are cheap: 14 turns and 147k input tokens, against 77 turns and 1.73M for the base. The
+  adapter gives up or finishes early instead of looping.
+- The adapter regresses on `tablib-dbf-export` (0/3, base 2/3) and wins on `markdown-bogus-declaration`,
+  `markdown-md-in-html-hr` and `more-itertools-distinct-permutations` (3/3 each, base 1/3).
+- With 22 of 30 tasks saturated, devbench cannot resolve a gain of this size. More hard tasks are needed before
+  adapter comparisons (Phase B/C) are run on it.
+
 ### 2026-11-26: devbench round 2 (30 tasks × 2 harnesses × 3 attempts)
 
 Run `devbench/runs/devbench-r2`, config `devbench/cfg/devbench-r2.yaml` (config hash `bd1edd4e…`), code `6045cb6`
@@ -95,10 +123,9 @@ base vs adapter on smoke (no difference shown).
 
 ## Next
 
-1. Pi base vs the reference Pi adapter on devbench, paired with round 2's Pi trials, 3 attempts (`devbench-r3-adapter`, running).
+1. Attention backend: the same tasks with `ROCM_AITER_UNIFIED_ATTN`, paired against round 2 (`devbench-r4-aiter`,
+   running). Decides the rollout backend.
 2. More hard tasks: most of the set no longer separates conditions.
-3. Attention backend: the same tasks with `ROCM_AITER_UNIFIED_ATTN`, paired against round 2. Decides the rollout
-   backend.
 4. RL pilot on GPUs 4 and 5:
    - kernel parity (`rl/parity/kernel_parity.py`);
    - 27B LoRA steps at 16k, 32k and 64k tokens;
