@@ -11,7 +11,7 @@ never committed.
 | Evaluation | Harbor runner, prebuilt images, Git and Hugging Face dataset loaders (PR #4), devbench (30 tasks), request-level performance monitoring |
 | Models served | Qwen3.8-27B `37561816e66b` with the reference Pi adapter `41396a9f14d9` as a LoRA module, vLLM 0.33.0 ROCm, one MI325X |
 | Harnesses evaluated with a real model | Pi 1.5.2, OpenCode 2.2.7 (Harbor 0.27.0) |
-| Training | pilot rungs 1-2 passed (kernel parity, 27B LoRA steps to 64k on one GPU); no training run yet |
+| Training | pilot rungs 1-3 passed (kernel parity, 27B LoRA steps to 64k on one GPU, LoRA hot-load into vLLM); no training run yet |
 
 ## Merged pull requests
 
@@ -23,6 +23,31 @@ never committed.
 | #4 | Git and Hugging Face dataset loaders, task-list pins, repository split; smoke task 020 fix | `4d337ee` |
 
 ## Log
+
+### 2026-11-26: RL pilot rung 3, LoRA hot-load round trip, trainer to vLLM
+
+Trainer on GPU 4 (`rl/parity/lora_roundtrip.py`), vLLM on GPU 5 (AITER backend, `scripts/serve_vllm_rocm.sh` with
+the new `LORA_DIR`, which enables `/v1/load_lora_adapter`), sampling script `rl/parity/rt_vllm.py`. Adapters are in
+`rl/adapters/rt-step{1,2}`, not in git.
+
+- **Hypothesis:** an adapter saved by the trainer (PEFT, r 32, all linear) can be hot-loaded and replaced by name in
+  vLLM, and vLLM's log-probs of its own samples match the trainer's.
+- **Criteria:** the replacement takes effect immediately, and the mean absolute log-prob difference is < 0.05.
+  **Met:**
+  - Two adapters were trained to visibly different behaviour: one on code with "The answer to everything is 42",
+    the other on "The capital of France is Berlin".
+  - After `unload` and `load` under the same name, vLLM's completions switched at once, from "Paris" to "Berlin".
+  - On 4 prompts × 48 sampled tokens at temperature 1, the trainer's log-probs (TRL tree-attention path) against
+    vLLM's:
+
+    | Adapter | Mean abs diff | Max abs diff | Importance ratio range |
+    |---|---|---|---|
+    | step 1 | 0.007 | 0.20 | 0.82-1.10 |
+    | step 2 | 0.012 | 0.20 | 0.82-1.14 |
+- The first attempt trained both adapters on the same text, so they were indistinguishable on the sampled tokens
+  and could not show that the swap took effect. The second adapter was retrained on different text.
+- The trainer forward needs `use_cache=False` on the tree path (otherwise transformers' recurrent cache update
+  fails).
 
 ### 2026-11-26: RL pilot rung 2, local FlashAttention and 27B LoRA steps up to 64k tokens
 
@@ -192,6 +217,6 @@ base vs adapter on smoke (no difference shown).
 3. RL pilot on GPUs 4 and 5:
    - ~~kernel parity~~ (passed);
    - ~~27B LoRA steps at 16k, 32k and 64k tokens~~ (passed, 132 GB at 64k);
-   - LoRA hot-load round trip;
+   - ~~LoRA hot-load round trip~~ (passed);
    - one OpenEnv Pi rollout;
    - three GRPO steps.
