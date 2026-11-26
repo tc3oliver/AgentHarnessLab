@@ -62,6 +62,8 @@ class TrialPerf:
     cached_tokens: int = 0
     max_prompt_tokens: int = 0
     errors: int = 0
+    unparsed_requests: int = 0
+    """Requests to /responses or /messages: counted in model time, but their tokens are not parsed."""
     request_rows: list[dict[str, Any]] = field(default_factory=list)
 
 
@@ -189,8 +191,8 @@ def analyse(run_dir: Path, requests_log: Path, samples_log: Path, slack: float =
     }
     intervals: dict[str, list[tuple[float, float]]] = {name: [] for name in perf}
     for request in _jsonl(requests_log):
-        # Only the chat-completions shape is parsed for tokens; /responses and /messages are not counted.
-        if not request.get("path", "").rstrip("/").endswith("/completions"):
+        path = request.get("path", "").rstrip("/")
+        if not path.endswith(("/completions", "/responses", "/messages")):
             continue
         container = _owner(spans, request.get("client"), request["start"], slack)
         trial = next((t for key, t in by_name.items() if container and key in container.lower()), None)
@@ -199,6 +201,7 @@ def analyse(run_dir: Path, requests_log: Path, samples_log: Path, slack: float =
         p = perf[trial.trial_name]
         p.container = container
         p.requests += 1
+        p.unparsed_requests += not path.endswith("/completions")  # timing only; token shape not parsed
         p.errors += bool(request.get("error")) or (request.get("status") or 200) >= 400
         p.prompt_tokens += request.get("prompt_tokens") or 0
         p.completion_tokens += request.get("completion_tokens") or 0

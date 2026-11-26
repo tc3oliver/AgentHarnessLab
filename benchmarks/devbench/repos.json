@@ -90,7 +90,7 @@
         "pytest"
       ],
       "reference_passed": 532,
-      "pytest_ini": "[pytest]\nnorecursedirs = .git build .env/ env/ .pyenv/ .tmp/ .eggs/ venv/\npythonpath = src tests\nfilterwarnings =\n    ignore:Function 'semver.*:DeprecationWarning\n    ignore:Function 'semver.compare' is deprecated.*:PendingDeprecationWarning\n"
+      "pytest_ini": "[pytest]\nnorecursedirs = .git build .env/ env/ .pyenv/ .tmp/ .eggs/ venv/\npythonpath = /app/src /app/tests\nfilterwarnings =\n    ignore:Function 'semver.*:DeprecationWarning\n    ignore:Function 'semver.compare' is deprecated.*:PendingDeprecationWarning\n"
     },
     "jmespath": {
       "github": "jmespath/jmespath.py",

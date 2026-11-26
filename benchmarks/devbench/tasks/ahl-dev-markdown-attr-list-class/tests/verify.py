@@ -2,7 +2,8 @@
 
 1. Replace the repository's test directory and root pytest files with the pristine upstream copy
    (restore.tar.gz), so edits to tests by the agent have no effect, and add the task's hidden tests.
-2. Refuse files the agent added at the top of /app that would shadow the standard library or the test runner.
+2. Refuse files the agent added under /app that would run inside the test process (sitecustomize, modules
+   shadowing the standard library or the test runner on sys.path).
 3. Run the suite isolated from agent-controlled configuration: `python -I` (no current directory on sys.path,
    no PYTHONPATH, no user site), pytest with the verifier's own ini file (`-c`), `--confcutdir` at the test
    directory (no conftest.py from elsewhere) and plugin autoloading disabled.
@@ -42,19 +43,34 @@ def restore(config: dict) -> None:
 
 
 def shadowing_files() -> list[str]:
-    """Top-level entries the agent created whose name is a standard-library or test-runner module."""
-    out = subprocess.run(
-        ["git", "-C", str(APP), "ls-files", "--others", "--directory", "--no-empty-directory"],
+    """Files under /app that would run code inside the test process, unless they were in the pristine image.
+
+    Every directory under /app on the interpreter's own sys.path (the editable install adds /app or /app/src)
+    is checked for modules named like the standard library or the test runner, and the whole tree for
+    sitecustomize/usercustomize. Git is not consulted: an agent can commit files or delete .git.
+    """
+    allowed = set(json.loads((TESTS / "allowed_names.json").read_text()))
+    probe = subprocess.run(
+        [sys.executable, "-I", "-c", "import json, sys; print(json.dumps(sys.path))"],
         capture_output=True,
         text=True,
-        check=False,
-    ).stdout
+        check=True,
+    )
     names = set(sys.stdlib_module_names) | SHADOW_EXTRA
     found = set()
-    for entry in out.splitlines():
-        top = entry.rstrip("/").split("/")[0]
-        if top.removesuffix(".py").removesuffix(".pth") in names:
-            found.add(top)
+    for entry in json.loads(probe.stdout):
+        path = Path(entry or ".").resolve()
+        if path != APP and APP not in path.parents:
+            continue
+        for child in path.iterdir() if path.is_dir() else []:
+            rel = child.relative_to(APP).as_posix()
+            if child.name.removesuffix(".py") in names and rel not in allowed:
+                found.add(rel)
+    for pattern in ("sitecustomize.py", "usercustomize.py", "sitecustomize", "usercustomize"):
+        for child in APP.rglob(pattern):
+            rel = child.relative_to(APP).as_posix()
+            if ".git" not in child.parts and rel not in allowed:
+                found.add(rel)
     return sorted(found)
 
 
@@ -112,12 +128,14 @@ def main() -> int:
         result = subprocess.run(
             cmd, cwd=APP, env=env, capture_output=True, text=True, timeout=config["timeout_s"]
         )
-        text, code = result.stdout + "\n" + result.stderr, result.returncode
+        text, code, stderr = result.stdout + "\n" + result.stderr, result.returncode, result.stderr
     except subprocess.TimeoutExpired:
-        text, code = "timeout", -1
+        text, code, stderr = "timeout", -1, ""
     (LOGS / "test_output.txt").write_text(text[-200_000:])
-    parse = unittest_result if config["runner"] == "unittest" else pytest_result
-    passed, missing = parse(text, config["fail_to_pass"])
+    if config["runner"] == "unittest":  # unittest reports on stderr; tests can print anything to stdout
+        passed, missing = unittest_result(stderr, config["fail_to_pass"])
+    else:
+        passed, missing = pytest_result(text, config["fail_to_pass"])
     ok = code == 0 and not missing and not shadows and passed >= config["min_passed"]
     details = {
         "exit_code": code,

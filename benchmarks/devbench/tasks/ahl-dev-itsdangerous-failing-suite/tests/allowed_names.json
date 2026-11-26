@@ -1,0 +1,17 @@
+[
+ ".devcontainer",
+ ".editorconfig",
+ ".github",
+ ".gitignore",
+ ".pre-commit-config.yaml",
+ ".readthedocs.yaml",
+ "CHANGES.rst",
+ "LICENSE.txt",
+ "README.md",
+ "docs",
+ "pyproject.toml",
+ "src",
+ "src/itsdangerous",
+ "tests",
+ "uv.lock"
+]

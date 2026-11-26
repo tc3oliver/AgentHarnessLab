@@ -206,6 +206,12 @@ def build(task: dict) -> None:
         restore_paths = [spec["tests"], *PYTEST_CONFIG]  # agent-created copies are deleted too
         restore = deterministic_tar(pristine, restore_paths)
         license_text = (pristine / spec["license_file"]).read_text()
+        allowed = sorted(
+            p.relative_to(pristine).as_posix()
+            for d in (pristine, pristine / "src")
+            if d.is_dir()
+            for p in d.iterdir()
+        )
 
     env = out / "environment"
     env.mkdir(parents=True)
@@ -231,6 +237,7 @@ def build(task: dict) -> None:
         "timeout_s": 900,
     }
     (tests / "pytest.ini").write_text(spec["pytest_ini"])
+    (tests / "allowed_names.json").write_text(json.dumps(allowed, indent=1) + "\n")
     (tests / "config.json").write_text(json.dumps(config, indent=2) + "\n")
     (tests / "test.sh").write_text(
         "#!/bin/bash\nmkdir -p /logs/verifier\necho 0 > /logs/verifier/reward.txt\npython3 /tests/verify.py\n"
