@@ -126,7 +126,7 @@ base vs adapter on smoke (no difference shown).
 1. Attention backend: the same tasks with `ROCM_AITER_UNIFIED_ATTN`, paired against round 2 (`devbench-r4-aiter`,
    running). Decides the rollout backend.
 2. More hard tasks: most of the set no longer separates conditions.
-4. RL pilot on GPUs 4 and 5:
+3. RL pilot on GPUs 4 and 5:
    - kernel parity (`rl/parity/kernel_parity.py`);
    - 27B LoRA steps at 16k, 32k and 64k tokens;
    - LoRA hot-load round trip;
