@@ -12,9 +12,9 @@ source = "swe-smith"
 repository = "jmespath/jmespath.py"
 repository_commit = "2812594e69d43098ef60f81f4efc404c071b0418"
 repository_license = "MIT"
-hidden_tests = true
+hidden_tests = false
 fail_to_pass = 3
-fail_to_pass_visible = 0
+fail_to_pass_visible = 3
 swe_smith_modifiers = ["func_pm_remove_cond"]
 
 [verifier]

@@ -76,3 +76,27 @@ network: the high values were measured during a 55.6 GB download on the same hos
   ATIF, so tool and model call counts become null when a subagent ran. Whether output tokens include reasoning tokens for
   every harness is **unverified**.
 - **Harbor 0.25.0** keeps `oracle` script failures silent (`failed`), while 0.27.0 reports `agent_error`.
+
+## Serving: attention backend and long-context decode (vLLM 0.33.0 ROCm, Qwen3.8-27B)
+
+Measured 2026-11-26 on one MI325X, streamed, 400 output tokens, one request at a time; raw numbers and the script
+are in `/data3/users/oliver/experiments/agentlab/devbench/perf-attn/` (not in git), summarised in the
+[devbench report](reports/devbench-benchmark.md#performance).
+
+| Prompt tokens | Default `ROCM_ATTN` (decode tok/s) | `--attention-backend ROCM_AITER_UNIFIED_ATTN` |
+|---|---|---|
+| 816 | 69 | 78 |
+| 9,201 | 32 | 73 |
+| 29,777 | 14 | 59 |
+| 60,644 | 7.6 | 46 |
+
+- vLLM picks `ROCM_ATTN` and logs "Cannot use ROCm custom paged attention kernel, falling back to Triton
+  implementation": its custom kernel needs head size 64 or 128 and block size 16 or 32
+  (`vllm/platforms/rocm.py`, `use_rocm_custom_paged_attention`), which this model's attention layers do not meet.
+  The Triton paged-decode fallback slows down roughly in proportion to context length.
+- The same slowdown appears on a second GPU without LoRA (control), so it is the backend, not LoRA or the device.
+- Agent contexts in our runs reach 45k tokens, so this, not the harness, explains the earlier observation of
+  decode falling from about 43 to 18 tok/s in long trials.
+- Greedy outputs of the two backends agree for the first few hundred characters and then diverge (bf16 kernel
+  differences). Whether task success changes has **not** been measured; all benchmark numbers so far use the
+  default backend.

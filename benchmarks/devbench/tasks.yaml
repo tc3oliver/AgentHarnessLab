@@ -148,7 +148,7 @@ tasks:
         tablib.import_set("H1,H2,H3\nA,B\nC,D,E\n\nF\n", format="csv")
 
     must give the rows `('A', 'B', '')`, `('C', 'D', 'E')` and `('F', '', '')`. The same rule applies when
-    loading XLSX and ODS files, both into a `Dataset` and into a `Databook`.
+    loading XLSX files (into a `Dataset` and into a `Databook`) and ODS files (into a `Dataset`).
 
     Ragged import is currently broken for CSV, XLSX and ODS. Fix all three. Do not modify the existing
     tests.
@@ -565,7 +565,6 @@ tasks:
   source: swe-smith
   bug_patches:
   - jmespath.func_pm_remove_cond.1997963fcf.diff
-  hide: true
   fail_to_pass:
   - tests/test_compliance.py::test_error_expression[given18-max(array)-invalid-type-functions.json]
   - tests/test_compliance.py::test_error_expression[given20-min(array)-invalid-type-functions.json]
@@ -577,10 +576,12 @@ tasks:
         TypeError: '>' not supported between instances of 'str' and 'int'
 
     Functions that take an array of numbers or an array of strings (`max`, `min`, `sort`, and others) must
-    reject arrays that mix element types with `jmespath.exceptions.JMESPathTypeError`, as the JMESPath
-    specification requires, instead of leaking a Python `TypeError`.
+    reject arrays that mix element types with a JMESPath error (`jmespath.exceptions.JMESPathTypeError`, a
+    subclass of `JMESPathError`), as the JMESPath specification requires, instead of leaking a Python
+    `TypeError`.
 
-    Find and fix the cause. Do not modify the existing tests or the compliance test data.
+    Find and fix the cause; the whole test suite (`python -m pytest tests`) must pass. Do not modify the
+    existing tests or the compliance test data.
 - id: ahl-dev-jmespath-comparisons-module
   repo: jmespath
   category: refactoring

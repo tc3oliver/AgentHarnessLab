@@ -1,13 +1,10 @@
 {
   "runner": "pytest",
   "tests_dir": "tests",
-  "pytest_args": [
-    "-o",
-    "addopts="
-  ],
-  "pythonpath": "/app/src",
   "restore_paths": [
     "tests",
+    "conftest.py",
+    "pytest.ini",
     ".pytest.ini"
   ],
   "fail_to_pass": [

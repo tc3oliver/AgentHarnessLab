@@ -1,10 +1,11 @@
 {
   "runner": "pytest",
   "tests_dir": "tests",
-  "pytest_args": [],
-  "pythonpath": "/app",
   "restore_paths": [
-    "tests"
+    "tests",
+    "conftest.py",
+    "pytest.ini",
+    ".pytest.ini"
   ],
   "fail_to_pass": [
     "tests/test_devbench_windows_module.py::test_functions_live_in_the_new_module",

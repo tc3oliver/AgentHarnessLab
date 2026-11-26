@@ -118,10 +118,11 @@ def containers(samples: Iterable[dict[str, Any]]) -> dict[str, list[tuple[str, f
 def _owner(
     spans: dict[str, list[tuple[str, float, float]]], ip: str | None, t: float, slack: float
 ) -> str | None:
-    for name, first, last in spans.get(ip or "", []):
-        if first - slack <= t <= last + slack:
-            return name
-    return None
+    """The container holding the address at time t; if reused within the slack, the latest one started."""
+    found = [
+        (first, name) for name, first, last in spans.get(ip or "", []) if first - slack <= t <= last + slack
+    ]
+    return max(found)[1] if found else None
 
 
 def _union(intervals: list[tuple[float, float]]) -> float:
@@ -188,7 +189,8 @@ def analyse(run_dir: Path, requests_log: Path, samples_log: Path, slack: float =
     }
     intervals: dict[str, list[tuple[float, float]]] = {name: [] for name in perf}
     for request in _jsonl(requests_log):
-        if request.get("path", "").rstrip("/").split("/")[-1] not in ("completions", "responses", "messages"):
+        # Only the chat-completions shape is parsed for tokens; /responses and /messages are not counted.
+        if not request.get("path", "").rstrip("/").endswith("/completions"):
             continue
         container = _owner(spans, request.get("client"), request["start"], slack)
         trial = next((t for key, t in by_name.items() if container and key in container.lower()), None)

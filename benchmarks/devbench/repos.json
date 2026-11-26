@@ -25,27 +25,8 @@
         "pytest",
         "pyyaml"
       ],
-      "reference_passed": 1119
-    },
-    "lark": {
-      "github": "lark-parser/lark",
-      "commit": "9a4fb9c7458e8155636773a3cded0016d52516da",
-      "archive_sha256": "1cadd357952701f6fba4d2718cbdc0701427091d02f099cccb7328cb2360444f",
-      "license": "MIT",
-      "license_file": "LICENSE",
-      "src": [
-        "lark"
-      ],
-      "tests": "tests",
-      "test_cmd": "python -m pytest -p no:cacheprovider tests",
-      "build_requires": [
-        "setuptools>=80",
-        "setuptools-scm>=9.2.2"
-      ],
-      "extras": "",
-      "test_requires": [
-        "pytest"
-      ]
+      "reference_passed": 1119,
+      "pytest_ini": "[pytest]\n"
     },
     "tablib": {
       "github": "jazzband/tablib",
@@ -57,7 +38,7 @@
         "src/tablib"
       ],
       "tests": "tests",
-      "test_cmd": "python -m pytest -p no:cacheprovider -o addopts= tests",
+      "test_cmd": "python -m pytest -p no:cacheprovider tests",
       "build_requires": [
         "setuptools>=58",
         "setuptools_scm[toml]>=6.2"
@@ -66,7 +47,8 @@
       "test_requires": [
         "pytest"
       ],
-      "reference_passed": 188
+      "reference_passed": 188,
+      "pytest_ini": "[pytest]\nnorecursedirs = .git .*\n"
     },
     "more-itertools": {
       "github": "more-itertools/more-itertools",
@@ -86,7 +68,8 @@
       "test_requires": [
         "pytest"
       ],
-      "reference_passed": 772
+      "reference_passed": 772,
+      "pytest_ini": "[pytest]\n"
     },
     "semver": {
       "github": "python-semver/python-semver",
@@ -98,7 +81,7 @@
         "src/semver"
       ],
       "tests": "tests",
-      "test_cmd": "python -m pytest -p no:cacheprovider -o addopts= tests",
+      "test_cmd": "python -m pytest -p no:cacheprovider tests",
       "build_requires": [
         "setuptools>=77.0.3"
       ],
@@ -106,7 +89,8 @@
       "test_requires": [
         "pytest"
       ],
-      "reference_passed": 532
+      "reference_passed": 532,
+      "pytest_ini": "[pytest]\nnorecursedirs = .git build .env/ env/ .pyenv/ .tmp/ .eggs/ venv/\npythonpath = src tests\nfilterwarnings =\n    ignore:Function 'semver.*:DeprecationWarning\n    ignore:Function 'semver.compare' is deprecated.*:PendingDeprecationWarning\n"
     },
     "jmespath": {
       "github": "jmespath/jmespath.py",
@@ -126,7 +110,8 @@
       "test_requires": [
         "pytest"
       ],
-      "reference_passed": 991
+      "reference_passed": 991,
+      "pytest_ini": "[pytest]\n"
     },
     "itsdangerous": {
       "github": "pallets/itsdangerous",
@@ -147,7 +132,9 @@
         "pytest",
         "freezegun"
       ],
-      "reference_passed": 297
+      "reference_passed": 297,
+      "pytest_ini": "[pytest]\nfilterwarnings =\n    error\n"
     }
-  }
+  },
+  "pytest_ini_note": "Verifier-owned pytest configuration: the upstream ini options without addopts (coverage, doctests)."
 }

@@ -1,14 +1,11 @@
 {
   "runner": "pytest",
   "tests_dir": "tests",
-  "pytest_args": [
-    "-o",
-    "addopts="
-  ],
-  "pythonpath": "/app/src",
   "restore_paths": [
     "tests",
-    "pytest.ini"
+    "conftest.py",
+    "pytest.ini",
+    ".pytest.ini"
   ],
   "fail_to_pass": [
     "tests/test_devbench_row_module.py::test_row_lives_in_new_module",

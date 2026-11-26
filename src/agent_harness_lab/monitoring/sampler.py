@@ -29,13 +29,17 @@ _LINE = re.compile(r"^([a-zA-Z_:][a-zA-Z0-9_:]*)(\{[^}]*\})?\s+([-+0-9.eEinfNa]+
 
 
 def parse_metrics(text: str) -> dict[str, float]:
-    """Sum each kept metric over its labels."""
+    """Sum each kept metric over its labels (the maximum for `*_perc` fractions)."""
     found: dict[str, float] = {}
     for line in text.splitlines():
         match = _LINE.match(line.strip())
         if match and KEEP.match(match.group(1)):
             name = match.group(1).removeprefix("vllm:")
-            found[name] = found.get(name, 0.0) + float(match.group(3))
+            value = float(match.group(3))
+            # counters and request gauges add up over labels; a usage fraction does not
+            found[name] = (
+                max(found.get(name, value), value) if name.endswith("_perc") else found.get(name, 0.0) + value
+            )
     return found
 
 

@@ -203,7 +203,7 @@ def build(task: dict) -> None:
             git(work, "apply", "--check", "-", stdin=solution)
         else:
             solution = git(work, "diff", "HEAD~1", "HEAD~2", "--", ".", f":(exclude){spec['tests']}")
-        restore_paths = [spec["tests"], *(n for n in PYTEST_CONFIG if (pristine / n).exists())]
+        restore_paths = [spec["tests"], *PYTEST_CONFIG]  # agent-created copies are deleted too
         restore = deterministic_tar(pristine, restore_paths)
         license_text = (pristine / spec["license_file"]).read_text()
 
@@ -222,17 +222,15 @@ def build(task: dict) -> None:
     hidden = ROOT / "hidden" / task["id"]
     if hidden.is_dir():
         shutil.copytree(hidden, tests / "hidden")
-    pythonpath = "/app/src" if any(s.startswith("src/") for s in spec["src"]) else "/app"
     config = {
         "runner": runner,
         "tests_dir": spec["tests"],
-        "pytest_args": ["-o", "addopts="] if "addopts=" in spec["test_cmd"] else [],
-        "pythonpath": pythonpath,
         "restore_paths": restore_paths,
         "fail_to_pass": task["fail_to_pass"],
         "min_passed": task.get("min_passed", spec.get("reference_passed", 0)),
         "timeout_s": 900,
     }
+    (tests / "pytest.ini").write_text(spec["pytest_ini"])
     (tests / "config.json").write_text(json.dumps(config, indent=2) + "\n")
     (tests / "test.sh").write_text(
         "#!/bin/bash\nmkdir -p /logs/verifier\necho 0 > /logs/verifier/reward.txt\npython3 /tests/verify.py\n"

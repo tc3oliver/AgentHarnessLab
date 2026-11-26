@@ -130,7 +130,12 @@ class Proxy:
             "start": start,
             "in_flight_at_start": self.in_flight,
         }
-        headers = {k: v for k, v in request.headers.items() if k.lower() not in HOP_BY_HOP}
+        # Ask for an uncompressed body: the proxy parses it, and drops Content-Encoding on the way back.
+        headers = {
+            k: v
+            for k, v in request.headers.items()
+            if k.lower() not in HOP_BY_HOP and k.lower() != "accept-encoding"
+        }
         stats = StreamStats()
         response: web.StreamResponse | None = None
         try:
@@ -157,10 +162,11 @@ class Proxy:
         except (ConnectionResetError, asyncio.CancelledError) as exc:
             record["error"] = type(exc).__name__
             raise
-        except Exception as exc:  # the agent sees a 502; the log keeps the reason
+        except Exception as exc:
             record["error"] = f"{type(exc).__name__}: {exc}"[:300]
-            if response is None:
-                response = web.Response(status=502, text="upstream error")
+            if response is not None:
+                raise  # headers sent: drop the connection so the client sees a broken stream, not a 200
+            response = web.Response(status=502, text="upstream error")
         finally:
             self.in_flight -= 1
             usage = stats.usage or {}

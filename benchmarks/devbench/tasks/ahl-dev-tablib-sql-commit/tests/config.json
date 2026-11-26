@@ -1,14 +1,11 @@
 {
   "runner": "pytest",
   "tests_dir": "tests",
-  "pytest_args": [
-    "-o",
-    "addopts="
-  ],
-  "pythonpath": "/app/src",
   "restore_paths": [
     "tests",
-    "pytest.ini"
+    "conftest.py",
+    "pytest.ini",
+    ".pytest.ini"
   ],
   "fail_to_pass": [
     "tests/test_tablib.py::SQLFormatTests::test_sql_date_and_timestamp_literals",
