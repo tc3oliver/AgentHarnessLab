@@ -11,7 +11,7 @@ never committed.
 | Evaluation | Harbor runner, prebuilt images, Git and Hugging Face dataset loaders (PR #4), devbench (30 tasks), request-level performance monitoring |
 | Models served | Qwen3.8-27B `37561816e66b` with the reference Pi adapter `41396a9f14d9` as a LoRA module, vLLM 0.33.0 ROCm, one MI325X |
 | Harnesses evaluated with a real model | Pi 1.5.2, OpenCode 2.2.7 (Harbor 0.27.0) |
-| Training | pilot rung 1 (kernel parity) passed; no training run yet |
+| Training | pilot rungs 1-2 passed (kernel parity, 27B LoRA steps to 64k on one GPU); no training run yet |
 
 ## Merged pull requests
 
@@ -23,6 +23,33 @@ never committed.
 | #4 | Git and Hugging Face dataset loaders, task-list pins, repository split; smoke task 020 fix | `4d337ee` |
 
 ## Log
+
+### 2026-11-26: RL pilot rung 2, local FlashAttention and 27B LoRA steps up to 64k tokens
+
+GPU 4, image `agentlab-trainer:trl1.19.0`, no network. Scripts and outputs are in `rl/parity/`.
+
+- **Attention kernel:** TRL 1.19.0's tree attention fetches `kernels-community/aiter-flash-attn` from the Hub at
+  run time, but the image has no `kernels` package. We use the image's own ROCm `flash_attn` 2.8.3 instead, with no
+  binary downloaded at run time. `fa_parity.py` (`fa-gpu4.jsonl`), varlen, causal, 24 query and 4 KV heads, head
+  dim 256, against fp32 SDPA:
+  - output 0.20-0.21%, dq 0.27-0.28%, dk 0.33%, dv 0.32% at 1k, 8k and 16k tokens;
+  - 64k forward and backward finite in 0.78 s.
+- **LoRA steps** (`lora_step.py`, `lora-gpu4-v2.jsonl`):
+  - setup: Qwen3.8-27B in bf16, LoRA r 32 on all linear layers (233M trainable), gradient checkpointing, TRL tree
+    attention and tree Gated DeltaNet and conv, chunked loss, AdamW;
+  - **criterion:** one finite forward, backward and optimizer step at 64k tokens on one GPU. **Met.**
+
+  | Tokens | Step s | Peak GB |
+  |---|---|---|
+  | 4k (first step, includes warm-up) | 46 | 65 |
+  | 16k | 16 | 75 |
+  | 32k | 26 | 93 |
+  | 64k | 52 | 132 |
+
+  Loss on random tokens is 12.4, about ln(vocabulary size), as expected.
+- **First attempt failed:** out of memory at 16k tokens, 182 GB at 4k. The test left the model in eval mode, so
+  gradient checkpointing was off, and it built full-vocabulary fp32 logits. Both are fixed in the script.
+  TRL's trainer scores only sampled tokens.
 
 ### 2026-11-26: RL pilot rung 1, kernel parity on gfx942
 
@@ -161,10 +188,10 @@ base vs adapter on smoke (no difference shown).
 ## Next
 
 1. More hard tasks: most of the set no longer separates conditions.
-2. Harness config fixes before rollouts: a Pi command timeout, and the OpenCode Web Search tool disabled.
+2. Harness configs for rollouts (decision 0010): OpenCode web tools denied (`opencode-v2-noweb.yaml`); Pi unmodified.
 3. RL pilot on GPUs 4 and 5:
    - ~~kernel parity~~ (passed);
-   - 27B LoRA steps at 16k, 32k and 64k tokens;
+   - ~~27B LoRA steps at 16k, 32k and 64k tokens~~ (passed, 132 GB at 64k);
    - LoRA hot-load round trip;
    - one OpenEnv Pi rollout;
    - three GRPO steps.
