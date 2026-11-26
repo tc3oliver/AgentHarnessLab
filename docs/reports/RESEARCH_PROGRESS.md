@@ -24,6 +24,33 @@ never committed.
 
 ## Log
 
+### 2026-11-26: devbench round 2 (30 tasks × 2 harnesses × 3 attempts)
+
+Run `devbench/runs/devbench-r2`, config `devbench/cfg/devbench-r2.yaml` (config hash `bd1edd4e…`), code `6045cb6`
+(verifier v4), base model, temperature 0.8, 1800 s per trial, 4 concurrent, default attention backend. Analysis:
+`devbench/analysis/devbench-r2.md` (`analysis/analyze.py`).
+
+| Harness | Solved / trials | Rate (Wilson 95%) | pass@1 | Failures | Median agent s | Mean tokens in/out (solved) | Mean tool calls (solved) |
+|---|---|---|---|---|---|---|---|
+| Pi 1.5.2 | 74 / 90 | 82% (73-89%) | 80% | 14 wrong, 2 timeout | 139 | 195k / 2.2k | 20 |
+| OpenCode 2.2.7 | 80 / 90 | 89% (81-94%) | 90% | 10 timeout, 0 wrong | 266 | 630k / 3.8k | 29 |
+
+- Infra, verifier and agent errors: 0 of 180.
+- Paired by task: OpenCode is better on 6 tasks, Pi on 2, and 22 are tied. Mean difference +6.7 points, bootstrap
+  95% CI [-1.1, +14.4], sign test p = 0.29. **No significant difference between the harnesses.**
+- **Every OpenCode failure is a wall-clock timeout**, and on the hardest tasks there were only 30-45 model calls in
+  1800 s. OpenCode's prompts are longer (median maximum prompt 24k tokens, against 8k for Pi), and under the
+  default attention backend decode slows with context (median request 8.8 tok/s for OpenCode, against 15.8 for
+  Pi). The OpenCode failures therefore measure serving speed at least as much as the harness. The backend run
+  (Next, item 3) tests this.
+- A failed Pi trial costs 8.8 times the input tokens of a solved one (1.72M against 195k) and runs 78 turns on
+  average.
+- Task tools account for 4% of agent time for both harnesses; the rest is model time.
+- 22 tasks are solved in every attempt by both harnesses, so the set is too easy to separate adapters well. Hard
+  tasks: `more-itertools-seekable-index` (0/6), `markdown-bogus-declaration` (1/6), `more-itertools-distinct-permutations` (2/6).
+- The 4-hour wrapper in `run.sh` would have cut the run off (it took 6 h 46 min). The wrapper process was
+  stopped by hand and the evaluation continued unaffected. The limit is now 12 hours.
+
 ### 2026-11-26: devbench and the decode slowdown
 
 - **devbench built** (`benchmarks/devbench`, decision 0007): 30 tasks from six MIT/BSD repositories, SWE-smith
@@ -68,8 +95,8 @@ base vs adapter on smoke (no difference shown).
 
 ## Next
 
-1. Round 2: devbench 30 tasks × Pi and OpenCode × 3 attempts (`devbench-r2`, verifier v4, started 03:18 UTC; running).
-2. Pi base vs the reference Pi adapter on devbench, paired, 3 attempts.
+1. Pi base vs the reference Pi adapter on devbench, paired with round 2's Pi trials, 3 attempts (`devbench-r3-adapter`, running).
+2. More hard tasks: most of the set no longer separates conditions.
 3. Attention backend: the same tasks with `ROCM_AITER_UNIFIED_ATTN`, paired against round 2. Decides the rollout
    backend.
 4. RL pilot on GPUs 4 and 5:
