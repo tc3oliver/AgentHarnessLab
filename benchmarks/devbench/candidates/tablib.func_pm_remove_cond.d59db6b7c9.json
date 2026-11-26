@@ -1,1 +1,0 @@
-{"modifier": "func_pm_remove_cond", "file": "src/tablib/formats/_ods.py", "entity": "convert_date", "explanation": "There is one or more missing conditionals that causes the bug."}

@@ -668,23 +668,6 @@ tasks:
     It must raise `ValueError` with the message `Too many items in iterable (got at least 4)`.
 
     Fix the library. Do not modify the existing tests.
-- id: ahl-dev-hard-jmespath-token-positions
-  repo: jmespath
-  category: bug-fix
-  difficulty: hard
-  source: swe-smith
-  bug_patches:
-  - jmespath.func_pm_op_change_const.c61ef399e5.diff
-  hide: true
-  fail_to_pass:
-  - tests/test_lexer.py::TestRegexLexer::test_position_multiple_tokens
-  instruction: |
-    The repository in `/app` is jmespath.
-
-    `list(jmespath.lexer.Lexer().tokenize('foo.bar'))` currently reports the `.` token with `start` 3 and `end` 5.
-    It must be `start` 3 and `end` 4.
-
-    Fix the library. Do not modify the existing tests.
 - id: ahl-dev-hard-jmespath-parse-error-expression
   repo: jmespath
   category: bug-fix
@@ -706,6 +689,28 @@ tasks:
             ^
 
     Fix the library. Do not modify the existing tests.
+- id: ahl-dev-hard-jmespath-incomplete-expression
+  repo: jmespath
+  category: bug-fix
+  difficulty: hard
+  source: swe-smith
+  bug_patches:
+  - jmespath.func_pm_remove_cond.1b95285fac.diff
+  hide: true
+  fail_to_pass:
+  - tests/test_parser.py::TestErrorMessages::test_incomplete_expression_with_missing_paren
+  instruction: |
+    The repository in `/app` is jmespath.
+
+    `jmespath.compile('length(@,')` currently raises a plain `ParseError` with the message `invalid token: Parse error
+    at column 9, token "" (EOF), for expression: ...`. It must raise `jmespath.exceptions.IncompleteExpressionError`
+    (a `ParseError` subclass), with the message
+
+        Invalid jmespath expression: Incomplete expression:
+        "length(@,"
+                  ^
+
+    Fix the library. Do not modify the existing tests.
 - id: ahl-dev-hard-semver-deprecation-message
   repo: semver
   category: bug-fix
@@ -719,14 +724,14 @@ tasks:
   instruction: |
     The repository in `/app` is python-semver.
 
-    A function decorated with `semver._deprecated.deprecated(version="2.10.0")` and no `replace`, named `mock_func`,
-    currently emits a `DeprecationWarning` with the message
+    A deprecated module-level function such as `semver.bump_major('1.2.3')` currently emits a `DeprecationWarning` with
+    the message
 
-        Function 'semver.mock_func' is deprecated. This function will be removed in semver 3.
+        Function 'semver.bump_major' is deprecated. This function will be removed in semver 3.
 
-    The message must also say since which version the function is deprecated and what to use instead: it must
-    contain `Deprecated since version 2.10.0.` before the removal sentence and end with
-    `Use the respective 'semver.Version.mock_func' instead.`
+    The message must also say since which version the function is deprecated and what to use instead: it must contain
+    `Deprecated since version 2.10.0.` before the removal sentence and end with
+    `Use the respective 'semver.Version.bump_major' instead.`
 
     Fix the library. Do not modify the existing tests.
 - id: ahl-dev-hard-markdown-setext-meta-registry
@@ -798,7 +803,7 @@ tasks:
       `<p>a &ndash; b</p>`. Quotes, dashes, ellipses and angled quotes are all affected.
 
     Fix the library. Do not modify the existing tests.
-- id: ahl-dev-hard-tablib-dbf-yaml-dates
+- id: ahl-dev-hard-tablib-dbf-yaml-rst
   repo: tablib
   category: multi-file
   difficulty: hard
@@ -806,7 +811,7 @@ tasks:
   bug_patches:
   - tablib.func_pm_remove_assign.814393af23.diff
   - tablib.func_pm_remove_assign.f4679dcec2.diff
-  - tablib.func_pm_remove_cond.3236b63b66.diff
+  - tablib.func_pm_op_change.86356b31d1.diff
   hide: true
   fail_to_pass:
   - tests/test_tablib.py::DBFTests::test_dbf_import_set
@@ -814,9 +819,9 @@ tasks:
   - tests/test_tablib.py::TablibTestCase::test_auto_format_detect
   - tests/test_tablib.py::YAMLTests::test_yaml_format_detect
   - tests/test_tablib.py::YAMLTests::test_yaml_import_book
-  - tests/test_tablib_dbfpy_packages_utils.py::UtilsGetDateTestCase::test_getDate_datetime_string_yymmdd
-  - tests/test_tablib_dbfpy_packages_utils.py::UtilsGetDateTestCase::test_getDate_datetime_string_yyyy_mm_dd
-  - tests/test_tablib_dbfpy_packages_utils.py::UtilsGetDateTestCase::test_getDate_datetime_timestamp
+  - tests/test_tablib.py::DocTests::test_rst_formatter_doctests
+  - tests/test_tablib.py::RSTTests::test_rst_force_grid
+  - tests/test_tablib.py::TablibTestCase::test_datetime_append
   instruction: |
     The repository in `/app` is tablib. Three things are broken:
 
@@ -824,34 +829,38 @@ tasks:
       `dataset.dbf` returned does not round-trip.
     - YAML handling raises `NameError` where it used to work: `tablib.detect_format('- {age: 90, first_name: John,
       last_name: Adams}')` and loading that text into a `Dataset` should give format `yaml` and one row, but raise instead.
-    - In the bundled DBF library, converting a Unix timestamp such as `1571515306` or a compact date string such as
-      `'20191019'` or `'191019'` to a date raises an error instead of giving `datetime.date(2019, 10, 19)`.
+    - Exporting a dataset to a reStructuredText grid table (`dataset.export('rst', force_grid=True)`) raises a
+      `TypeError`; the simple table still works.
 
     Fix the library. Do not modify the existing tests.
-- id: ahl-dev-hard-tablib-dbf-rst-ods
+- id: ahl-dev-hard-tablib-dbf-df-ods
   repo: tablib
   category: multi-file
   difficulty: hard
   source: swe-smith
   bug_patches:
   - tablib.func_pm_class_rm_funcs.c04426e9de.diff
-  - tablib.func_pm_op_change.86356b31d1.diff
-  - tablib.func_pm_remove_cond.d59db6b7c9.diff
+  - tablib.func_pm_remove_assign.d8a31a7824.diff
+  - tablib.func_pm_ctrl_invert_if.72fd6fb804.diff
   hide: true
   fail_to_pass:
   - tests/test_tablib.py::DBFTests::test_dbf_export_set
   - tests/test_tablib.py::DBFTests::test_dbf_import_set
-  - tests/test_tablib.py::DocTests::test_rst_formatter_doctests
-  - tests/test_tablib.py::RSTTests::test_rst_force_grid
+  - tests/test_tablib.py::TablibTestCase::test_auto_format_detect
   - tests/test_tablib.py::TablibTestCase::test_datetime_append
+  - tests/test_tablib.py::TablibTestCase::test_separator_append
+  - tests/test_tablib.py::TablibTestCase::test_unicode_append
+  - tests/test_tablib.py::ODSTests::test_ods_export_import_boolean
   - tests/test_tablib.py::ODSTests::test_ods_export_import_set
+  - tests/test_tablib.py::ODSTests::test_ods_import_set_skip_lines
   instruction: |
     The repository in `/app` is tablib. Three things are broken:
 
-    - Exporting a dataset to DBF fails.
-    - Exporting a dataset to a reStructuredText grid table (`dataset.export('rst', force_grid=True)`) raises a
-      `TypeError`; the simple table still works.
-    - Dates and datetimes written to an ODS file come back as empty cells when the file is read again.
+    - Exporting a dataset to DBF (`dataset.dbf`) fails.
+    - Exporting a dataset to a pandas DataFrame (`dataset.export('df')`) fails with a `NameError`.
+    - Reading back a dataset exported to ODS (`dataset.ods`, loaded into a new `Dataset` with `format='ods'`) gives
+      the wrong data: the columns are lost and cells come back as empty or as the text `None`. Headers and values
+      (`None` as an empty cell) must survive the round trip.
 
     Fix the library. Do not modify the existing tests.
 - id: ahl-dev-hard-semver-cli-compat-deprecated
@@ -884,7 +893,7 @@ tasks:
       should print `2.0.0`.
     - `Version(1, 2, 3).is_compatible(other)` with an argument that is not a `Version` (for example `"wrongtype"` or
       a list) no longer raises `TypeError("Expected a Version type but got ...")`.
-    - A function decorated with `deprecated(remove="Gone in 99.")` warns with "This function will be removed in
-      semver 3." instead of the custom text; without `remove` the message contains the word `None`.
+    - The `DeprecationWarning` of the deprecated module-level functions is wrong: `semver.bump_major('1.2.3')` warns
+      with a message that contains the word `None` instead of "This function will be removed in semver 3.".
 
     Fix the library. Do not modify the existing tests.

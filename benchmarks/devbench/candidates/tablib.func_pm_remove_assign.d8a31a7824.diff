@@ -1,0 +1,10 @@
+--- a/src/tablib/formats/_df.py
++++ b/src/tablib/formats/_df.py
+@@ -31,7 +31,6 @@
+             raise NotImplementedError(
+                 'DataFrame Format requires `pandas` to be installed.'
+                 ' Try `pip install "tablib[pandas]"`.')
+-        dataframe = DataFrame(dset.dict, columns=dset.headers)
+         return dataframe
+ 
+     @classmethod

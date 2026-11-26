@@ -4,15 +4,15 @@ split: validation
 task_names:
   - ahl-dev-hard-more-itertools-bucket-validator
   - ahl-dev-hard-more-itertools-strictly-n-default
-  - ahl-dev-hard-jmespath-token-positions
   - ahl-dev-hard-jmespath-parse-error-expression
+  - ahl-dev-hard-jmespath-incomplete-expression
   - ahl-dev-hard-semver-deprecation-message
   - ahl-dev-hard-markdown-setext-meta-registry
   - ahl-dev-hard-markdown-ancestors-html-smarty
-  - ahl-dev-hard-tablib-dbf-yaml-dates
-  - ahl-dev-hard-tablib-dbf-rst-ods
+  - ahl-dev-hard-tablib-dbf-yaml-rst
+  - ahl-dev-hard-tablib-dbf-df-ods
   - ahl-dev-hard-semver-cli-compat-deprecated
-tasks_hash: sha256:25ad61a9e0b8fe0e7b960ff51e373cb154735be05634461d61fdb49181281105
+tasks_hash: sha256:14d0ac9f21289acda91aae0dfafd19cc3205d87219841332fe78f12b2efaeffa
 license: Apache-2.0 AND MIT AND BSD-3-Clause
 redistributable: true
 notes: >-

@@ -1,0 +1,1 @@
+{"modifier": "func_pm_remove_cond", "file": "jmespath/parser.py", "entity": "_error_nud_token", "explanation": "There is one or more missing conditionals that causes the bug."}
