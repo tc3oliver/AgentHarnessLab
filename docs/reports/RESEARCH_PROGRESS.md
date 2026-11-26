@@ -26,6 +26,19 @@ never committed.
 
 ## Log
 
+### 2026-11-26: Flash-Next feasibility probes (Phase D)
+
+Full note: [flash-next-feasibility.md](flash-next-feasibility.md). GPU 6, artifacts in `flashnext/`.
+- **Serving with LoRA:** works on one GPU, but only with the Triton FP8 MoE backend. With LoRA on, vLLM refuses the
+  AITER MoE backend at startup.
+  - An identity adapter matches the base model exactly (Δ logprob 0.0).
+  - A random adapter shifts log-probs by up to 0.20, so the adapter is really applied.
+  - Decode speed (warm, one 92-token request): 114 tok/s base, 73 tok/s with the adapter.
+- **Training step:** blocked. The FP8 checkpoint loads in the trainer image (169.4 GiB on one GPU). The forward pass
+  fails, because transformers' fine-grained FP8 kernel comes from the `kernels` Hub loader, which we do not install
+  (same policy as pilot rung 2).
+- **Recommendation:** v0.5 stays evaluation-only until a reviewed, vendored FP8 kernel exists.
+
 ### 2026-11-26: devbench hard tier (10 tasks), built, not yet evaluated
 
 The original 30 tasks saturate. Test-repair and refactoring were solved in 124/126 and 59/60 trials across all five
