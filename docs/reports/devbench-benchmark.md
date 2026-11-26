@@ -139,7 +139,7 @@ so the OpenCode-Pi difference is not a statement about either harness alone.
 | test-repair | 7 | 21/21 | 21/21 | 20/21 | 21/21 | 21/21 |
 
 Hard under every condition: `more-itertools-seekable-index` (2 of 15 trials) and `markdown-processing-instruction`
-(9/15). Hard for Pi only: `more-itertools-gray-product` (3 of 9 Pi trials; OpenCode 6/6). `tablib-dbf-export` is solved by OpenCode and missed by the adapter
+(9/15). Hard for Pi only: `more-itertools-gray-product` (3 of 9 Pi trials; OpenCode 6/6). `tablib-dbf-export` is solved by OpenCode on the default backend (3/3) and missed by the adapter
 (0/3), the one clear adapter regression.
 
 ### Where the time goes
