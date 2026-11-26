@@ -41,7 +41,7 @@ So OpenCode v2 can be **evaluated** today and **trained** only after OpenEnv gai
 | `--expose` defaults to `gradio`; `cloudflare` also exists | both open public tunnels | allow `direct` only |
 | `--expose direct` advertises `127.0.0.1` | Docker sandboxes cannot reach the proxy | advertise the bridge address |
 | A session's empty `api_key` overrides the server key | the probe gets a 401 and falls back to `capture_level=text`; rollouts are untrainable | pass the endpoint key in the session factory |
-| Probe results are cached per (url, model) for the server's lifetime | one bad probe poisons every later rollout | restart the OpenEnv server after a failed probe |
+| Probe results are cached per upstream (url, model; read in OpenEnv's source) for the server's lifetime | one bad probe poisons every later rollout | restart the OpenEnv server after a failed probe |
 | TRL's async trainer calls `/server_info`, `/pause`, `/resume` | vLLM serves them only in dev mode, unauthenticated | dev mode stays off; the trainer gets a fixed server info and no-op pause/resume (LoRA hot-load only) |
 | TRL tree attention loads the `kernels-community/aiter-flash-attn` Hub kernel | the kernel is downloaded and run from the Hub | use the image's own `flash_attn` 2.8.3 |
 | `from_pretrained` loads the VL model; LoRA `all-linear` includes `visual.*` | vLLM rejects the adapter | name `q,k,v,o,gate,up,down` explicitly |

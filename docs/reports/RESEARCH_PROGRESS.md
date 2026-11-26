@@ -50,11 +50,12 @@ Adapters and `log_history.json`: `rl/adapters/grpo-pilot/`. OpenEnv server log: 
 | 2 | −0.128 | 0.073 | 1.152 | 0.155 | 0.48 / 1.000 / 4.47 | 0.11 % | 0.97 s |
 | 3 | −0.130 | 0.053 | 1.099 | 0.164 | 0.29 / 1.000 / 1.62 | 0.09 % | 1.12 s |
 
-- 51–68 trained samples per step (about 93k–98k trained tokens out of 127k–131k forwarded), 25–26 minutes per
-  step for steps 2 and 3, 105 minutes in total including model load.
-- Rollout drift tokens were 0 in all three logged steps. Staleness was at most 1.
+- 51–68 trained samples per step (about 92k–98k trained tokens out of 127k–131k forwarded), 25–26 minutes per
+  step for steps 2 and 3, 105 minutes of training time in total (`train_runtime`).
+- Rollout drift tokens were 0 in all three logged steps. Staleness was at most 1. The final summary row of
+  `log_history.json` (drift max 261, mean 0.96) also counts the rollouts cancelled at shutdown.
 - The OpenEnv server probed each adapter (v1, v2, v3) as `capture_level=tokens rollout_type=train`.
-- 8 rollouts failed with `rollout produced no capture`. All 8 came after `Stopping AsyncRolloutWorker`: they were
+- 4 rollouts failed with `rollout produced no capture`. All 4 came after `Stopping AsyncRolloutWorker`: they were
   in flight when training ended and were cancelled. None failed during the three steps.
 - The rewards do not show learning, and three steps at lr 1e-6 are not expected to. Most of the signal is the
   tool-call bonus. Mean group std is 0.16, because the smoke tasks are nearly always solved. A real run needs a
@@ -67,7 +68,7 @@ Adapters and `log_history.json`: `rl/adapters/grpo-pilot/`. OpenEnv server log: 
   - The LoRA targets name the language-model projections explicitly. `all-linear` also matches the vision tower,
     whose modules vLLM rejects.
 - **Wall limit not enforced:** `timeout 5400 docker run ...` killed only the Docker client at 90 minutes, and the
-  container trained on to 105 minutes. This is the same mistake as the round 2 wrapper. `run.sh` now runs
+  container trained on to 105 minutes of training time. This is the same mistake as the round 2 wrapper. `run.sh` now runs
   `timeout` inside the container (`--init`, entrypoint `timeout -s TERM -k 60 $LIMIT python3 ...`, checked: exit
   124 on a 2 s limit). A host watchdog also runs `docker stop` LIMIT + 300 s after launch. Every later training
   or eval container needs its limit enforced the same way.
