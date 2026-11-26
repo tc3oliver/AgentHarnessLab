@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 import platform
+import re
 import subprocess
 from datetime import UTC, datetime
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, ValidationError
+from pydantic import BaseModel, ConfigDict, ValidationError, field_validator
 
 from agent_harness_lab import __version__
 from agent_harness_lab.core.config import EvalConfig, canonical_hash
@@ -40,6 +41,14 @@ class DatasetInfo(BaseModel):
     source_revision: str | None = None
     source_path: str | None = None
     redistributable: bool | None = None
+
+    @field_validator("tasks_hash", mode="before")
+    @classmethod
+    def _prefix(cls, value: object) -> object:
+        """Manifests written before the prefix existed hold bare hex."""
+        if isinstance(value, str) and re.fullmatch(r"[0-9a-f]{64}", value):
+            return f"sha256:{value}"
+        return value
 
 
 class HarnessInfo(BaseModel):

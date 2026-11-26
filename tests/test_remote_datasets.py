@@ -567,3 +567,27 @@ def test_git_concurrent_fetch_winner_is_accepted(tmp_path: Path, origin: tuple[P
 
     racing = Racing(cache=tmp_path / "cache", remotes={URL: str(repo)})
     assert len(racing.load(git_cfg(commit)).tasks) == 4
+
+
+def test_old_manifest_with_bare_task_hash_compares_equal(config: Any) -> None:
+    smoke = load_dataset_config(ROOT / "configs/datasets/smoke.yaml")
+    new = new_manifest(config, [LocalDataset().load(smoke)], 1, True, {})
+    data = json.loads(new.model_dump_json())
+    data["datasets"][0]["tasks_hash"] = data["datasets"][0]["tasks_hash"].removeprefix("sha256:")
+    for key in ("version", "source_type", "source", "source_revision", "source_path", "redistributable"):
+        data["datasets"][0].pop(key)
+    old = type(new).model_validate(data)
+    assert old.datasets[0].tasks_hash == new.datasets[0].tasks_hash
+    assert old.datasets[0].version is None
+    data["datasets"][0]["version"] = "2"
+    assert type(new).model_validate(data).comparability() == new.comparability()
+
+
+def test_hf_etag_matches_by_length(tmp_path: Path) -> None:
+    from agent_harness_lab.dataset.loaders import _etag_matches
+
+    f = tmp_path / "f"
+    f.write_bytes(b"x" * 3_000_000)
+    assert _etag_matches(f, f'"{blob_sha1(f.read_bytes())}"')
+    assert _etag_matches(f, hashlib.sha256(f.read_bytes()).hexdigest())
+    assert not _etag_matches(f, "abc") and not _etag_matches(f, "0" * 40)

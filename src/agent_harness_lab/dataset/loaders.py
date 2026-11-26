@@ -78,11 +78,18 @@ COMPLETE_MARKER = "agentlab-complete.json"
 
 
 def _etag_matches(path: Path, etag: str) -> bool:
-    """The Hub's etag is the git blob sha1 of a regular file and the sha256 of an LFS file."""
+    """The Hub's etag is the git blob sha1 of a regular file (40 hex), or the sha256 of an LFS file (64)."""
     wanted = etag.removeprefix("W/").strip('"')
-    data = path.read_bytes()
-    blob = hashlib.sha1(b"blob %d\0" % len(data) + data, usedforsecurity=False).hexdigest()
-    return wanted in {blob, hashlib.sha256(data).hexdigest()}
+    if len(wanted) == 40:
+        digest = hashlib.sha1(b"blob %d\0" % path.stat().st_size, usedforsecurity=False)
+    elif len(wanted) == 64:
+        digest = hashlib.sha256()
+    else:
+        return False
+    with path.open("rb") as f:
+        while chunk := f.read(1 << 20):
+            digest.update(chunk)
+    return digest.hexdigest() == wanted
 
 
 def _cache_root(cache: Path | None) -> Path:
@@ -385,11 +392,14 @@ class HuggingFaceDataset:
                 complete = json.loads(marker.read_text(encoding="utf-8"))
             except (OSError, ValueError) as exc:
                 raise ConfigError(
-                    f"dataset '{config.name}': offline and the cached download of {source.repo} is incomplete"
+                    f"dataset '{config.name}': offline and the cached download of {source.repo} is "
+                    "incomplete or predates the completion marker; load it once online"
                 ) from exc
             if complete != etags:
                 raise ConfigError(f"dataset '{config.name}': cached files differ from the completed download")
         else:
             marker.parent.mkdir(parents=True, exist_ok=True)
-            marker.write_text(json.dumps(etags, sort_keys=True), encoding="utf-8")
+            temp = marker.with_name(f"{marker.name}.{os.getpid()}.tmp")
+            temp.write_text(json.dumps(etags, sort_keys=True), encoding="utf-8")
+            temp.replace(marker)
         return _finish(config, root, local, source.revision, source.repo, source.path)
