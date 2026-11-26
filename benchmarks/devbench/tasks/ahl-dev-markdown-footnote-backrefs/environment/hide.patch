@@ -1,0 +1,136 @@
+diff --git a/tests/test_syntax/extensions/test_footnotes.py b/tests/test_syntax/extensions/test_footnotes.py
+index 0b372e5..be5177c 100644
+--- a/tests/test_syntax/extensions/test_footnotes.py
++++ b/tests/test_syntax/extensions/test_footnotes.py
+@@ -747,33 +747,6 @@ class TestFootnotes(TestCase):
+             '</div>'
+         )
+ 
+-    def test_duplicate_footnote_references(self):
+-        """Test multiple references to the same footnote."""
+-
+-        self.assertMarkdownRenders(
+-            self.dedent(
+-                """
+-                First[^dup] and second[^dup] reference.
+-
+-                [^dup]: Duplicate footnote.
+-                """
+-            ),
+-            '<p>First<sup id="fnref:dup">'
+-            '<a class="footnote-ref" href="#fn:dup">1</a></sup> and second<sup id="fnref2:dup">'
+-            '<a class="footnote-ref" href="#fn:dup">1</a></sup> reference.</p>\n'
+-            '<div class="footnote">\n'
+-            '<hr />\n'
+-            '<ol>\n'
+-            '<li id="fn:dup">\n'
+-            '<p>Duplicate footnote.&#160;'
+-            '<a class="footnote-backref" href="#fnref:dup" '
+-            'title="Jump back to footnote 1 in the text">&#8617;</a>'
+-            '<a class="footnote-backref" href="#fnref2:dup" '
+-            'title="Jump back to footnote 1 in the text">&#8617;</a></p>\n'
+-            '</li>\n'
+-            '</ol>\n'
+-            '</div>'
+-        )
+ 
+     def test_many_duplicate_footnote_references(self):
+         """Test that many references to one footnote get sequential ids."""
+diff --git a/tests/test_syntax/extensions/test_toc.py b/tests/test_syntax/extensions/test_toc.py
+index 7072b4b..d2de5f2 100644
+--- a/tests/test_syntax/extensions/test_toc.py
++++ b/tests/test_syntax/extensions/test_toc.py
+@@ -1407,93 +1407,6 @@ class TestTOC(TestCase):
+             extensions=[TocExtension(), 'attr_list']
+         )
+ 
+-    def testHeadingRemoveFootnoteRef(self):
+-
+-        self.assertMarkdownRenders(
+-            self.dedent(
+-                '''
+-                # Header 1[^1]
+-                # Header[^1] 2
+-                # Header *subelement*[^1] 3
+-                # Header[^1] double[^1] 4
+-
+-                [^1]: footnote
+-                '''
+-            ),
+-            (
+-                '<h1 id="header-1">Header 1<sup id="fnref:1"><a class="footnote-ref" href="#fn:1">1</a></sup></h1>\n'
+-                '<h1 id="header-2">Header<sup id="fnref2:1"><a class="footnote-ref" href="#fn:1">1</a></sup> 2</h1>\n'
+-                '<h1 id="header-subelement-3">'
+-                'Header <em>subelement</em><sup id="fnref3:1"><a class="footnote-ref" href="#fn:1">1</a></sup> 3'
+-                '</h1>\n'
+-                '<h1 id="header-double-4">'
+-                'Header<sup id="fnref4:1"><a class="footnote-ref" href="#fn:1">1</a></sup> double'
+-                '<sup id="fnref5:1"><a class="footnote-ref" href="#fn:1">1</a></sup> 4'
+-                '</h1>\n'
+-                '<div class="footnote">\n'
+-                '<hr />\n'
+-                '<ol>\n'
+-                '<li id="fn:1">\n'
+-                '<p>'
+-                'footnote&#160;'
+-                '<a class="footnote-backref" href="#fnref:1" title="Jump back to footnote 1 in the text">&#8617;</a>'
+-                '<a class="footnote-backref" href="#fnref2:1" title="Jump back to footnote 1 in the text">&#8617;</a>'
+-                '<a class="footnote-backref" href="#fnref3:1" title="Jump back to footnote 1 in the text">&#8617;</a>'
+-                '<a class="footnote-backref" href="#fnref4:1" title="Jump back to footnote 1 in the text">&#8617;</a>'
+-                '<a class="footnote-backref" href="#fnref5:1" title="Jump back to footnote 1 in the text">&#8617;</a>'
+-                '</p>\n'
+-                '</li>\n'
+-                '</ol>\n'
+-                '</div>'
+-            ),
+-            expected_attrs={
+-                'toc': (
+-                    '<div class="toc">\n'
+-                      '<ul>\n'                                                               # noqa
+-                        '<li><a href="#header-1">Header 1</a></li>\n'                        # noqa
+-                        '<li><a href="#header-2">Header 2</a></li>\n'                        # noqa
+-                        '<li><a href="#header-subelement-3">Header subelement 3</a></li>\n'  # noqa
+-                        '<li><a href="#header-double-4">Header double 4</a></li>\n'          # noqa
+-                      '</ul>\n'                                                              # noqa
+-                    '</div>\n'                                                               # noqa
+-                ),
+-                'toc_tokens': [
+-                    {
+-                        'level': 1,
+-                        'id': 'header-1',
+-                        'name': 'Header 1',
+-                        'html': 'Header 1',
+-                        'data-toc-label': '',
+-                        'children': []
+-                    },
+-                    {
+-                        'level': 1,
+-                        'id': 'header-2',
+-                        'name': 'Header 2',
+-                        'html': 'Header 2',
+-                        'data-toc-label': '',
+-                        'children': []
+-                    },
+-                    {
+-                        'level': 1,
+-                        'id': 'header-subelement-3',
+-                        'name': 'Header subelement 3',
+-                        'html': 'Header <em>subelement</em> 3',
+-                        'data-toc-label': '',
+-                        'children': []
+-                    },
+-                    {
+-                        'level': 1,
+-                        'id': 'header-double-4',
+-                        'name': 'Header double 4',
+-                        'html': 'Header double 4',
+-                        'data-toc-label': '',
+-                        'children': []
+-                    }
+-                ]
+-            },
+-            extensions=[TocExtension(), 'footnotes']
+-        )
+ 
+ 
+ class testStripTags(TestCase):

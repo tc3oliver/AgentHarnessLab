@@ -1,0 +1,16 @@
+{
+  "runner": "unittest",
+  "tests_dir": "tests",
+  "pytest_args": [],
+  "pythonpath": "/app",
+  "restore_paths": [
+    "tests"
+  ],
+  "fail_to_pass": [
+    "test_attr_list (test_legacy.TestExtensions.test_attr_list)",
+    "test_curly_after_inline (test_syntax.extensions.test_attr_list.TestAttrList.test_curly_after_inline)",
+    "test_table_td (test_syntax.extensions.test_attr_list.TestAttrList.test_table_td)"
+  ],
+  "min_passed": 1119,
+  "timeout_s": 900
+}

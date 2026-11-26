@@ -1,0 +1,47 @@
+diff --git a/tests/test_more.py b/tests/test_more.py
+index 4a5d7fc..30bf045 100644
+--- a/tests/test_more.py
++++ b/tests/test_more.py
+@@ -537,11 +537,6 @@ class ConsumerTests(TestCase):
+ 
+ 
+ class DistinctPermutationsTests(TestCase):
+-    def test_basic(self):
+-        iterable = ['z', 'a', 'a', 'q', 'q', 'q', 'y']
+-        actual = list(mi.distinct_permutations(iterable))
+-        expected = set(permutations(iterable))
+-        self.assertCountEqual(actual, expected)
+ 
+     def test_r(self):
+         for iterable, r in (
+@@ -567,11 +562,6 @@ class DistinctPermutationsTests(TestCase):
+                 actual = list(mi.distinct_permutations(iter(iterable), r))
+                 self.assertCountEqual(actual, expected)
+ 
+-    def test_unsortable(self):
+-        iterable = ['1', 2, 2, 3, 3, 3]
+-        actual = list(mi.distinct_permutations(iterable))
+-        expected = set(permutations(iterable))
+-        self.assertCountEqual(actual, expected)
+ 
+     def test_unsortable_r(self):
+         iterable = ['1', 2, 2, 3, 3, 3]
+@@ -581,17 +571,7 @@ class DistinctPermutationsTests(TestCase):
+                 expected = set(permutations(iterable, r=r))
+                 self.assertCountEqual(actual, expected)
+ 
+-    def test_unsorted_equivalent(self):
+-        iterable = [1, True, '3']
+-        actual = list(mi.distinct_permutations(iterable))
+-        expected = set(permutations(iterable))
+-        self.assertCountEqual(actual, expected)
+-
+-    def test_unhashable(self):
+-        iterable = ([1], [1], 2)
+-        actual = list(mi.distinct_permutations(iterable))
+-        expected = list(mi.unique_everseen(permutations(iterable), key=str))
+-        self.assertCountEqual(actual, expected)
++
+ 
+     def test_sortable_input_produces_sorted_output(self):
+         for iterable in [

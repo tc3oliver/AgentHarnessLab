@@ -1,0 +1,21 @@
+{
+  "runner": "pytest",
+  "tests_dir": "tests",
+  "pytest_args": [
+    "-o",
+    "addopts="
+  ],
+  "pythonpath": "/app/src",
+  "restore_paths": [
+    "tests",
+    "pytest.ini"
+  ],
+  "fail_to_pass": [
+    "tests/test_devbench_row_module.py::test_row_lives_in_new_module",
+    "tests/test_devbench_row_module.py::test_old_and_new_import_paths_are_the_same_class",
+    "tests/test_devbench_row_module.py::test_core_no_longer_defines_row",
+    "tests/test_devbench_row_module.py::test_rows_and_tags_still_work"
+  ],
+  "min_passed": 192,
+  "timeout_s": 900
+}

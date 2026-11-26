@@ -1,0 +1,11 @@
+--- a/src/tablib/formats/_csv.py
++++ b/src/tablib/formats/_csv.py
+@@ -50,7 +50,7 @@
+                 dset.headers = row
+             elif row:
+                 if i > 0 and len(row) < dset.width:
+-                    row += [''] * (dset.width - len(row))
++                    row += [''] * len(row)
+                 dset.append(row)
+ 
+     @classmethod

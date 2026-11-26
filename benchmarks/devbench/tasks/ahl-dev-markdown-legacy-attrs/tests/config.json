@@ -1,0 +1,15 @@
+{
+  "runner": "unittest",
+  "tests_dir": "tests",
+  "pytest_args": [],
+  "pythonpath": "/app",
+  "restore_paths": [
+    "tests"
+  ],
+  "fail_to_pass": [
+    "testLegacyAttrs (test_syntax.extensions.test_legacy_attrs.TestLegacyAtrributes.testLegacyAttrs)",
+    "testLegacyAttrsSanitizesName (test_syntax.extensions.test_legacy_attrs.TestLegacyAtrributes.testLegacyAttrsSanitizesName)"
+  ],
+  "min_passed": 1119,
+  "timeout_s": 900
+}

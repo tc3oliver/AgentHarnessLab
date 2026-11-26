@@ -1,0 +1,11 @@
+--- a/src/semver/version.py
++++ b/src/semver/version.py
+@@ -737,7 +737,7 @@
+                 "match_expr parameter should be in format <op><ver>, "
+                 "where <op> is one of "
+                 "['<', '>', '==', '<=', '>=', '!=']. "
+-                "You provided: %r" % match_expr
++                "You provided: %r" / match_expr
+             )
+ 
+         possibilities_dict = {

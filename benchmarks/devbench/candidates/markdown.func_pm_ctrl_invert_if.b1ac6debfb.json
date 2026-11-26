@@ -1,0 +1,1 @@
+{"modifier": "func_pm_ctrl_invert_if", "file": "markdown/extensions/attr_list.py", "entity": "assign_attrs", "explanation": "The if-else conditions may be out of order, or the bodies are inverted."}

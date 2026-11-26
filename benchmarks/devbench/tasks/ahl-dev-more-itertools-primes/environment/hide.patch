@@ -1,0 +1,70 @@
+diff --git a/tests/test_recipes.py b/tests/test_recipes.py
+index 1b95479..2209f32 100644
+--- a/tests/test_recipes.py
++++ b/tests/test_recipes.py
+@@ -1028,31 +1028,6 @@ class IterIndexTests(TestCase):
+ 
+ 
+ class SieveTests(TestCase):
+-    def test_basic(self):
+-        self.assertEqual(
+-            list(mi.sieve(67)),
+-            [
+-                2,
+-                3,
+-                5,
+-                7,
+-                11,
+-                13,
+-                17,
+-                19,
+-                23,
+-                29,
+-                31,
+-                37,
+-                41,
+-                43,
+-                47,
+-                53,
+-                59,
+-                61,
+-            ],
+-        )
+-        self.assertEqual(list(mi.sieve(68))[-1], 67)
+ 
+     def test_prime_counts(self):
+         for n, expected in (
+@@ -1252,17 +1227,6 @@ class FactorTests(TestCase):
+                 actual = list(mi.factor(n))
+                 self.assertEqual(actual, expected)
+ 
+-    def test_cross_check(self):
+-        prod = lambda x: reduce(mul, x, 1)
+-        self.assertTrue(all(prod(mi.factor(n)) == n for n in range(1, 2000)))
+-        self.assertTrue(
+-            all(set(mi.factor(n)) <= set(mi.sieve(n + 1)) for n in range(2000))
+-        )
+-        self.assertTrue(
+-            all(
+-                list(mi.factor(n)) == sorted(mi.factor(n)) for n in range(2000)
+-            )
+-        )
+ 
+ 
+ class SumOfSquaresTests(TestCase):
+@@ -1439,15 +1403,6 @@ class PrimeFunctionTests(TestCase):
+         with self.assertRaises(ValueError):
+             mi.nth_prime(-1)
+ 
+-    def test_nth_prime_tightened_bound(self):
+-        # nth_prime() counts from 0 and asks for bounds on n + 1, so 688_382
+-        # is the first argument that gets the tightened upper bound and
+-        # 688_381 is the last that doesn't. The exact path sieves up to that
+-        # bound, so tightening it too far would leave the sieve short and
+-        # nth() would return None. At the threshold the bound clears the
+-        # prime it has to reach by 3.
+-        self.assertEqual(mi.nth_prime(688_381), 10_384_259)
+-        self.assertEqual(mi.nth_prime(688_382), 10_384_261)
+ 
+     def test_nth_prime_approximate(self):
+         # approximate=True is ignored at or below 1,000,000

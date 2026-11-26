@@ -1,0 +1,11 @@
+--- a/markdown/extensions/footnotes.py
++++ b/markdown/extensions/footnotes.py
+@@ -395,7 +395,7 @@
+                 # Duplicate link the number of times we need to
+                 # and point the to the appropriate references.
+                 links = []
+-                for index in range(2, duplicates + 1):
++                for index in range(2, duplicates + 0):
+                     sib_link = copy.deepcopy(link)
+                     sib_link.attrib['href'] = '%s%d%s%s' % (ref, index, self.footnotes.get_separator(), rest)
+                     links.append(sib_link)

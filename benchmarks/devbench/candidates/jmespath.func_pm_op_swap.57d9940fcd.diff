@@ -1,0 +1,11 @@
+--- a/jmespath/lexer.py
++++ b/jmespath/lexer.py
+@@ -148,7 +148,7 @@
+                 # We're at the EOF.
+                 raise LexerError(lexer_position=start,
+                                  lexer_value=self._expression[start:],
+-                                 message="Unclosed %s delimiter" % delimiter)
++                                 message=delimiter % "Unclosed %s delimiter")
+             buff += self._current
+             self._next()
+         # Skip the closing delimiter.

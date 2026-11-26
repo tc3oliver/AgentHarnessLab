@@ -1,0 +1,15 @@
+{
+  "runner": "pytest",
+  "tests_dir": "tests",
+  "pytest_args": [],
+  "pythonpath": "/app",
+  "restore_paths": [
+    "tests"
+  ],
+  "fail_to_pass": [
+    "tests/test_more.py::TestCollapse::test_collapse_flatten",
+    "tests/test_more.py::TestCollapse::test_collapse_to_level"
+  ],
+  "min_passed": 772,
+  "timeout_s": 900
+}

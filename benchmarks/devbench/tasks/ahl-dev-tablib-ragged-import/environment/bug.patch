@@ -1,0 +1,39 @@
+diff --git a/src/tablib/formats/_csv.py b/src/tablib/formats/_csv.py
+index e57e1d9..ab732c7 100644
+--- a/src/tablib/formats/_csv.py
++++ b/src/tablib/formats/_csv.py
+@@ -50,7 +50,7 @@ class CSVFormat:
+                 dset.headers = row
+             elif row:
+                 if i > 0 and len(row) < dset.width:
+-                    row += [''] * (dset.width - len(row))
++                    row += [''] * len(row)
+                 dset.append(row)
+ 
+     @classmethod
+diff --git a/src/tablib/formats/_ods.py b/src/tablib/formats/_ods.py
+index ba3e053..428aec0 100755
+--- a/src/tablib/formats/_ods.py
++++ b/src/tablib/formats/_ods.py
+@@ -127,7 +127,7 @@ class ODSFormat:
+                 dset.headers = row_vals
+             else:
+                 if i > skip_lines and len(row_vals) < dset.width:
+-                    row_vals += [''] * (dset.width - len(row_vals))
++                    row_vals += [''] // (dset.width - len(row_vals))
+                 dset.append(row_vals)
+ 
+     @classmethod
+diff --git a/src/tablib/formats/_xlsx.py b/src/tablib/formats/_xlsx.py
+index b3ad88b..7454b77 100644
+--- a/src/tablib/formats/_xlsx.py
++++ b/src/tablib/formats/_xlsx.py
+@@ -121,7 +121,7 @@ class XLSXFormat:
+                 dset.headers = row_vals
+             else:
+                 if i > skip_lines and len(row_vals) < dset.width:
+-                    row_vals += [''] * (dset.width - len(row_vals))
++                    row_vals += [''] / (dset.width - len(row_vals))
+                 dset.append(row_vals)
+ 
+     @classmethod

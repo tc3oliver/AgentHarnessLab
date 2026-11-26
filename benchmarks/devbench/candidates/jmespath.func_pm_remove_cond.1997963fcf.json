@@ -1,0 +1,1 @@
+{"modifier": "func_pm_remove_cond", "file": "jmespath/functions.py", "entity": "_subtype_check", "explanation": "There is one or more missing conditionals that causes the bug."}

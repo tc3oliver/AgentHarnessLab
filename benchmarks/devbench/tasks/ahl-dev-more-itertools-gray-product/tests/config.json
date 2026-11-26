@@ -1,0 +1,17 @@
+{
+  "runner": "pytest",
+  "tests_dir": "tests",
+  "pytest_args": [],
+  "pythonpath": "/app",
+  "restore_paths": [
+    "tests"
+  ],
+  "fail_to_pass": [
+    "tests/test_more.py::GrayProductTests::test_basic",
+    "tests/test_more.py::GrayProductTests::test_repeat",
+    "tests/test_more.py::GrayProductTests::test_repeat_with_iterators",
+    "tests/test_more.py::GrayProductTests::test_vs_product"
+  ],
+  "min_passed": 772,
+  "timeout_s": 900
+}

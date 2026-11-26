@@ -1,0 +1,18 @@
+{
+  "runner": "unittest",
+  "tests_dir": "tests",
+  "pytest_args": [],
+  "pythonpath": "/app",
+  "restore_paths": [
+    "tests"
+  ],
+  "fail_to_pass": [
+    "test_registry_lives_in_new_module (test_devbench_registry_module.TestRegistryModule.test_registry_lives_in_new_module)",
+    "test_util_keeps_backward_compatible_names (test_devbench_registry_module.TestRegistryModule.test_util_keeps_backward_compatible_names)",
+    "test_util_no_longer_defines_it (test_devbench_registry_module.TestRegistryModule.test_util_no_longer_defines_it)",
+    "test_package_code_imports_from_new_module (test_devbench_registry_module.TestRegistryModule.test_package_code_imports_from_new_module)",
+    "test_processors_use_the_registry (test_devbench_registry_module.TestRegistryModule.test_processors_use_the_registry)"
+  ],
+  "min_passed": 1124,
+  "timeout_s": 900
+}

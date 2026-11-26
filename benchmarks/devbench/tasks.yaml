@@ -1,0 +1,631 @@
+# Development benchmark task specs. Build with: python benchmarks/devbench/tools/make_task.py
+# bug_patches: SWE-smith procedural modifications (benchmarks/devbench/candidates), applied in order.
+# hide: remove the fail_to_pass tests from the agent's copy; the verifier restores the pristine tests.
+# fail_to_pass: test ids that fail with the bug and must pass after the fix (in the runner's id format).
+tasks:
+- id: ahl-dev-markdown-footnote-backrefs
+  repo: markdown
+  category: bug-fix
+  source: swe-smith
+  bug_patches:
+  - markdown.func_pm_op_change_const.218a9cb5a8.diff
+  hide: true
+  fail_to_pass:
+  - testHeadingRemoveFootnoteRef (test_syntax.extensions.test_toc.TestTOC.testHeadingRemoveFootnoteRef)
+  - test_duplicate_footnote_references (test_syntax.extensions.test_footnotes.TestFootnotes.test_duplicate_footnote_references)
+  - test_footnote (test_legacy.TestExtensionsExtra.test_footnote)
+  instruction: |
+    The repository in `/app` is Python-Markdown.
+
+    With the `footnotes` extension, a footnote that is referenced more than once must get one back-reference
+    link (`&#8617;`) per reference at the end of its entry in the footnote list: the first link points to
+    `#fnref:<label>`, the second to `#fnref2:<label>`, the third to `#fnref3:<label>`, and so on.
+
+    Currently the last back-reference is missing. For example, for a footnote referenced twice only the
+    `#fnref:<label>` link is rendered, while both references in the text get their ids (`fnref:<label>`
+    and `fnref2:<label>`).
+
+    Fix the library. Do not modify the existing tests.
+- id: ahl-dev-more-itertools-collapse-levels
+  repo: more-itertools
+  category: bug-fix
+  source: swe-smith
+  bug_patches:
+  - more-itertools.func_pm_op_change.ea5cdbc2a0.diff
+  hide: true
+  fail_to_pass:
+  - tests/test_more.py::TestCollapse::test_collapse_flatten
+  - tests/test_more.py::TestCollapse::test_collapse_to_level
+  instruction: |
+    The repository in `/app` is more-itertools.
+
+    `more_itertools.collapse(iterable, base_type=None, levels=None)` flattens nested iterables. With
+    `levels=n` it must flatten only the first `n` levels of nesting and keep anything deeper as it is:
+
+        list(collapse([[1], 2, [[3], 4], [[[5]]]], levels=2)) == [1, 2, 3, 4, [5]]
+
+    and `collapse(x, levels=1)` must give the same items as `flatten(x)`. At the moment the level limit is
+    not respected when `levels` is given.
+
+    Fix the library. Do not modify the existing tests.
+- id: ahl-dev-tablib-failing-suite
+  repo: tablib
+  category: test-repair
+  source: swe-smith
+  bug_patches:
+  - tablib.func_pm_op_change.3ab10e3e6a.diff
+  fail_to_pass:
+  - tests/test_tablib.py::TablibTestCase::test_add_callable_column
+  instruction: |
+    The repository in `/app` is tablib. Its test suite currently fails; run it with
+
+        python -m pytest -o addopts= tests
+
+    Find the cause in the library code and fix it so that the whole suite passes. Do not modify, skip or
+    delete tests.
+- id: ahl-dev-jmespath-failing-suite
+  repo: jmespath
+  category: test-repair
+  source: swe-smith
+  bug_patches:
+  - jmespath.func_pm_remove_cond.c49c0ad5ed.diff
+  fail_to_pass:
+  - tests/test_compliance.py::test_expression[given241-type(`null`)-null-functions.json]
+  instruction: |
+    The repository in `/app` is jmespath.py. Its test suite currently fails; run it with
+
+        python -m pytest tests
+
+    Find the cause in the library code and fix it so that the whole suite passes. Do not modify, skip or
+    delete tests or the compliance test data.
+- id: ahl-dev-markdown-processing-instruction
+  repo: markdown
+  category: navigation
+  source: swe-smith
+  bug_patches:
+  - markdown.func_pm_op_change_const.cfc9d577bf.diff
+  hide: true
+  fail_to_pass:
+  - test_angles_and_nonsense_url (test_syntax.inline.test_links.TestInlineLinks.test_angles_and_nonsense_url)
+  - test_raw_processing_instruction_code_span (test_syntax.blocks.test_html_blocks.TestHTMLBlocks.test_raw_processing_instruction_code_span)
+  instruction: |
+    A user reports a rendering bug in Python-Markdown (the repository in `/app`):
+
+        >>> import markdown
+        >>> markdown.markdown("`<?php`\n\n<div>\nfoo\n</div>\n")
+        '<p><code>&lt;??php</code></p>\n<div>\nfoo\n</div>'
+        >>> markdown.markdown("[test nonsense](<?}]*+|&)>).")
+        '<p><a href="??}]*+|&amp;)">test nonsense</a>.</p>'
+
+    The `?` after `<` is duplicated. The expected results are
+    `'<p><code>&lt;?php</code></p>\n<div>\nfoo\n</div>'` and
+    `'<p><a href="?}]*+|&amp;)">test nonsense</a>.</p>'`.
+
+    Find and fix the cause in the library. Do not modify the existing tests.
+- id: ahl-dev-markdown-attr-list-class
+  repo: markdown
+  category: navigation
+  source: swe-smith
+  bug_patches:
+  - markdown.func_pm_ctrl_invert_if.b1ac6debfb.diff
+  hide: true
+  fail_to_pass:
+  - test_attr_list (test_legacy.TestExtensions.test_attr_list)
+  - test_curly_after_inline (test_syntax.extensions.test_attr_list.TestAttrList.test_curly_after_inline)
+  - test_table_td (test_syntax.extensions.test_attr_list.TestAttrList.test_table_td)
+  instruction: |
+    A user reports a bug in Python-Markdown (the repository in `/app`) when setting CSS classes with
+    attribute lists:
+
+        >>> import markdown
+        >>> markdown.markdown("# Title {.big}", extensions=["attr_list"])
+        '<h1 class="None big">Title</h1>'
+
+    The expected result is `'<h1 class="big">Title</h1>'`. Several classes, as in `{.a .b}`, must all be
+    kept, giving `class="a b"`. The same applies to inline elements and table cells.
+
+    Find and fix the cause in the library. Do not modify the existing tests.
+- id: ahl-dev-tablib-ragged-import
+  repo: tablib
+  category: multi-file
+  source: swe-smith
+  bug_patches:
+  - tablib.func_pm_op_break_chains.f71376a3ec.diff
+  - tablib.func_pm_op_change.bd1b74b395.diff
+  - tablib.func_pm_op_change.906e3c34d6.diff
+  hide: true
+  fail_to_pass:
+  - tests/test_tablib.py::CSVTests::test_csv_import_set_ragged
+  - tests/test_tablib.py::XLSXTests::test_xlsx_import_book_ragged
+  - tests/test_tablib.py::XLSXTests::test_xlsx_import_set_ragged
+  - tests/test_tablib.py::ODSTests::test_ods_import_set_ragged
+  instruction: |
+    The repository in `/app` is tablib.
+
+    Importing "ragged" data must work: when a data row has fewer cells than the header row, the missing
+    cells are filled with empty strings (`''`), so that every row has the width of the header. For example
+
+        tablib.import_set("H1,H2,H3\nA,B\nC,D,E\n\nF\n", format="csv")
+
+    must give the rows `('A', 'B', '')`, `('C', 'D', 'E')` and `('F', '', '')`. The same rule applies when
+    loading XLSX and ODS files, both into a `Dataset` and into a `Databook`.
+
+    Ragged import is currently broken for CSV, XLSX and ODS. Fix all three. Do not modify the existing
+    tests.
+- id: ahl-dev-jmespath-error-messages
+  repo: jmespath
+  category: multi-file
+  source: swe-smith
+  bug_patches:
+  - jmespath.func_pm_op_swap.57d9940fcd.diff
+  - jmespath.func_pm_op_swap.857ab87470.diff
+  fail_to_pass:
+  - tests/test_compliance.py::test_error_expression[given127-"foo-syntax-syntax.json]
+  - tests/test_parser.py::TestErrorMessages::test_bad_lexer_values
+  - tests/test_compliance.py::test_error_expression[given75-@(foo)-syntax-syntax.json]
+  instruction: |
+    The repository in `/app` is jmespath.py.
+
+    Malformed expressions must raise the library's own errors (`jmespath.exceptions.LexerError` or
+    `ParseError`) with a readable message. Some of them, for example `jmespath.compile('"foo')` and
+    `jmespath.compile('@(foo)')`, currently fail with a `TypeError` raised inside the library instead.
+
+    Fix the library so that the whole test suite (`python -m pytest tests`) passes. Do not modify, skip or
+    delete tests or the compliance test data.
+- id: ahl-dev-more-itertools-windows-module
+  repo: more-itertools
+  category: refactoring
+  source: hand-written
+  solution_patch: ahl-dev-more-itertools-windows-module.patch
+  min_passed: 778
+  fail_to_pass:
+  - tests/test_devbench_windows_module.py::test_functions_live_in_the_new_module
+  - tests/test_devbench_windows_module.py::test_old_import_paths_still_work
+  - tests/test_devbench_windows_module.py::test_star_import_still_exports_them
+  - tests/test_devbench_windows_module.py::test_more_py_no_longer_defines_them
+  - tests/test_devbench_windows_module.py::test_stubs_moved
+  - tests/test_devbench_windows_module.py::test_behaviour_unchanged
+  instruction: |
+    The repository in `/app` is more-itertools. `more_itertools/more.py` has grown too large. Move these
+    five functions out of it into a new module `more_itertools/windows.py`:
+
+        windowed, windowed_complete, stagger, substrings, substrings_indexes
+
+    Requirements:
+
+    - The functions are defined in `more_itertools/windows.py` (so `windowed.__module__` is
+      `'more_itertools.windows'`), and that module lists all five in its `__all__`.
+    - `more.py` no longer contains their definitions.
+    - Existing imports keep working and give the same objects: `from more_itertools import windowed`,
+      `from more_itertools.more import windowed`, and `from more_itertools import *`.
+    - Their type stubs move as well: the stub definitions live in a new `more_itertools/windows.pyi`
+      and are removed from `more_itertools/more.pyi`.
+    - Behaviour does not change; the whole test suite (`python -m pytest tests`) passes.
+
+    Do not modify the existing tests.
+- id: ahl-dev-markdown-registry-module
+  repo: markdown
+  category: refactoring
+  source: hand-written
+  solution_patch: ahl-dev-markdown-registry-module.patch
+  min_passed: 1124
+  fail_to_pass:
+  - test_registry_lives_in_new_module (test_devbench_registry_module.TestRegistryModule.test_registry_lives_in_new_module)
+  - test_util_keeps_backward_compatible_names (test_devbench_registry_module.TestRegistryModule.test_util_keeps_backward_compatible_names)
+  - test_util_no_longer_defines_it (test_devbench_registry_module.TestRegistryModule.test_util_no_longer_defines_it)
+  - test_package_code_imports_from_new_module (test_devbench_registry_module.TestRegistryModule.test_package_code_imports_from_new_module)
+  - test_processors_use_the_registry (test_devbench_registry_module.TestRegistryModule.test_processors_use_the_registry)
+  instruction: |
+    The repository in `/app` is Python-Markdown. Move the `Registry` class and its helper `_PriorityItem`
+    out of `markdown/util.py` into a new module `markdown/registry.py`.
+
+    Requirements:
+
+    - Both are defined in `markdown/registry.py` (their `__module__` is `'markdown.registry'`) and no longer
+      defined in `markdown/util.py`.
+    - `markdown.util.Registry` and `markdown.util._PriorityItem` remain importable for third-party
+      extensions and are the same objects as the new ones.
+    - Code inside the `markdown` package (including the bundled extensions) no longer refers to
+      `util.Registry` or imports `Registry` from `util`; it uses the new module.
+    - Behaviour does not change; the whole test suite (`python -m unittest discover tests`) passes.
+
+    Do not modify the existing tests.
+- id: ahl-dev-more-itertools-seekable-index
+  repo: more-itertools
+  category: bug-fix
+  source: swe-smith
+  bug_patches:
+  - more-itertools.func_pm_op_break_chains.a15c33ab6a.diff
+  hide: true
+  fail_to_pass:
+  - tests/test_more.py::PeekableTests::test_indexing
+  - tests/test_more.py::PeekableTests::test_prepend_indexing
+  - tests/test_more.py::PeekableTests::test_slicing_negative_step_omitted_stop_read_bound
+  instruction: |
+    The repository in `/app` is more-itertools.
+
+    Indexing a `peekable` or `seekable` iterator must look ahead without consuming items: for
+    `p = more_itertools.seekable('abcdef')`, `p[2]` is `'c'`, and `next(p)` afterwards is still `'a'`. The same
+    holds for `peekable`, including after `prepend()`.
+
+    At the moment indexing further ahead than the items already cached raises `IndexError` (for example
+    `seekable('abcdef')[2]` on a fresh iterator). Fix the library. Do not modify the existing tests.
+- id: ahl-dev-more-itertools-gray-product
+  repo: more-itertools
+  category: bug-fix
+  source: swe-smith
+  bug_patches:
+  - more-itertools.func_pm_op_change_const.f381c7d1ae.diff
+  hide: true
+  fail_to_pass:
+  - tests/test_more.py::GrayProductTests::test_basic
+  - tests/test_more.py::GrayProductTests::test_repeat
+  - tests/test_more.py::GrayProductTests::test_repeat_with_iterators
+  - tests/test_more.py::GrayProductTests::test_vs_product
+  instruction: |
+    The repository in `/app` is more-itertools.
+
+    `more_itertools.gray_product(*iterables)` yields the Cartesian product in Gray-code order, where only one
+    element changes between consecutive tuples:
+
+        list(gray_product(('a', 'b', 'c'), range(1, 3)))
+        == [('a', 1), ('b', 1), ('c', 1), ('c', 2), ('b', 2), ('a', 2)]
+
+    It currently fails with `IndexError` (for example `list(gray_product('ab', [1, 2]))`). Fix the library so
+    that it yields every combination exactly once in that order. Do not modify the existing tests.
+- id: ahl-dev-more-itertools-distinct-permutations
+  repo: more-itertools
+  category: bug-fix
+  source: swe-smith
+  bug_patches:
+  - more-itertools.func_pm_ctrl_invert_if.e8b12ecf7a.diff
+  hide: true
+  fail_to_pass:
+  - tests/test_more.py::DistinctPermutationsTests::test_basic
+  - tests/test_more.py::DistinctPermutationsTests::test_unhashable
+  - tests/test_more.py::DistinctPermutationsTests::test_unsortable
+  - tests/test_more.py::DistinctPermutationsTests::test_unsorted_equivalent
+  instruction: |
+    The repository in `/app` is more-itertools.
+
+    `more_itertools.distinct_permutations(iterable, r=None)` must also work for items that are unhashable or
+    cannot be sorted, for example `list(distinct_permutations([[1], [1], [2]]))` gives the three distinct
+    orderings. Currently such input raises `UnboundLocalError`. Fix the library. Do not modify the existing
+    tests.
+- id: ahl-dev-tablib-ods-dates
+  repo: tablib
+  category: bug-fix
+  source: swe-smith
+  bug_patches:
+  - tablib.func_pm_ctrl_invert_if.76e1ba93da.diff
+  hide: true
+  fail_to_pass:
+  - tests/test_tablib.py::ODSTests::test_ods_export_import_set
+  - tests/test_tablib.py::ODSTests::test_ods_import_book
+  instruction: |
+    The repository in `/app` is tablib.
+
+    Exporting a `Dataset` that contains `datetime.date` and `datetime.datetime` values to ODS and loading the
+    file back must give the same values back: dates as `datetime.date`, timestamps as `datetime.datetime`.
+    Currently loading an ODS file that contains a plain date fails with
+    `ValueError: time data '2020-01-02' does not match format '%Y-%m-%dT%H:%M:%S'`. Fix the library. Do not
+    modify the existing tests.
+- id: ahl-dev-tablib-sql-commit
+  repo: tablib
+  category: bug-fix
+  source: swe-smith
+  bug_patches:
+  - tablib.func_pm_op_break_chains.a43260692f.diff
+  hide: true
+  fail_to_pass:
+  - tests/test_tablib.py::SQLFormatTests::test_sql_date_and_timestamp_literals
+  - tests/test_tablib.py::SQLFormatTests::test_sql_microseconds_and_default_table
+  - tests/test_tablib.py::SQLFormatTests::test_sql_no_headers
+  - tests/test_tablib.py::SQLFormatTests::test_sql_regular_literals
+  instruction: |
+    The repository in `/app` is tablib.
+
+    `Dataset.export('sql')` writes one `INSERT` statement per row, each on its own line, and the output ends
+    with a newline. With `commit=True` a final `COMMIT;` line follows:
+
+        'INSERT INTO export_table (a,b) VALUES (1, 2);\nCOMMIT;\n'
+
+    Currently the newline after the last `INSERT` is missing, so the output is
+    `'INSERT INTO export_table (a,b) VALUES (1, 2);COMMIT;\n'`. Fix the library. Do not modify the existing
+    tests.
+- id: ahl-dev-more-itertools-running-max
+  repo: more-itertools
+  category: test-repair
+  source: swe-smith
+  bug_patches:
+  - more-itertools.func_pm_op_swap.6c885ee728.diff
+  fail_to_pass:
+  - tests/test_more.py::TestRunningMax::test_maxlen
+  - tests/test_more.py::TestRunningMax::test_stability
+  - tests/test_more.py::TestRunningStats::test_datatypes
+  - tests/test_more.py::TestRunningStats::test_single_example
+  - tests/test_recipes.py::RunningWindowSizeTests::test_index_protocol
+  instruction: |
+    The repository in `/app` is more-itertools. Its test suite currently fails; run it with
+
+        python -m pytest tests
+
+    Find the cause in the library code and fix it so that the whole suite passes. Do not modify, skip or
+    delete tests.
+- id: ahl-dev-more-itertools-running-mean
+  repo: more-itertools
+  category: test-repair
+  source: swe-smith
+  bug_patches:
+  - more-itertools.func_pm_op_change.6f03fab6ce.diff
+  fail_to_pass:
+  - tests/test_more.py::TestRunningStats::test_single_example
+  - tests/test_recipes.py::RunningMeanTests::test_maxlen
+  instruction: |
+    The repository in `/app` is more-itertools. Its test suite currently fails; run it with
+
+        python -m pytest tests
+
+    Find the cause in the library code and fix it so that the whole suite passes. Do not modify, skip or
+    delete tests.
+- id: ahl-dev-tablib-latex-suite
+  repo: tablib
+  category: test-repair
+  source: swe-smith
+  bug_patches:
+  - tablib.func_pm_op_change_const.1665121d3a.diff
+  fail_to_pass:
+  - tests/test_tablib.py::LatexTests::test_latex_export
+  instruction: |
+    The repository in `/app` is tablib. Its test suite currently fails; run it with
+
+        python -m pytest -o addopts= tests
+
+    Find the cause in the library code and fix it so that the whole suite passes. Do not modify, skip or
+    delete tests.
+- id: ahl-dev-semver-failing-suite
+  repo: semver
+  category: test-repair
+  source: swe-smith
+  bug_patches:
+  - semver.func_pm_op_swap.9fb23e9aef.diff
+  fail_to_pass:
+  - tests/test_replace.py::test_replace_raises_TypeError_for_invalid_keyword_arg
+  instruction: |
+    The repository in `/app` is python-semver. Its test suite currently fails; run it with
+
+        python -m pytest -o addopts= tests
+
+    Find the cause in the library code and fix it so that the whole suite passes. Do not modify, skip or
+    delete tests.
+- id: ahl-dev-itsdangerous-failing-suite
+  repo: itsdangerous
+  category: test-repair
+  source: swe-smith
+  bug_patches:
+  - itsdangerous.func_pm_op_break_chains.8d9b73f755.diff
+  fail_to_pass:
+  - tests/test_itsdangerous/test_serializer.py::test_digests
+  instruction: |
+    The repository in `/app` is itsdangerous. Its test suite currently fails; run it with
+
+        python -m pytest tests
+
+    Find the cause in the library code and fix it so that the whole suite passes. Do not modify, skip or
+    delete tests.
+- id: ahl-dev-more-itertools-primes
+  repo: more-itertools
+  category: multi-file
+  source: swe-smith
+  bug_patches:
+  - more-itertools.func_pm_op_swap.b6d7f1457d.diff
+  - more-itertools.func_pm_op_change.a8fb16934a.diff
+  hide: true
+  fail_to_pass:
+  - tests/test_recipes.py::FactorTests::test_cross_check
+  - tests/test_recipes.py::PrimeFunctionTests::test_nth_prime_tightened_bound
+  - tests/test_recipes.py::SieveTests::test_basic
+  instruction: |
+    The repository in `/app` is more-itertools. Two prime-number helpers are broken:
+
+    - `more_itertools.sieve(n)` must yield all primes less than `n`; `list(sieve(30))` is
+      `[2, 3, 5, 7, 11, 13, 17, 19, 23, 29]`, but it currently yields only `[2]`.
+    - `more_itertools.nth_prime(n)` must return the n-th prime counting from 0 (`nth_prime(0) == 2`,
+      `nth_prime(100) == 547`); it currently returns wrong results such as `None`.
+
+    Fix both. Do not modify the existing tests.
+- id: ahl-dev-markdown-bogus-declaration
+  repo: markdown
+  category: multi-file
+  source: swe-smith
+  bug_patches:
+  - markdown.func_pm_op_change.9452bea5e4.diff
+  - markdown.func_pm_remove_assign.586f299c7e.diff
+  hide: true
+  fail_to_pass:
+  - test_not_actually_cdata (test_syntax.blocks.test_html_blocks.TestHTMLBlocks.test_not_actually_cdata)
+  - test_not_actually_cdata (test_syntax.extensions.test_md_in_html.TestDefaultwMdInHTML.test_not_actually_cdata)
+  instruction: |
+    The repository in `/app` is Python-Markdown.
+
+    Text that starts like a CDATA section but is not one, such as `<![`, must be kept as text:
+    `markdown.markdown('<![')` returns `'<p>&lt;![</p>'`, and the same output is expected with the
+    `md_in_html` extension enabled. Currently the default parser does not handle this input correctly, and with
+    `md_in_html` the conversion crashes with `NameError`. Fix both code paths. Do not modify the existing
+    tests.
+- id: ahl-dev-tablib-dbf-export
+  repo: tablib
+  category: multi-file
+  source: swe-smith
+  bug_patches:
+  - tablib.func_pm_ctrl_invert_if.d583a6a2f8.diff
+  - tablib.func_pm_op_change.49b39976ac.diff
+  hide: true
+  fail_to_pass:
+  - tests/test_tablib.py::DBFTests::test_dbf_export_set
+  - tests/test_tablib.py::DBFTests::test_dbf_import_set
+  instruction: |
+    The repository in `/app` is tablib.
+
+    Exporting a `Dataset` to DBF (`dataset.export('dbf')`) and loading the result back
+    (`tablib.Dataset().load(data, 'dbf')`) must round-trip text columns and numeric columns, including floats.
+    At the moment the export fails, for example with `TypeError: can't multiply sequence by non-int of type
+    'tuple'` for a dataset with a float column, and text columns are not declared correctly. Fix the export.
+    Do not modify the existing tests.
+- id: ahl-dev-semver-match-and-cli
+  repo: semver
+  category: multi-file
+  source: swe-smith
+  bug_patches:
+  - semver.func_pm_op_change.a81241c31d.diff
+  - semver.func_pm_remove_cond.d4cfc8da3b.diff
+  hide: true
+  fail_to_pass:
+  - tests/test_match.py::test_should_raise_value_error_for_invalid_match_expression[1.0.0-!]
+  - tests/test_match.py::test_should_raise_value_error_for_invalid_match_expression[1.0.0-]
+  - tests/test_match.py::test_should_raise_value_error_for_unexpected_match_expression[2.3.7-=2.3.7]
+  - tests/test_match.py::test_should_raise_value_error_for_unexpected_match_expression[2.3.7-^2.3.7]
+  - tests/test_match.py::test_should_raise_value_error_for_unexpected_match_expression[2.3.7-~2.3.7]
+  - tests/test_pysemver-cli.py::test_should_process_print
+  instruction: |
+    The repository in `/app` is python-semver. Two problems were reported:
+
+    1. `Version.match(expr)` (and the module-level `semver.match`) must raise `ValueError` for a malformed
+       expression such as `'!'`, `''` or `'?1.0.0'`; it currently raises `TypeError` for some of them.
+    2. The command-line interface (`python -m semver ...` / `semver.cli.main([...])`) must print the result
+       of commands such as `bump`, `compare` and `nextver` to standard output, for example `nextver 1.2.3 minor`
+       prints `1.3.0`. Currently nothing is printed.
+
+    Fix both. Do not modify the existing tests.
+- id: ahl-dev-markdown-wikilinks-meta
+  repo: markdown
+  category: navigation
+  source: swe-smith
+  bug_patches:
+  - markdown.func_pm_remove_cond.99c207996a.diff
+  hide: true
+  fail_to_pass:
+  - testWikilinksMetaData (test_extensions.TestWikiLinks.testWikilinksMetaData)
+  instruction: |
+    A user reports a bug in Python-Markdown (the repository in `/app`). With the `meta` and `wikilinks`
+    extensions, the `wiki_end_url` meta-data value is ignored:
+
+        md = markdown.Markdown(extensions=['meta', 'wikilinks'])
+        md.convert('wiki_base_url: http://example.com/\nwiki_end_url:   .html\nwiki_html_class:\n\n'
+                   'Some text with a [[WikiLink]].')
+
+    returns a link to `http://example.com/WikiLink/`, but the expected output is
+    `'<p>Some text with a <a href="http://example.com/WikiLink.html">WikiLink</a>.</p>'`. Meta-data must still
+    not carry over to the next document converted with the same instance.
+
+    Find and fix the cause. Do not modify the existing tests.
+- id: ahl-dev-markdown-legacy-attrs
+  repo: markdown
+  category: navigation
+  source: swe-smith
+  bug_patches:
+  - markdown.func_pm_remove_assign.7dec2016fc.diff
+  hide: true
+  fail_to_pass:
+  - testLegacyAttrs (test_syntax.extensions.test_legacy_attrs.TestLegacyAtrributes.testLegacyAttrs)
+  - testLegacyAttrsSanitizesName (test_syntax.extensions.test_legacy_attrs.TestLegacyAtrributes.testLegacyAttrsSanitizesName)
+  instruction: |
+    A user reports a crash in Python-Markdown (the repository in `/app`) with the `legacy_attrs`
+    extension:
+
+        markdown.markdown('# Header {@id=top}\n\n![img{@id=foo}](i.jpg)', extensions=['legacy_attrs'])
+
+    raises `NameError`. Legacy attributes written as `{@key=value}` must again be applied, including in the
+    `alt` text of images (giving `<img alt="img" id="foo" ...>`) and in element text.
+
+    Find and fix the cause. Do not modify the existing tests.
+- id: ahl-dev-markdown-md-in-html-hr
+  repo: markdown
+  category: navigation
+  source: swe-smith
+  bug_patches:
+  - markdown.func_pm_ctrl_invert_if.a1b14b0ea3.diff
+  hide: true
+  fail_to_pass:
+  - test_md1_hr_self_close (test_syntax.extensions.test_md_in_html.TestMdInHTML.test_md1_hr_self_close)
+  instruction: |
+    A user reports a bug in Python-Markdown (the repository in `/app`) with the `md_in_html` extension.
+    A self-closing tag with a `markdown` attribute is copied into the output unchanged:
+
+        markdown.markdown('*e1*\n<hr markdown="1" />\n*e2*', extensions=['md_in_html'])
+
+    returns `'<p><em>e1</em></p>\n<hr markdown="1" />\n<p><em>e2</em></p>'`, but the expected output is
+    `'<p><em>e1</em></p>\n<hr>\n<p><em>e2</em></p>'`: the `markdown` attribute is consumed like on other
+    elements.
+
+    Find and fix the cause. Do not modify the existing tests.
+- id: ahl-dev-jmespath-function-types
+  repo: jmespath
+  category: navigation
+  source: swe-smith
+  bug_patches:
+  - jmespath.func_pm_remove_cond.1997963fcf.diff
+  hide: true
+  fail_to_pass:
+  - tests/test_compliance.py::test_error_expression[given18-max(array)-invalid-type-functions.json]
+  - tests/test_compliance.py::test_error_expression[given20-min(array)-invalid-type-functions.json]
+  - tests/test_compliance.py::test_error_expression[given32-sort(array)-invalid-type-functions.json]
+  instruction: |
+    A user reports a bug in jmespath.py (the repository in `/app`):
+
+        >>> jmespath.search('max(@)', [1, 'a', 3])
+        TypeError: '>' not supported between instances of 'str' and 'int'
+
+    Functions that take an array of numbers or an array of strings (`max`, `min`, `sort`, and others) must
+    reject arrays that mix element types with `jmespath.exceptions.JMESPathTypeError`, as the JMESPath
+    specification requires, instead of leaking a Python `TypeError`.
+
+    Find and fix the cause. Do not modify the existing tests or the compliance test data.
+- id: ahl-dev-jmespath-comparisons-module
+  repo: jmespath
+  category: refactoring
+  source: hand-written
+  solution_patch: ahl-dev-jmespath-comparisons-module.patch
+  min_passed: 1003
+  fail_to_pass:
+  - tests/test_devbench_comparisons.py::test_helpers_are_public_functions_of_the_new_module
+  - tests/test_devbench_comparisons.py::test_visitor_no_longer_defines_them
+  - tests/test_devbench_comparisons.py::test_interpreter_uses_the_new_module
+  - tests/test_devbench_comparisons.py::test_equality_rules
+  instruction: |
+    The repository in `/app` is jmespath.py. JMESPath's comparison and truthiness rules differ from Python's
+    and are currently private helpers inside `jmespath/visitor.py`. Move them into a new module
+    `jmespath/comparisons.py` as public functions:
+
+    - `equals(x, y)`, `is_comparable(x)` and `is_actual_number(x)`, replacing `_equals`, `_is_comparable` and
+      `_is_actual_number` (the helper `_is_special_number_case` moves along; you may rename it);
+    - `is_false(value)` and `is_true(value)`, replacing the methods `TreeInterpreter._is_false` and
+      `TreeInterpreter._is_true`.
+
+    The old private functions and methods are removed from `visitor.py`, and the interpreter calls the new
+    functions. Behaviour does not change; the whole test suite (`python -m pytest tests`) passes.
+
+    Do not modify the existing tests.
+- id: ahl-dev-tablib-row-module
+  repo: tablib
+  category: refactoring
+  source: hand-written
+  solution_patch: ahl-dev-tablib-row-module.patch
+  min_passed: 192
+  fail_to_pass:
+  - tests/test_devbench_row_module.py::test_row_lives_in_new_module
+  - tests/test_devbench_row_module.py::test_old_and_new_import_paths_are_the_same_class
+  - tests/test_devbench_row_module.py::test_core_no_longer_defines_row
+  - tests/test_devbench_row_module.py::test_rows_and_tags_still_work
+  instruction: |
+    The repository in `/app` is tablib. Move the `Row` class out of `src/tablib/core.py` into a new module
+    `src/tablib/row.py`.
+
+    Requirements:
+
+    - `Row` is defined in `tablib/row.py` (`Row.__module__ == 'tablib.row'`) and no longer in `core.py`.
+    - `tablib.core.Row` keeps working and is the same class, and `Row` is also exported from the package
+      (`from tablib import Row`).
+    - Behaviour does not change; the whole test suite (`python -m pytest -o addopts= tests`) passes.
+
+    Do not modify the existing tests.

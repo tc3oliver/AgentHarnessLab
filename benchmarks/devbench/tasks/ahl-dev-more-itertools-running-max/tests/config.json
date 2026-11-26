@@ -1,0 +1,18 @@
+{
+  "runner": "pytest",
+  "tests_dir": "tests",
+  "pytest_args": [],
+  "pythonpath": "/app",
+  "restore_paths": [
+    "tests"
+  ],
+  "fail_to_pass": [
+    "tests/test_more.py::TestRunningMax::test_maxlen",
+    "tests/test_more.py::TestRunningMax::test_stability",
+    "tests/test_more.py::TestRunningStats::test_datatypes",
+    "tests/test_more.py::TestRunningStats::test_single_example",
+    "tests/test_recipes.py::RunningWindowSizeTests::test_index_protocol"
+  ],
+  "min_passed": 772,
+  "timeout_s": 900
+}

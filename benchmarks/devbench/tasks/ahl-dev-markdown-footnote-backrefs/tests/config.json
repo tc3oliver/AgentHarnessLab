@@ -1,0 +1,16 @@
+{
+  "runner": "unittest",
+  "tests_dir": "tests",
+  "pytest_args": [],
+  "pythonpath": "/app",
+  "restore_paths": [
+    "tests"
+  ],
+  "fail_to_pass": [
+    "testHeadingRemoveFootnoteRef (test_syntax.extensions.test_toc.TestTOC.testHeadingRemoveFootnoteRef)",
+    "test_duplicate_footnote_references (test_syntax.extensions.test_footnotes.TestFootnotes.test_duplicate_footnote_references)",
+    "test_footnote (test_legacy.TestExtensionsExtra.test_footnote)"
+  ],
+  "min_passed": 1119,
+  "timeout_s": 900
+}

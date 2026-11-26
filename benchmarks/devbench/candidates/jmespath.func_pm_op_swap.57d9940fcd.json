@@ -1,0 +1,1 @@
+{"modifier": "func_pm_op_swap", "file": "jmespath/lexer.py", "entity": "_consume_until", "explanation": "The operands in an expression are likely in the wrong order."}

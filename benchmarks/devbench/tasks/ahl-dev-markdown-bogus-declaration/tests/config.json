@@ -1,0 +1,15 @@
+{
+  "runner": "unittest",
+  "tests_dir": "tests",
+  "pytest_args": [],
+  "pythonpath": "/app",
+  "restore_paths": [
+    "tests"
+  ],
+  "fail_to_pass": [
+    "test_not_actually_cdata (test_syntax.blocks.test_html_blocks.TestHTMLBlocks.test_not_actually_cdata)",
+    "test_not_actually_cdata (test_syntax.extensions.test_md_in_html.TestDefaultwMdInHTML.test_not_actually_cdata)"
+  ],
+  "min_passed": 1119,
+  "timeout_s": 900
+}

@@ -1,0 +1,16 @@
+{
+  "runner": "pytest",
+  "tests_dir": "tests",
+  "pytest_args": [],
+  "pythonpath": "/app",
+  "restore_paths": [
+    "tests"
+  ],
+  "fail_to_pass": [
+    "tests/test_more.py::PeekableTests::test_indexing",
+    "tests/test_more.py::PeekableTests::test_prepend_indexing",
+    "tests/test_more.py::PeekableTests::test_slicing_negative_step_omitted_stop_read_bound"
+  ],
+  "min_passed": 772,
+  "timeout_s": 900
+}

@@ -1,0 +1,18 @@
+{
+  "runner": "pytest",
+  "tests_dir": "tests",
+  "pytest_args": [
+    "-o",
+    "addopts="
+  ],
+  "pythonpath": "/app/src",
+  "restore_paths": [
+    "tests",
+    "pytest.ini"
+  ],
+  "fail_to_pass": [
+    "tests/test_tablib.py::LatexTests::test_latex_export"
+  ],
+  "min_passed": 188,
+  "timeout_s": 900
+}

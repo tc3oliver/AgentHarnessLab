@@ -24,12 +24,23 @@ parquet = ["pyarrow>=18"]
 harbor = ["harbor==0.25.0"]
 # Hugging Face dataset downloads (agent_harness_lab.dataset.loaders.HuggingFaceDataset). Tested with 2.4.0.
 hf = ["huggingface-hub>=2.4,<3"]
+# Request-timing proxy for evaluation runs (agent_harness_lab.monitoring.proxy).
+monitor = ["aiohttp>=3.10,<4"]
 
 [project.scripts]
 agentlab = "agent_harness_lab.cli:main"
 
 [dependency-groups]
-dev = ["huggingface-hub>=2.4", "mypy>=1.15", "pyarrow>=18", "pytest>=8.3", "pytest-cov>=6", "ruff>=0.11", "types-pyyaml>=6"]
+dev = [
+  "aiohttp>=3.10,<4",
+  "huggingface-hub>=2.4",
+  "mypy>=1.15",
+  "pyarrow>=18",
+  "pytest>=8.3",
+  "pytest-cov>=6",
+  "ruff>=0.11",
+  "types-pyyaml>=6",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/agent_harness_lab"]
@@ -40,13 +51,17 @@ include = ["src", "tests", "configs", "README.md", "LICENSE"]
 [tool.ruff]
 line-length = 110
 target-version = "py312"
-extend-exclude = ["examples/smoke_tasks/tasks"]
+extend-exclude = ["examples/smoke_tasks/tasks", "benchmarks/devbench/tasks"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "RUF", "PTH", "S", "C4"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101"]
+# Benchmark tooling runs fixed git/docker/pytest commands; hidden tests are plain pytest/unittest files.
+"benchmarks/devbench/tools/*" = ["S101", "S603", "S607"]
+"benchmarks/devbench/tools/fetch_source.py" = ["E501"]  # copied into every task image; editing it changes all image tags
+"benchmarks/devbench/hidden/*" = ["S101", "S102", "SIM102", "RUF015"]
 
 [tool.mypy]
 strict = true

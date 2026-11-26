@@ -1,0 +1,14 @@
+{
+  "runner": "pytest",
+  "tests_dir": "tests",
+  "pytest_args": [],
+  "pythonpath": "/app/src",
+  "restore_paths": [
+    "tests"
+  ],
+  "fail_to_pass": [
+    "tests/test_itsdangerous/test_serializer.py::test_digests"
+  ],
+  "min_passed": 297,
+  "timeout_s": 900
+}

@@ -1,0 +1,1 @@
+{"modifier": "func_pm_ctrl_invert_if", "file": "markdown/extensions/md_in_html.py", "entity": "handle_startendtag", "explanation": "The if-else conditions may be out of order, or the bodies are inverted."}

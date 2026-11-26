@@ -1,0 +1,16 @@
+{
+  "runner": "pytest",
+  "tests_dir": "tests",
+  "pytest_args": [],
+  "pythonpath": "/app",
+  "restore_paths": [
+    "tests"
+  ],
+  "fail_to_pass": [
+    "tests/test_recipes.py::FactorTests::test_cross_check",
+    "tests/test_recipes.py::PrimeFunctionTests::test_nth_prime_tightened_bound",
+    "tests/test_recipes.py::SieveTests::test_basic"
+  ],
+  "min_passed": 772,
+  "timeout_s": 900
+}

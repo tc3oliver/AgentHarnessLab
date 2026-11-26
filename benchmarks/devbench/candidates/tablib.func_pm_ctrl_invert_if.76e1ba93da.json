@@ -1,0 +1,1 @@
+{"modifier": "func_pm_ctrl_invert_if", "file": "src/tablib/formats/_ods.py", "entity": "read_cell", "explanation": "The if-else conditions may be out of order, or the bodies are inverted."}

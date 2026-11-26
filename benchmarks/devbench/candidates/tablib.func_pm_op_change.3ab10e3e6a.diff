@@ -1,0 +1,11 @@
+--- a/src/tablib/core.py
++++ b/src/tablib/core.py
+@@ -259,7 +259,7 @@
+             if self.width:
+                 is_valid = (
+                     len(row) == self.width or
+-                    len(row) == (self.width - len(self._dynamic_columns))
++                    len(row) == (self.width + len(self._dynamic_columns))
+                 )
+             else:
+                 is_valid = True
