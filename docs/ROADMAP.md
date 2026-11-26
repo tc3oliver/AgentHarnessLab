@@ -48,3 +48,5 @@ Statuses: **Verified** (we ran it), **Planned**, **Unverified**. As of the date 
 - **Artifacts:** configs, results, a note on what failed.
 - **Depends on:** v0.4; gated model access; a training path. TRL has no `qwen4_exp` reference while vLLM does ([UPSTREAM.md](UPSTREAM.md#constraints)), so training needs either TRL support, a port, or another trainer (SkyRL is an option, not adopted).
 - **Go/no-go risks:** no trainer support (then v0.5 becomes evaluation-only); memory for MoE on 4 GPUs; licence terms for releasing derived adapters.
+- **Status (2026-11-26):** serving with LoRA works on one GPU (Triton MoE backend only). The training step is blocked on the
+  FP8 kernel, which transformers loads from the Hub. See [reports/flash-next-feasibility.md](reports/flash-next-feasibility.md).
