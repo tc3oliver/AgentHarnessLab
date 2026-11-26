@@ -45,9 +45,10 @@ def restore(config: dict) -> None:
 def shadowing_files() -> list[str]:
     """Files under /app that would run code inside the test process, unless they were in the pristine image.
 
-    Every directory under /app on the interpreter's own sys.path (the editable install adds /app or /app/src)
-    is checked for modules named like the standard library or the test runner, and the whole tree for
-    sitecustomize/usercustomize. Git is not consulted: an agent can commit files or delete .git.
+    /app, /app/src and every other directory under /app on the interpreter's own sys.path are checked for
+    modules named like the standard library or the test runner (pytest itself puts /app on sys.path at
+    collection time for flat layouts), and the whole tree for sitecustomize/usercustomize. Git is not
+    consulted: an agent can commit files or delete .git.
     """
     allowed = set(json.loads((TESTS / "allowed_names.json").read_text()))
     probe = subprocess.run(
@@ -58,7 +59,7 @@ def shadowing_files() -> list[str]:
     )
     names = set(sys.stdlib_module_names) | SHADOW_EXTRA
     found = set()
-    for entry in json.loads(probe.stdout):
+    for entry in [str(APP), str(APP / "src"), *json.loads(probe.stdout)]:
         path = Path(entry or ".").resolve()
         if path != APP and APP not in path.parents:
             continue

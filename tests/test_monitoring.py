@@ -157,3 +157,63 @@ def test_analyse_attributes_requests_to_trials(tmp_path):
     assert row.setup_s == pytest.approx(2.0) and row.verifier_s == pytest.approx(8.0)
     assert row.request_rows[0]["decode_tok_s"] == pytest.approx(20.0)
     assert row.request_rows[0]["kv_cache_usage"] == 0.1
+
+
+def test_proxy_forwards_streams_and_asks_for_identity_encoding(tmp_path):
+    import asyncio
+
+    from aiohttp import ClientSession, web
+
+    from agent_harness_lab.monitoring.proxy import Proxy
+
+    seen: dict[str, str] = {}
+
+    async def upstream(request: web.Request) -> web.StreamResponse:
+        seen.update(request.headers)
+        response = web.StreamResponse(headers={"Content-Type": "text/event-stream"})
+        await response.prepare(request)
+        for body in (
+            {"choices": [{"delta": {"content": "hi"}}]},
+            {"choices": [], "usage": {"completion_tokens": 1}},
+        ):
+            await response.write(b"data: " + json.dumps(body).encode() + b"\n\n")
+        await response.write(b"data: [DONE]\n\n")
+        return response
+
+    async def main() -> bytes:
+        up = web.Application()
+        up.router.add_post("/v1/chat/completions", upstream)
+        up_runner = web.AppRunner(up)
+        await up_runner.setup()
+        up_site = web.TCPSite(up_runner, "127.0.0.1", 0)
+        await up_site.start()
+        port = up_runner.addresses[0][1]
+        proxy = Proxy(f"http://127.0.0.1:{port}", tmp_path / "log.jsonl")
+        app = web.Application()
+        app.on_startup.append(proxy.start)
+        app.on_cleanup.append(proxy.stop)
+        app.router.add_route("*", "/{tail:.*}", proxy.handle)
+        runner = web.AppRunner(app)
+        await runner.setup()
+        await web.TCPSite(runner, "127.0.0.1", 0).start()
+        proxy_port = runner.addresses[0][1]
+        async with (
+            ClientSession() as client,
+            client.post(
+                f"http://127.0.0.1:{proxy_port}/v1/chat/completions",
+                json={"model": "m", "stream": True},
+                headers={"Authorization": "Bearer secret-token", "Accept-Encoding": "gzip"},
+            ) as resp,
+        ):
+            body = await resp.read()
+        await runner.cleanup()
+        await up_runner.cleanup()
+        return body
+
+    body = asyncio.run(main())
+    assert b"[DONE]" in body
+    assert seen["Accept-Encoding"] == "identity"
+    assert seen["Authorization"] == "Bearer secret-token"
+    [record] = [json.loads(line) for line in (tmp_path / "log.jsonl").read_text().splitlines()]
+    assert record["completion_tokens"] == 1 and record["first_token"] is not None
+    assert "secret-token" not in (tmp_path / "log.jsonl").read_text()

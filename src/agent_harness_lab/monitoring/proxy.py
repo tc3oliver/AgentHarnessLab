@@ -131,11 +131,13 @@ class Proxy:
             "in_flight_at_start": self.in_flight,
         }
         # Ask for an uncompressed body: the proxy parses it, and drops Content-Encoding on the way back.
+        # Removing the client's header is not enough: aiohttp would then send its default "gzip, deflate".
         headers = {
             k: v
             for k, v in request.headers.items()
             if k.lower() not in HOP_BY_HOP and k.lower() != "accept-encoding"
         }
+        headers["Accept-Encoding"] = "identity"
         stats = StreamStats()
         response: web.StreamResponse | None = None
         try:
