@@ -5,8 +5,8 @@ from conftest import ROOT, make_task
 
 from agent_harness_lab.core.config import DatasetConfig
 from agent_harness_lab.dataset.audit import audit
-from agent_harness_lab.dataset.loaders import GitDataset, HuggingFaceDataset, LocalDataset
-from agent_harness_lab.errors import ConfigError, FeatureNotImplementedError
+from agent_harness_lab.dataset.loaders import LocalDataset
+from agent_harness_lab.errors import ConfigError
 
 
 def cfg(path: Path, split: str = "train", **over: object) -> DatasetConfig:
@@ -52,16 +52,6 @@ def test_invalid_tasks(tasks: Path, tmp_path: Path) -> None:
         f.write('\n[[steps]]\nname = "one"\n')
     with pytest.raises(ConfigError, match="multi-step"):
         LocalDataset().load(cfg(tmp_path / "multi"))
-
-
-def test_remote_sources_are_not_implemented() -> None:
-    for loader, source in (
-        (HuggingFaceDataset(), {"type": "huggingface", "repo": "a/b", "revision": "a" * 40}),
-        (GitDataset(), {"type": "git", "url": "https://x", "commit": "a" * 40}),
-    ):
-        config = DatasetConfig.model_validate({"name": "n", "source": source, "split": "test"})
-        with pytest.raises(FeatureNotImplementedError):
-            loader.load(config)
 
 
 def test_audit(tmp_path: Path) -> None:

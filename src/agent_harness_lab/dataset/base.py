@@ -21,10 +21,25 @@ class TaskRef:
 
 
 @dataclass(frozen=True)
+class Provenance:
+    """Where a dataset came from, for the manifest."""
+
+    source_type: str
+    location: str
+    """Local path, git URL or Hugging Face repository."""
+    revision: str | None
+    """Pinned commit; None for local directories."""
+    path: str
+    license: str | None
+    redistributable: bool
+
+
+@dataclass(frozen=True)
 class LoadedDataset:
     config: DatasetConfig
     revision: str
     tasks: tuple[TaskRef, ...]
+    provenance: Provenance | None = None
 
 
 class DatasetLoader(Protocol):

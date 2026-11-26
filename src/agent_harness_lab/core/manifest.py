@@ -3,17 +3,19 @@
 from __future__ import annotations
 
 import platform
+import re
 import subprocess
 from datetime import UTC, datetime
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, ValidationError
+from pydantic import BaseModel, ConfigDict, ValidationError, field_validator
 
 from agent_harness_lab import __version__
 from agent_harness_lab.core.config import EvalConfig, canonical_hash
-from agent_harness_lab.dataset.base import LoadedDataset
+from agent_harness_lab.dataset.base import LoadedDataset, Provenance
+from agent_harness_lab.dataset.loaders import tasks_hash
 from agent_harness_lab.errors import RunError
 
 MANIFEST_FILE = "manifest.json"
@@ -33,6 +35,20 @@ class DatasetInfo(BaseModel):
     license: str | None
     n_tasks: int
     tasks_hash: str
+    version: str | None = None
+    source_type: str | None = None
+    source: str | None = None
+    source_revision: str | None = None
+    source_path: str | None = None
+    redistributable: bool | None = None
+
+    @field_validator("tasks_hash", mode="before")
+    @classmethod
+    def _prefix(cls, value: object) -> object:
+        """Manifests written before the prefix existed hold bare hex."""
+        if isinstance(value, str) and re.fullmatch(r"[0-9a-f]{64}", value):
+            return f"sha256:{value}"
+        return value
 
 
 class HarnessInfo(BaseModel):
@@ -73,7 +89,9 @@ class Manifest(BaseModel):
             "package_version": self.code.package_version,
             "seed": self.seed,
             "n_attempts": c.n_attempts,
-            "datasets": sorted((d.name, d.split, d.revision, d.tasks_hash) for d in self.datasets),
+            "datasets": sorted(
+                (d.name, d.version or "", d.split, d.revision, d.tasks_hash) for d in self.datasets
+            ),
             "harnesses": [h.model_dump() for h in sorted(c.harnesses, key=lambda h: h.name)],
             "observed_harness_versions": sorted((h.name, tuple(h.observed_versions)) for h in self.harnesses),
             "sampling": c.inference.sampling.model_dump(),
@@ -140,6 +158,16 @@ def installed_packages() -> dict[str, str]:
     return found
 
 
+def _provenance(p: Provenance) -> dict[str, Any]:
+    return {
+        "source_type": p.source_type,
+        "source": p.location,
+        "source_revision": p.revision,
+        "source_path": p.path,
+        "redistributable": p.redistributable,
+    }
+
+
 def new_manifest(
     config: EvalConfig,
     datasets: list[LoadedDataset],
@@ -164,7 +192,9 @@ def new_manifest(
                 revision=d.revision,
                 license=d.config.license,
                 n_tasks=len(d.tasks),
-                tasks_hash=canonical_hash([[t.task_id, t.content_hash] for t in d.tasks]),
+                tasks_hash=tasks_hash(d.tasks),
+                version=d.config.version,
+                **({} if d.provenance is None else _provenance(d.provenance)),
             )
             for d in datasets
         ],

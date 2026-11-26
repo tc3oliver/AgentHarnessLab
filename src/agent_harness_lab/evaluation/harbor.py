@@ -133,9 +133,6 @@ class HarborRunner:
             adapter.harbor_agent(harness, config.model, config.inference)
         if runner.prebuilt and runner.environment != "docker":
             raise ConfigError("runner.prebuilt needs the docker environment")
-        for dataset in config.datasets:
-            if dataset.source.type != "local":
-                raise ConfigError(f"dataset '{dataset.name}': the Harbor runner needs a local source")
         env = harbor_env(config)
         found = _output([*runner.command, "--version"], env).splitlines()[-1:]
         if found != [runner.version]:
