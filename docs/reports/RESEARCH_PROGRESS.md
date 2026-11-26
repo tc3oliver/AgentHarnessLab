@@ -11,7 +11,7 @@ never committed.
 | Evaluation | Harbor runner, prebuilt images, Git and Hugging Face dataset loaders (PR #4), devbench (30 tasks), request-level performance monitoring |
 | Models served | Qwen3.8-27B `37561816e66b` with the reference Pi adapter `41396a9f14d9` as a LoRA module, vLLM 0.33.0 ROCm, one MI325X |
 | Harnesses evaluated with a real model | Pi 1.5.2, OpenCode 2.2.7 (Harbor 0.27.0) |
-| Training | not started; pilot plan below |
+| Training | pilot rung 1 (kernel parity) passed; no training run yet |
 
 ## Merged pull requests
 
@@ -23,6 +23,22 @@ never committed.
 | #4 | Git and Hugging Face dataset loaders, task-list pins, repository split; smoke task 020 fix | `4d337ee` |
 
 ## Log
+
+### 2026-11-26: RL pilot rung 1, kernel parity on gfx942
+
+Image `agentlab-trainer:trl1.19.0` (`rl/trainer-image/Dockerfile`: the vLLM 0.33.0 ROCm image plus
+`trl[peft]==1.19.0`, `peft==0.22.0`), GPU 4, no network. Script `rl/parity/kernel_parity.py`, output
+`rl/parity/parity-gpu4.jsonl`.
+
+- **Hypothesis:** TRL's tree kernels give correct forward and backward results on MI325X at the model's shapes.
+  **Criterion:** relative error at bf16 level (< 1%) against PyTorch fp32 references, deterministic gradients.
+  **Met** at 1k, 8k and 32k tokens:
+  - causal conv (10240 channels, width 4): forward 0.17%, dx 0.27%;
+  - Gated DeltaNet (48 heads, dims 128): forward 0.41%, gradients 0.38-0.48%;
+  - identical gradients over 10 repeats;
+  - attention backward at head dim 256 finite at 32k tokens (0.25 s, 23 GB peak).
+- Risk for the next rung: without `flash-linear-attention`, transformers runs Gated DeltaNet in its PyTorch
+  reference implementation, which is slow.
 
 ### 2026-11-26: attention backend, paired on devbench
 
@@ -147,7 +163,7 @@ base vs adapter on smoke (no difference shown).
 1. More hard tasks: most of the set no longer separates conditions.
 2. Harness config fixes before rollouts: a Pi command timeout, and the OpenCode Web Search tool disabled.
 3. RL pilot on GPUs 4 and 5:
-   - kernel parity (`rl/parity/kernel_parity.py`);
+   - ~~kernel parity~~ (passed);
    - 27B LoRA steps at 16k, 32k and 64k tokens;
    - LoRA hot-load round trip;
    - one OpenEnv Pi rollout;
