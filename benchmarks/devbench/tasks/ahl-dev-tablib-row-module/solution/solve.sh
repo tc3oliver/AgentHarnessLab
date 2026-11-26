@@ -1,0 +1,194 @@
+#!/bin/bash
+set -euo pipefail
+cd /app
+git apply <<'PATCH'
+diff --git a/src/tablib/__init__.py b/src/tablib/__init__.py
+index d528c7b..3035894 100644
+--- a/src/tablib/__init__.py
++++ b/src/tablib/__init__.py
+@@ -15,6 +15,7 @@ from .core import (  # noqa: F401
+     Dataset,
+     InvalidDatasetType,
+     InvalidDimensions,
++    Row,
+     UnsupportedFormat,
+     detect_format,
+     import_book,
+diff --git a/src/tablib/core.py b/src/tablib/core.py
+index b0b56fd..5e5a038 100644
+--- a/src/tablib/core.py
++++ b/src/tablib/core.py
+@@ -26,6 +26,7 @@ from .exceptions import (
+     UnsupportedFormat,
+ )
+ from .formats import registry
++from .row import Row
+ from .utils import normalize_input
+ 
+ __title__ = 'tablib'
+@@ -35,78 +36,6 @@ __copyright__ = 'Copyright 2017 Kenneth Reitz. 2019 Jazzband.'
+ __docformat__ = 'restructuredtext'
+ 
+ 
+-class Row:
+-    """Internal Row object. Mainly used for filtering."""
+-
+-    __slots__ = ['_row', 'tags']
+-
+-    def __init__(self, row=(), tags=()):
+-        self._row = list(row)
+-        self.tags = list(tags)
+-
+-    def __iter__(self):
+-        return (col for col in self._row)
+-
+-    def __len__(self):
+-        return len(self._row)
+-
+-    def __repr__(self):
+-        return repr(self._row)
+-
+-    def __getitem__(self, i):
+-        return self._row[i]
+-
+-    def __setitem__(self, i, value):
+-        self._row[i] = value
+-
+-    def __delitem__(self, i):
+-        del self._row[i]
+-
+-    def __getstate__(self):
+-        return self._row, self.tags
+-
+-    def __setstate__(self, state):
+-        self._row, self.tags = state
+-
+-    def rpush(self, value):
+-        self.insert(len(self._row), value)
+-
+-    def lpush(self, value):
+-        self.insert(0, value)
+-
+-    def append(self, value):
+-        self.rpush(value)
+-
+-    def insert(self, index, value):
+-        self._row.insert(index, value)
+-
+-    def copy(self):
+-        return Row(self._row.copy(), self.tags.copy())
+-
+-    def __contains__(self, item):
+-        return item in self._row
+-
+-    @property
+-    def tuple(self):
+-        """Tuple representation of :class:`Row`."""
+-        return tuple(self._row)
+-
+-    @property
+-    def list(self):
+-        """List representation of :class:`Row`."""
+-        return list(self._row)
+-
+-    def has_tag(self, tag):
+-        """Returns true if current row contains tag."""
+-
+-        if tag is None:
+-            return False
+-        elif isinstance(tag, str):
+-            return tag in self.tags
+-        else:
+-            return bool(len(set(tag) & set(self.tags)))
+-
+-
+ class Dataset:
+     """The :class:`Dataset` object is the heart of Tablib. It provides all core
+     functionality.
+diff --git a/src/tablib/row.py b/src/tablib/row.py
+new file mode 100644
+index 0000000..93d893d
+--- /dev/null
++++ b/src/tablib/row.py
+@@ -0,0 +1,80 @@
++"""
++    tablib.row
++    ~~~~~~~~~~
++
++    The row object used inside a :class:`tablib.Dataset`.
++
++    :license: MIT, see LICENSE for more details.
++"""
++
++
++class Row:
++    """Internal Row object. Mainly used for filtering."""
++
++    __slots__ = ['_row', 'tags']
++
++    def __init__(self, row=(), tags=()):
++        self._row = list(row)
++        self.tags = list(tags)
++
++    def __iter__(self):
++        return (col for col in self._row)
++
++    def __len__(self):
++        return len(self._row)
++
++    def __repr__(self):
++        return repr(self._row)
++
++    def __getitem__(self, i):
++        return self._row[i]
++
++    def __setitem__(self, i, value):
++        self._row[i] = value
++
++    def __delitem__(self, i):
++        del self._row[i]
++
++    def __getstate__(self):
++        return self._row, self.tags
++
++    def __setstate__(self, state):
++        self._row, self.tags = state
++
++    def rpush(self, value):
++        self.insert(len(self._row), value)
++
++    def lpush(self, value):
++        self.insert(0, value)
++
++    def append(self, value):
++        self.rpush(value)
++
++    def insert(self, index, value):
++        self._row.insert(index, value)
++
++    def copy(self):
++        return Row(self._row.copy(), self.tags.copy())
++
++    def __contains__(self, item):
++        return item in self._row
++
++    @property
++    def tuple(self):
++        """Tuple representation of :class:`Row`."""
++        return tuple(self._row)
++
++    @property
++    def list(self):
++        """List representation of :class:`Row`."""
++        return list(self._row)
++
++    def has_tag(self, tag):
++        """Returns true if current row contains tag."""
++
++        if tag is None:
++            return False
++        elif isinstance(tag, str):
++            return tag in self.tags
++        else:
++            return bool(len(set(tag) & set(self.tags)))
+PATCH

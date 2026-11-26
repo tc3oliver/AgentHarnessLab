@@ -1,0 +1,15 @@
+{
+  "runner": "unittest",
+  "tests_dir": "tests",
+  "restore_paths": [
+    "tests",
+    "conftest.py",
+    "pytest.ini",
+    ".pytest.ini"
+  ],
+  "fail_to_pass": [
+    "testWikilinksMetaData (test_extensions.TestWikiLinks.testWikilinksMetaData)"
+  ],
+  "min_passed": 1119,
+  "timeout_s": 900
+}

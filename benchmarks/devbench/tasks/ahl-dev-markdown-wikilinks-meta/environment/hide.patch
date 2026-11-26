@@ -1,0 +1,32 @@
+diff --git a/tests/test_extensions.py b/tests/test_extensions.py
+index b8bc3c8..12213e6 100644
+--- a/tests/test_extensions.py
++++ b/tests/test_extensions.py
+@@ -216,27 +216,6 @@ class TestWikiLinks(unittest.TestCase):
+             '<a href="http://example.com/WikiLink.html">WikiLink</a>.</p>'
+         )
+ 
+-    def testWikilinksMetaData(self):
+-        """ test `MetaData` with `Wikilinks` Extension. """
+-
+-        text = """wiki_base_url: http://example.com/
+-wiki_end_url:   .html
+-wiki_html_class:
+-
+-Some text with a [[WikiLink]]."""
+-        md = markdown.Markdown(extensions=['meta', 'wikilinks'])
+-        self.assertEqual(
+-            md.convert(text),
+-            '<p>Some text with a '
+-            '<a href="http://example.com/WikiLink.html">WikiLink</a>.</p>'
+-        )
+-
+-        # `MetaData` should not carry over to next document:
+-        self.assertEqual(
+-            md.convert("No [[MetaData]] here."),
+-            '<p>No <a class="wikilink" href="/MetaData/">MetaData</a> '
+-            'here.</p>'
+-        )
+ 
+     def testURLCallback(self):
+         """ Test used of a custom URL builder. """

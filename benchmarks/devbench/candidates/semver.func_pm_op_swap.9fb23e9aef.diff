@@ -1,0 +1,15 @@
+--- a/src/semver/version.py
++++ b/src/semver/version.py
+@@ -831,10 +831,10 @@
+             unknownkeys = set(parts) - set(self.to_dict())
+             if not unknownkeys:
+                 raise
+-            error = "replace() got %d unexpected keyword argument(s): %s" % (
++            error = (
+                 len(unknownkeys),
+                 ", ".join(unknownkeys),
+-            )
++            ) % "replace() got %d unexpected keyword argument(s): %s"
+             raise TypeError(error)
+ 
+     @classmethod

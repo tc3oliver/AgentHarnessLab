@@ -1,0 +1,91 @@
+diff --git a/tests/test_more.py b/tests/test_more.py
+index 4a5d7fc..b97e17c 100644
+--- a/tests/test_more.py
++++ b/tests/test_more.py
+@@ -261,31 +261,6 @@ class PeekableMixinTests:
+ class PeekableTests(PeekableMixinTests, TestCase):
+     cls = mi.peekable
+ 
+-    def test_indexing(self):
+-        """
+-        Indexing into the peekable shouldn't advance the iterator.
+-        """
+-        p = mi.peekable('abcdefghijkl')
+-
+-        # The 0th index is what ``next()`` will return
+-        self.assertEqual(p[0], 'a')
+-        self.assertEqual(next(p), 'a')
+-
+-        # Indexing further into the peekable shouldn't advance the iterator
+-        self.assertEqual(p[2], 'd')
+-        self.assertEqual(next(p), 'b')
+-
+-        # The 0th index moves up with the iterator; the last index follows
+-        self.assertEqual(p[0], 'c')
+-        self.assertEqual(p[9], 'l')
+-
+-        self.assertEqual(next(p), 'c')
+-        self.assertEqual(p[8], 'l')
+-
+-        # Negative indexing should work too
+-        self.assertEqual(p[-2], 'k')
+-        self.assertEqual(p[-9], 'd')
+-        self.assertRaises(IndexError, lambda: p[-10])
+ 
+     def test_slicing(self):
+         """Slicing the peekable shouldn't advance the iterator."""
+@@ -347,29 +322,6 @@ class PeekableTests(PeekableMixinTests, TestCase):
+         self.assertEqual(len(p._cache), 6)
+         self.assertEqual(next(p), 0)
+ 
+-    def test_slicing_negative_step_omitted_stop_read_bound(self):
+-        seen = []
+-
+-        def guarded_source():
+-            for value in count():
+-                if len(seen) == 6:
+-                    raise AssertionError(
+-                        'source read past reverse-slice boundary'
+-                    )
+-                seen.append(value)
+-                yield value
+-
+-        p = mi.peekable(guarded_source())
+-        self.assertEqual(p[2], 2)
+-        self.assertEqual(seen, [0, 1, 2])
+-
+-        self.assertEqual(p[5::-2], [5, 3, 1])
+-        self.assertEqual(seen, list(range(6)))
+-        self.assertEqual(p[5::-1], [5, 4, 3, 2, 1, 0])
+-        self.assertEqual(seen, list(range(6)))
+-
+-        self.assertEqual(list(islice(p, 6)), list(range(6)))
+-        self.assertEqual(seen, list(range(6)))
+ 
+     # prepend() behavior tests
+ 
+@@ -467,24 +419,6 @@ class PeekableTests(PeekableMixinTests, TestCase):
+         self.assertEqual(p[::2], pseq[::2])
+         self.assertEqual(p[::-1], pseq[::-1])
+ 
+-    def test_prepend_indexing(self):
+-        """Tests interaction between prepending and indexing"""
+-        seq = list(range(20))
+-        p = mi.peekable(seq)
+-
+-        p.prepend(30, 40, 50)
+-
+-        self.assertEqual(p[0], 30)
+-        self.assertEqual(next(p), 30)
+-        self.assertEqual(p[2], 0)
+-        self.assertEqual(next(p), 40)
+-        self.assertEqual(p[0], 50)
+-        self.assertEqual(p[9], 8)
+-        self.assertEqual(next(p), 50)
+-        self.assertEqual(p[8], 8)
+-        self.assertEqual(p[-2], 18)
+-        self.assertEqual(p[-9], 11)
+-        self.assertRaises(IndexError, lambda: p[-21])
+ 
+     def test_prepend_iterable(self):
+         """Tests prepending from an iterable"""

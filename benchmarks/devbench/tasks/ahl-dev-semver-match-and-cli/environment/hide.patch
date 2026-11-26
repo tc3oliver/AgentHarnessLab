@@ -1,0 +1,39 @@
+diff --git a/tests/test_match.py b/tests/test_match.py
+index 1f94a1d..d50a9ed 100644
+--- a/tests/test_match.py
++++ b/tests/test_match.py
+@@ -52,18 +52,8 @@ def test_should_not_raise_value_error_for_expected_match_expression(
+     assert match(left, right) is expected
+ 
+ 
+-@pytest.mark.parametrize(
+-    "left,right", [("2.3.7", "=2.3.7"), ("2.3.7", "~2.3.7"), ("2.3.7", "^2.3.7")]
+-)
+-def test_should_raise_value_error_for_unexpected_match_expression(left, right):
+-    with pytest.raises(ValueError):
+-        match(left, right)
+ 
+ 
+-@pytest.mark.parametrize("left,right", [("1.0.0", ""), ("1.0.0", "!")])
+-def test_should_raise_value_error_for_invalid_match_expression(left, right):
+-    with pytest.raises(ValueError):
+-        match(left, right)
+ 
+ 
+ @pytest.mark.parametrize(
+diff --git a/tests/test_pysemver-cli.py b/tests/test_pysemver-cli.py
+index 9933b0d..c1c9f5c 100644
+--- a/tests/test_pysemver-cli.py
++++ b/tests/test_pysemver-cli.py
+@@ -105,11 +105,6 @@ def test_should_process_parsed_cli_arguments(func, args, expectation):
+         assert result == expected
+ 
+ 
+-def test_should_process_print(capsys):
+-    rc = main(["bump", "major", "1.2.3"])
+-    assert rc == 0
+-    captured = capsys.readouterr()
+-    assert captured.out.rstrip() == "2.0.0"
+ 
+ 
+ def test_should_process_raise_error(capsys):

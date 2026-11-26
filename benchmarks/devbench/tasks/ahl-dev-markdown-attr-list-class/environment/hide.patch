@@ -1,0 +1,66 @@
+diff --git a/tests/test_syntax/extensions/test_attr_list.py b/tests/test_syntax/extensions/test_attr_list.py
+index 73c7796..5de2038 100644
+--- a/tests/test_syntax/extensions/test_attr_list.py
++++ b/tests/test_syntax/extensions/test_attr_list.py
+@@ -34,11 +34,6 @@ class TestAttrList(TestCase):
+             '<p><em>foo</em>{ }</p>'
+         )
+ 
+-    def test_curly_after_inline(self):
+-        self.assertMarkdownRenders(
+-            '*inline*{.a} } *text*{.a }}',
+-            '<p><em class="a">inline</em> } <em class="a">text</em>}</p>'
+-        )
+ 
+     def test_extra_eq_gets_ignored_inside_curly_inline(self):
+         # Undesired behavior but kept for historic compatibility.
+@@ -90,49 +85,6 @@ class TestAttrList(TestCase):
+         text = 'foo\n{a' + (' ' * 50000)
+         self.assertMarkdownRenders(text, f'<p>{text}</p>')
+ 
+-    def test_table_td(self):
+-        self.assertMarkdownRenders(
+-            self.dedent(
+-                """
+-                | A { .foo }  | *B*{ .foo } | C { } | D{ .foo }     | E { .foo } F |
+-                |-------------|-------------|-------|---------------|--------------|
+-                | a { .foo }  | *b*{ .foo } | c { } | d{ .foo }     | e { .foo } f |
+-                | valid on td | inline      | empty | missing space | not at end   |
+-                """
+-            ),
+-            self.dedent(
+-                """
+-                <table>
+-                <thead>
+-                <tr>
+-                <th class="foo">A</th>
+-                <th><em class="foo">B</em></th>
+-                <th>C { }</th>
+-                <th>D{ .foo }</th>
+-                <th>E { .foo } F</th>
+-                </tr>
+-                </thead>
+-                <tbody>
+-                <tr>
+-                <td class="foo">a</td>
+-                <td><em class="foo">b</em></td>
+-                <td>c { }</td>
+-                <td>d{ .foo }</td>
+-                <td>e { .foo } f</td>
+-                </tr>
+-                <tr>
+-                <td>valid on td</td>
+-                <td>inline</td>
+-                <td>empty</td>
+-                <td>missing space</td>
+-                <td>not at end</td>
+-                </tr>
+-                </tbody>
+-                </table>
+-                """
+-            ),
+-            extensions=['attr_list', 'tables']
+-        )
+ 
+ 
+ class TestAttrListValuelessAttributes(TestCase):

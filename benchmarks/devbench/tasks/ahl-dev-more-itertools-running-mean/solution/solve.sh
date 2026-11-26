@@ -1,0 +1,18 @@
+#!/bin/bash
+set -euo pipefail
+cd /app
+git apply <<'PATCH'
+diff --git a/more_itertools/recipes.py b/more_itertools/recipes.py
+index d1ebf37..7c458d3 100644
+--- a/more_itertools/recipes.py
++++ b/more_itertools/recipes.py
+@@ -1430,7 +1430,7 @@ def _windowed_running_mean(iterator, n):
+         running_sum += value
+         if len(window) > n:
+             running_sum -= window.popleft()
+-        yield running_sum * len(window)
++        yield running_sum / len(window)
+ 
+ 
+ def running_mean(iterable, *, maxlen=None):
+PATCH

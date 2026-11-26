@@ -1,0 +1,20 @@
+[
+ ".coveragerc",
+ ".github",
+ ".gitignore",
+ ".pre-commit-config.yaml",
+ ".readthedocs.yaml",
+ "AUTHORS",
+ "CODE_OF_CONDUCT.md",
+ "HISTORY.md",
+ "LICENSE",
+ "README.md",
+ "RELEASING.md",
+ "docs",
+ "pyproject.toml",
+ "pytest.ini",
+ "src",
+ "src/tablib",
+ "tests",
+ "tox.ini"
+]

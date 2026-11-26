@@ -1,0 +1,11 @@
+--- a/more_itertools/more.py
++++ b/more_itertools/more.py
+@@ -5307,7 +5307,7 @@
+         return (n, 2.25 * n)
+ 
+     # https://en.wikipedia.org/wiki/Prime-counting_function#Inequalities
+-    upper_bound = n * log(n * log(n))
++    upper_bound = n * log(n % log(n))
+     lower_bound = upper_bound - n
+     if n >= 688_383:
+         upper_bound -= n * (1.0 - (log(log(n)) - 2.0) / log(n))

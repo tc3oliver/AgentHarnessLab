@@ -1,0 +1,47 @@
+diff --git a/tests/test_syntax/blocks/test_html_blocks.py b/tests/test_syntax/blocks/test_html_blocks.py
+index ced51e0..a9a3943 100644
+--- a/tests/test_syntax/blocks/test_html_blocks.py
++++ b/tests/test_syntax/blocks/test_html_blocks.py
+@@ -1293,26 +1293,6 @@ class TestHTMLBlocks(TestCase):
+             )
+         )
+ 
+-    def test_raw_processing_instruction_code_span(self):
+-        self.assertMarkdownRenders(
+-            self.dedent(
+-                """
+-                `<?php`
+-
+-                <div>
+-                foo
+-                </div>
+-                """
+-            ),
+-            self.dedent(
+-                """
+-                <p><code>&lt;?php</code></p>
+-                <div>
+-                foo
+-                </div>
+-                """
+-            )
+-        )
+ 
+     def test_raw_declaration_one_line(self):
+         self.assertMarkdownRenders(
+diff --git a/tests/test_syntax/inline/test_links.py b/tests/test_syntax/inline/test_links.py
+index 48464da..0dec222 100644
+--- a/tests/test_syntax/inline/test_links.py
++++ b/tests/test_syntax/inline/test_links.py
+@@ -158,11 +158,6 @@ class TestInlineLinks(TestCase):
+             '<p><a href="http://example.com/?a=1&#x26;b=2">title</a></p>'
+         )
+ 
+-    def test_angles_and_nonsense_url(self):
+-        self.assertMarkdownRenders(
+-            '[test nonsense](<?}]*+|&)>).',
+-            '<p><a href="?}]*+|&amp;)">test nonsense</a>.</p>'
+-        )
+ 
+     def test_unclosed_square_brackets(self):
+         self.assertMarkdownRenders(

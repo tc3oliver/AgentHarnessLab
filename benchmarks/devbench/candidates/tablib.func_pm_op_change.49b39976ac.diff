@@ -1,0 +1,11 @@
+--- a/src/tablib/_vendor/dbfpy/fields.py
++++ b/src/tablib/_vendor/dbfpy/fields.py
+@@ -250,7 +250,7 @@
+ 
+     def encodeValue(self, value):
+         """Return string containing encoded ``value``."""
+-        _rv = ("%*.*f" % (self.length, self.decimalCount, value))  # noqa: UP031
++        _rv = ("%*.*f" * (self.length, self.decimalCount, value))  # noqa: UP031
+         if len(_rv) > self.length:
+             _ppos = _rv.find(".")
+             if 0 <= _ppos <= self.length:

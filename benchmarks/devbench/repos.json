@@ -1,0 +1,140 @@
+{
+  "base_image": "python:3.12-slim@sha256:191083cdf6c7bda8c76158983163ead5d5cf7b77cf3033e805bb0f5296f51b4b",
+  "swe_smith": {
+    "repository": "SWE-bench/SWE-smith",
+    "commit": "9b74ac08118a85c39c356802f7961893af73e07f",
+    "license": "MIT"
+  },
+  "repositories": {
+    "markdown": {
+      "github": "Python-Markdown/markdown",
+      "commit": "27c014198021f71442301319981a3ed366ae2ad1",
+      "archive_sha256": "c108a743747c2e74f871db32e72a931b6fd93f9f20d5e7f34070e7c0bf5ff9b2",
+      "license": "BSD-3-Clause",
+      "license_file": "LICENSE.md",
+      "src": [
+        "markdown"
+      ],
+      "tests": "tests",
+      "test_cmd": "python -m unittest discover tests",
+      "build_requires": [
+        "setuptools>=77.0"
+      ],
+      "extras": "",
+      "test_requires": [
+        "pytest",
+        "pyyaml"
+      ],
+      "reference_passed": 1119,
+      "pytest_ini": "[pytest]\n"
+    },
+    "tablib": {
+      "github": "jazzband/tablib",
+      "commit": "b6a75dcbe01cc42b3fd45ae5005901e2639fa7a7",
+      "archive_sha256": "e8049212d75b7cb0fca237bd48dd0116a2c6335c8f1715a1546547095dd706f4",
+      "license": "MIT",
+      "license_file": "LICENSE",
+      "src": [
+        "src/tablib"
+      ],
+      "tests": "tests",
+      "test_cmd": "python -m pytest -p no:cacheprovider tests",
+      "build_requires": [
+        "setuptools>=58",
+        "setuptools_scm[toml]>=6.2"
+      ],
+      "extras": "[all]",
+      "test_requires": [
+        "pytest"
+      ],
+      "reference_passed": 188,
+      "pytest_ini": "[pytest]\nnorecursedirs = .git .*\n"
+    },
+    "more-itertools": {
+      "github": "more-itertools/more-itertools",
+      "commit": "aa9977698a5e6ae15d3fdfac08a5fc5621c4e179",
+      "archive_sha256": "c3fd0d7f923aa6bdb7254d227118f41f639deaa23142e21b92888b5a929efaee",
+      "license": "MIT",
+      "license_file": "LICENSE",
+      "src": [
+        "more_itertools"
+      ],
+      "tests": "tests",
+      "test_cmd": "python -m pytest -p no:cacheprovider tests",
+      "build_requires": [
+        "flit_core>=4,<5"
+      ],
+      "extras": "",
+      "test_requires": [
+        "pytest"
+      ],
+      "reference_passed": 772,
+      "pytest_ini": "[pytest]\n"
+    },
+    "semver": {
+      "github": "python-semver/python-semver",
+      "commit": "a4b7d337b1eb699ad4bad532a4b3fc68f8ec2408",
+      "archive_sha256": "0cac63fa8d1d67335aa316c2b97eae2394caaeae711672688cef2493988e08b8",
+      "license": "BSD-3-Clause",
+      "license_file": "LICENSE.txt",
+      "src": [
+        "src/semver"
+      ],
+      "tests": "tests",
+      "test_cmd": "python -m pytest -p no:cacheprovider tests",
+      "build_requires": [
+        "setuptools>=77.0.3"
+      ],
+      "extras": "",
+      "test_requires": [
+        "pytest"
+      ],
+      "reference_passed": 532,
+      "pytest_ini": "[pytest]\nnorecursedirs = .git build .env/ env/ .pyenv/ .tmp/ .eggs/ venv/\npythonpath = /app/src /app/tests\nfilterwarnings =\n    ignore:Function 'semver.*:DeprecationWarning\n    ignore:Function 'semver.compare' is deprecated.*:PendingDeprecationWarning\n"
+    },
+    "jmespath": {
+      "github": "jmespath/jmespath.py",
+      "commit": "2812594e69d43098ef60f81f4efc404c071b0418",
+      "archive_sha256": "d06f2c3dbda981778fa39d7fca3a7ba49c4f2a797f66f08eefe9db22469b83cf",
+      "license": "MIT",
+      "license_file": "LICENSE",
+      "src": [
+        "jmespath"
+      ],
+      "tests": "tests",
+      "test_cmd": "python -m pytest -p no:cacheprovider tests",
+      "build_requires": [
+        "setuptools"
+      ],
+      "extras": "",
+      "test_requires": [
+        "pytest"
+      ],
+      "reference_passed": 991,
+      "pytest_ini": "[pytest]\n"
+    },
+    "itsdangerous": {
+      "github": "pallets/itsdangerous",
+      "commit": "672971d66a2ef9f85151e53283113f33d642dabd",
+      "archive_sha256": "4bb4319c82ed401baa6fa4e795ee2221dedaeeeffbfe2ca8397048120bcb43f2",
+      "license": "BSD-3-Clause",
+      "license_file": "LICENSE.txt",
+      "src": [
+        "src/itsdangerous"
+      ],
+      "tests": "tests",
+      "test_cmd": "python -m pytest -p no:cacheprovider tests",
+      "build_requires": [
+        "flit_core<4"
+      ],
+      "extras": "",
+      "test_requires": [
+        "pytest",
+        "freezegun"
+      ],
+      "reference_passed": 297,
+      "pytest_ini": "[pytest]\nfilterwarnings =\n    error\n"
+    }
+  },
+  "pytest_ini_note": "Verifier-owned pytest configuration: the upstream ini options without addopts (coverage, doctests)."
+}

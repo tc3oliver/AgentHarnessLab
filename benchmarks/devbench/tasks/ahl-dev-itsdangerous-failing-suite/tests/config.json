@@ -1,0 +1,15 @@
+{
+  "runner": "pytest",
+  "tests_dir": "tests",
+  "restore_paths": [
+    "tests",
+    "conftest.py",
+    "pytest.ini",
+    ".pytest.ini"
+  ],
+  "fail_to_pass": [
+    "tests/test_itsdangerous/test_serializer.py::test_digests"
+  ],
+  "min_passed": 297,
+  "timeout_s": 900
+}

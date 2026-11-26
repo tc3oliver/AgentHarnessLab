@@ -1,0 +1,17 @@
+{
+  "runner": "pytest",
+  "tests_dir": "tests",
+  "restore_paths": [
+    "tests",
+    "conftest.py",
+    "pytest.ini",
+    ".pytest.ini"
+  ],
+  "fail_to_pass": [
+    "tests/test_compliance.py::test_error_expression[given18-max(array)-invalid-type-functions.json]",
+    "tests/test_compliance.py::test_error_expression[given20-min(array)-invalid-type-functions.json]",
+    "tests/test_compliance.py::test_error_expression[given32-sort(array)-invalid-type-functions.json]"
+  ],
+  "min_passed": 991,
+  "timeout_s": 900
+}

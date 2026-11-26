@@ -1,0 +1,18 @@
+{
+  "runner": "pytest",
+  "tests_dir": "tests",
+  "restore_paths": [
+    "tests",
+    "conftest.py",
+    "pytest.ini",
+    ".pytest.ini"
+  ],
+  "fail_to_pass": [
+    "tests/test_tablib.py::CSVTests::test_csv_import_set_ragged",
+    "tests/test_tablib.py::XLSXTests::test_xlsx_import_book_ragged",
+    "tests/test_tablib.py::XLSXTests::test_xlsx_import_set_ragged",
+    "tests/test_tablib.py::ODSTests::test_ods_import_set_ragged"
+  ],
+  "min_passed": 188,
+  "timeout_s": 900
+}

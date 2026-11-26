@@ -1,0 +1,28 @@
+diff --git a/tests/test_syntax/extensions/test_md_in_html.py b/tests/test_syntax/extensions/test_md_in_html.py
+index c89ae6f..66b201e 100644
+--- a/tests/test_syntax/extensions/test_md_in_html.py
++++ b/tests/test_syntax/extensions/test_md_in_html.py
+@@ -1047,23 +1047,6 @@ class TestMdInHTML(TestCase):
+             )
+         )
+ 
+-    def test_md1_hr_self_close(self):
+-        self.assertMarkdownRenders(
+-            self.dedent(
+-                """
+-                *emphasis1*
+-                <hr markdown="1" />
+-                *emphasis2*
+-                """
+-            ),
+-            self.dedent(
+-                """
+-                <p><em>emphasis1</em></p>
+-                <hr>
+-                <p><em>emphasis2</em></p>
+-                """
+-            )
+-        )
+ 
+     def test_md1_hr_start_and_end(self):
+         # Browsers ignore ending hr tags, so we don't try to do anything to handle them special.

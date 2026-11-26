@@ -1,0 +1,1 @@
+{"modifier": "func_pm_ctrl_invert_if", "file": "more_itertools/more.py", "entity": "distinct_permutations", "explanation": "The if-else conditions may be out of order, or the bodies are inverted."}

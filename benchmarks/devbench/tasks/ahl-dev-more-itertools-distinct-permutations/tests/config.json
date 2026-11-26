@@ -1,0 +1,18 @@
+{
+  "runner": "pytest",
+  "tests_dir": "tests",
+  "restore_paths": [
+    "tests",
+    "conftest.py",
+    "pytest.ini",
+    ".pytest.ini"
+  ],
+  "fail_to_pass": [
+    "tests/test_more.py::DistinctPermutationsTests::test_basic",
+    "tests/test_more.py::DistinctPermutationsTests::test_unhashable",
+    "tests/test_more.py::DistinctPermutationsTests::test_unsortable",
+    "tests/test_more.py::DistinctPermutationsTests::test_unsorted_equivalent"
+  ],
+  "min_passed": 772,
+  "timeout_s": 900
+}

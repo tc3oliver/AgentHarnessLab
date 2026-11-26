@@ -1,0 +1,15 @@
+--- a/markdown/extensions/legacy_attrs.py
++++ b/markdown/extensions/legacy_attrs.py
+@@ -47,11 +47,10 @@
+     def run(self, doc: etree.Element) -> None:
+         """Find and set values of attributes ({@key=value}). """
+         for el in doc.iter():
+-            alt = el.get('alt', None)
+             if alt is not None:
+                 el.set('alt', self.handleAttributes(el, alt))
+             if el.text and isString(el.text):
+-                el.text = self.handleAttributes(el, el.text)
++                pass
+             if el.tail and isString(el.tail):
+                 el.tail = self.handleAttributes(el, el.tail)
+ 

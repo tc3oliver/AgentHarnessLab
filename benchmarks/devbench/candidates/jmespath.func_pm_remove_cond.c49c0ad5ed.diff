@@ -1,0 +1,11 @@
+--- a/jmespath/functions.py
++++ b/jmespath/functions.py
+@@ -303,8 +303,6 @@
+             return "object"
+         elif isinstance(arg, (float, int)):
+             return "number"
+-        elif arg is None:
+-            return "null"
+ 
+     @signature({'types': ['array']}, {'types': ['expref']})
+     def _func_sort_by(self, array, expref):

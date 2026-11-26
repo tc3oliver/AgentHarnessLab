@@ -1,0 +1,22 @@
+diff --git a/tests/test_more.py b/tests/test_more.py
+index 4a5d7fc..cbdf4df 100644
+--- a/tests/test_more.py
++++ b/tests/test_more.py
+@@ -1433,17 +1433,7 @@ class TestCollapse(TestCase):
+             list(mi.collapse(l)), [b"s1", b"s2", b"s3", b"s4", b"s5"]
+         )
+ 
+-    def test_collapse_flatten(self):
+-        l = [[1], [2], [[3], 4], [[[5]]]]
+-        self.assertEqual(list(mi.collapse(l, levels=1)), list(mi.flatten(l)))
+ 
+-    def test_collapse_to_level(self):
+-        l = [[1], 2, [[3], 4], [[[5]]]]
+-        self.assertEqual(list(mi.collapse(l, levels=2)), [1, 2, 3, 4, [5]])
+-        self.assertEqual(
+-            list(mi.collapse(mi.collapse(l, levels=1), levels=1)),
+-            list(mi.collapse(l, levels=2)),
+-        )
+ 
+     def test_collapse_to_list(self):
+         l = (1, [2], (3, [4, (5,)], 'ab'))

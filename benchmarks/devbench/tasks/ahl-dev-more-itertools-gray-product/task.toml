@@ -1,0 +1,30 @@
+schema_version = "1.4"
+
+[task]
+name = "ahl-devbench/ahl-dev-more-itertools-gray-product"
+version = "1.0.0"
+authors = []
+keywords = ["devbench"]
+
+[metadata]
+category = "bug-fix"
+source = "swe-smith"
+repository = "more-itertools/more-itertools"
+repository_commit = "aa9977698a5e6ae15d3fdfac08a5fc5621c4e179"
+repository_license = "MIT"
+hidden_tests = true
+fail_to_pass = 4
+fail_to_pass_visible = 0
+swe_smith_modifiers = ["func_pm_op_change_const"]
+
+[verifier]
+timeout_sec = 1200.0
+
+[agent]
+timeout_sec = 1800.0
+
+[environment]
+build_timeout_sec = 1200.0
+cpus = 2
+memory_mb = 4096
+gpus = 0

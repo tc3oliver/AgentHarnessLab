@@ -1,0 +1,11 @@
+--- a/src/tablib/formats/_sql.py
++++ b/src/tablib/formats/_sql.py
+@@ -64,7 +64,7 @@
+             statements.append(
+                 f'INSERT INTO {tbl_ident}{columns_headers} VALUES ({values});'
+             )
+-        return '\n'.join(statements) + '\n' + ('COMMIT;\n' if commit else '')
++        return '\n'.join(statements) + ('COMMIT;\n' if commit else '')
+ 
+     @classmethod
+     def import_set(cls, dataset, in_stream, **kwargs):

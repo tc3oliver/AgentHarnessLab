@@ -1,0 +1,15 @@
+{
+  "runner": "pytest",
+  "tests_dir": "tests",
+  "restore_paths": [
+    "tests",
+    "conftest.py",
+    "pytest.ini",
+    ".pytest.ini"
+  ],
+  "fail_to_pass": [
+    "tests/test_compliance.py::test_expression[given241-type(`null`)-null-functions.json]"
+  ],
+  "min_passed": 991,
+  "timeout_s": 900
+}

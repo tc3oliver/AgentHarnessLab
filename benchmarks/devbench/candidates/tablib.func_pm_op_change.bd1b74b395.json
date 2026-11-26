@@ -1,0 +1,1 @@
+{"modifier": "func_pm_op_change", "file": "src/tablib/formats/_xlsx.py", "entity": "import_sheet", "explanation": "The operations in an expression are likely incorrect."}

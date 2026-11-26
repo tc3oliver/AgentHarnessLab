@@ -1,11 +1,11 @@
 # Experiments
 
-Research design is in [RESEARCH.md](RESEARCH.md); data rules in [DATASETS.md](DATASETS.md); upstream facts in [UPSTREAM.md](UPSTREAM.md). Status: the mock runner, result and manifest schemas, config validation, metrics, paired comparison and Markdown reports exist in `src/`; Harbor smoke tasks (oracle, nop) exist. No model-backed run has happened. Everything below about real runs is **Planned** unless it says it is implemented.
+Research design is in [RESEARCH.md](RESEARCH.md); data rules in [DATASETS.md](DATASETS.md); upstream facts in [UPSTREAM.md](UPSTREAM.md). Status: the mock runner, result and manifest schemas, config validation, metrics, paired comparison and Markdown reports exist in `src/`; Harbor smoke tasks (oracle, nop) and devbench exist. Model-backed runs: the smoke tasks (2026-11-25) and devbench (2026-11-26, [report](reports/devbench-benchmark.md)). Everything else below about real runs is **Planned** unless it says it is implemented.
 
 ## Evaluation protocol
 
 1. An experiment config names: model (Hub ID + revision), optional adapter (path or revision), dataset (ID + revision; a split-file hash is Planned), harness (`pi` or `opencode`) and its version, inference parameters, seed, attempts per task (`n_attempts`), per-trial limits. The Harbor version is in the runner config and checked at preflight.
-2. Each (task, harness, attempt) is one Harbor trial. `HarborRunner` runs Harbor as a subprocess, one job per (harness, attempt), and parses each `result.json` into the project result schema. It ran the smoke tasks; no model-backed run has happened.
+2. Each (task, harness, attempt) is one Harbor trial. `HarborRunner` runs Harbor as a subprocess, one job per (harness, attempt), and parses each `result.json` into the project result schema. It has run the smoke tasks and devbench with a real model.
 3. Evaluation uses the same harness, tool set and version as training for that arm. Pi and OpenCode are never compared with each other on pass@1 (they differ in context compaction); only within a harness.
 4. The serving endpoint is an OpenAI-compatible server, and the key is passed by environment variable name. **Sampling is declared, not enforced:** harnesses choose their own request parameters (neither Pi nor OpenCode v2 sent a temperature in our runs), so set `--override-generation-config` and `--default-chat-template-kwargs` on the server and record them in `server_args`. No seed reaches the sampler, so `seed` is null in real results.
 5. For adapters, vLLM serves the base model with the adapter loaded; the adapter is identified in the manifest by file hash (Planned).
@@ -57,8 +57,8 @@ Rules:
 
 | ID | Arms | Harnesses | Purpose | Milestone |
 |---|---|---|---|---|
-| E0 | Base | Pi, OpenCode | Baseline and infra-error rate, no training | v0.1 |
-| E1 | Reference Pi adapter vs Base | Pi, OpenCode | Re-measure published transfer under our pins; sanity check | v0.1 |
+| E0 | Base | Pi, OpenCode | Baseline and infra-error rate, no training (done on devbench: `devbench-r2`, `devbench-r4-aiter`) | v0.1 |
+| E1 | Reference Pi adapter vs Base | Pi, OpenCode | Re-measure published transfer under our pins; sanity check (Pi done on devbench: `devbench-r3-adapter`; OpenCode with the adapter not yet run) | v0.1 |
 | E2 | Pi-only (1 seed) | Pi | Single-harness RL works at all on our stack | v0.2 |
 | E3 | Joint (1 seed, small) | Pi, OpenCode | Shared-LoRA pipeline runs end to end | v0.3 |
 | E4 | Base, Pi-only, OpenCode-only, Merge, Joint, Joint-mixed; >= 3 seeds | Pi, OpenCode | RQ1-RQ3 at matched budget | v0.4 |

@@ -1,0 +1,17 @@
+--- a/more_itertools/more.py
++++ b/more_itertools/more.py
+@@ -904,12 +904,12 @@
+ 
+     if 0 < r <= size:
+         if sortable:
+-            return algorithm(items)
+-        else:
+             return (
+                 permuted_items(permuted_indices)
+                 for permuted_indices in algorithm(indices)
+             )
++        else:
++            return algorithm(items)
+ 
+     return iter(() if r else ((),))
+ 

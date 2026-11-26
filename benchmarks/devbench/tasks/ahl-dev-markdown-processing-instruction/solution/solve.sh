@@ -1,0 +1,18 @@
+#!/bin/bash
+set -euo pipefail
+cd /app
+git apply <<'PATCH'
+diff --git a/markdown/htmlparser.py b/markdown/htmlparser.py
+index 65efff0..78c9e04 100644
+--- a/markdown/htmlparser.py
++++ b/markdown/htmlparser.py
+@@ -354,7 +354,7 @@ class HTMLExtractor(htmlparser.HTMLParser):
+         # This is not the beginning of a raw block so treat as plain data
+         # and avoid consuming any tags which may follow (see #1066).
+         self.handle_data('<?')
+-        return i + 1
++        return i + 2
+ 
+     # Internal -- parse comment, return length or -1 if not terminated
+     # see https://html.spec.whatwg.org/multipage/parsing.html#comment-start-state
+PATCH

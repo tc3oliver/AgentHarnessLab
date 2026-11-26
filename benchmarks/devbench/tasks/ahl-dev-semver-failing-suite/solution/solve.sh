@@ -1,0 +1,22 @@
+#!/bin/bash
+set -euo pipefail
+cd /app
+git apply <<'PATCH'
+diff --git a/src/semver/version.py b/src/semver/version.py
+index e6374de..f207d31 100644
+--- a/src/semver/version.py
++++ b/src/semver/version.py
+@@ -831,10 +831,10 @@ prerelease='pre.2', build='build.4')
+             unknownkeys = set(parts) - set(self.to_dict())
+             if not unknownkeys:
+                 raise
+-            error = (
++            error = "replace() got %d unexpected keyword argument(s): %s" % (
+                 len(unknownkeys),
+                 ", ".join(unknownkeys),
+-            ) % "replace() got %d unexpected keyword argument(s): %s"
++            )
+             raise TypeError(error)
+ 
+     @classmethod
+PATCH

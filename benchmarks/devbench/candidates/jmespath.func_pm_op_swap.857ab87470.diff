@@ -1,0 +1,11 @@
+--- a/jmespath/parser.py
++++ b/jmespath/parser.py
+@@ -289,7 +289,7 @@
+             prev_t = self._lookahead_token(-2)
+             raise exceptions.ParseError(
+                 prev_t['start'], prev_t['value'], prev_t['type'],
+-                "Invalid function name '%s'" % prev_t['value'])
++                prev_t['value'] % "Invalid function name '%s'")
+         name = left['value']
+         args = []
+         while not self._current_token() == 'rparen':

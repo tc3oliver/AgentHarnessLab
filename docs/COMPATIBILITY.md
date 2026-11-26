@@ -76,3 +76,42 @@ network: the high values were measured during a 55.6 GB download on the same hos
   ATIF, so tool and model call counts become null when a subagent ran. Whether output tokens include reasoning tokens for
   every harness is **unverified**.
 - **Harbor 0.25.0** keeps `oracle` script failures silent (`failed`), while 0.27.0 reports `agent_error`.
+
+## Serving: attention backend and long-context decode (vLLM 0.33.0 ROCm, Qwen3.8-27B)
+
+Measured 2026-11-26 on one MI325X, streamed, 400 output tokens, one request at a time; raw numbers and the script
+are in `/data3/users/oliver/experiments/agentlab/devbench/perf-attn/` (not in git), summarised in the
+[devbench report](reports/devbench-benchmark.md#performance).
+
+| Prompt tokens | Default `ROCM_ATTN` (decode tok/s) | `--attention-backend ROCM_AITER_UNIFIED_ATTN` |
+|---|---|---|
+| 816 | 69 | 78 |
+| 9,201 | 32 | 73 |
+| 29,777 | 14 | 59 |
+| 60,644 | 7.6 | 46 |
+
+- vLLM picks `ROCM_ATTN` and logs "Cannot use ROCm custom paged attention kernel, falling back to Triton
+  implementation": its custom kernel needs head size 64 or 128 and block size 16 or 32
+  (`vllm/platforms/rocm.py`, `use_rocm_custom_paged_attention`), which this model's attention layers do not meet.
+  The Triton paged-decode fallback slows down roughly in proportion to context length.
+- The same slowdown appears on a second GPU without LoRA (control), so it is the backend, not LoRA or the device.
+- Agent contexts in our runs reach 45k tokens, so this, not the harness, explains the earlier observation of
+  decode falling from about 43 to 18 tok/s in long trials.
+- Greedy outputs of the two backends agree for the first few hundred characters and then diverge (bf16 kernel
+  differences). On agent tasks, a paired devbench run showed no significant difference in success, with about 2.4
+  times shorter median trials (decision [0009](DECISIONS/0009-aiter-attention-backend.md)). Evaluation and rollouts now use AITER;
+  `devbench-r2` and earlier runs use the default backend.
+
+## Harness behaviour seen on devbench (Pi 1.5.2, OpenCode 2.2.7, Harbor 0.27.0)
+
+- **Pi has no per-command timeout in its bash tool.** A command that never returns uses up the whole trial budget.
+  Five trials in `devbench-r4-aiter` lost 786-1777 s each this way; one was `find /` over the whole filesystem,
+  and others look like test scripts that loop. The proxy join shows these trials as harness time, not model time.
+  Add a command timeout in the harness config before training on Pi rollouts.
+- **OpenCode 2.2.7 offers a Web Search tool.** It asks for approval, which non-interactive runs cancel, so the
+  run ends with an error. The sandbox has no network either way. Harbor 0.27.0 classified one such trial as
+  `ApiRateLimitError` (infra) and another as an agent error; both are agent failures. Disable the tool in the
+  OpenCode config.
+- **Harbor 0.27.0 passes the endpoint API key as `docker compose exec -e OPENAI_API_KEY=...` on the command
+  line**, so other users of a shared host can read it with `ps`. Use a key that only works on the local endpoint,
+  and rotate it after shared-host runs.

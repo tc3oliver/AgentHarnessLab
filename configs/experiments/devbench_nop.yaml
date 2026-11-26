@@ -1,0 +1,11 @@
+# Control run: needs Docker and Harbor 0.27.0 (set runner.command), no model and no GPU.
+kind: eval
+name: devbench-nop
+seed: 0
+model: {id: none}
+inference: {backend: none}
+harnesses:
+  - {name: nop, version: 1.0.0}
+datasets:
+  - {include: ../datasets/devbench.yaml}
+runner: {type: harbor, version: 0.27.0, n_concurrent: 8}

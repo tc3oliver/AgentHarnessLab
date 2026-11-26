@@ -1,0 +1,1 @@
+{"modifier": "func_pm_op_break_chains", "file": "src/tablib/formats/_sql.py", "entity": "export_set", "explanation": "There are expressions or mathematical operations that are likely incomplete."}

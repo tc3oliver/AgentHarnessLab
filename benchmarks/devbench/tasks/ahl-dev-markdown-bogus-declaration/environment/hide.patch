@@ -1,0 +1,17 @@
+diff --git a/tests/test_syntax/blocks/test_html_blocks.py b/tests/test_syntax/blocks/test_html_blocks.py
+index ced51e0..7e2d61d 100644
+--- a/tests/test_syntax/blocks/test_html_blocks.py
++++ b/tests/test_syntax/blocks/test_html_blocks.py
+@@ -1452,12 +1452,6 @@ class TestHTMLBlocks(TestCase):
+             )
+         )
+ 
+-    def test_not_actually_cdata(self):
+-        # Ensure bug reported in #1534 is avoided.
+-        self.assertMarkdownRenders(
+-            '<![',
+-            '<p>&lt;![</p>'
+-        )
+ 
+     def test_raw_cdata_code_span(self):
+         self.assertMarkdownRenders(

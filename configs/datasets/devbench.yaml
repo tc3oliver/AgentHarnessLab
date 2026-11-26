@@ -1,0 +1,9 @@
+name: devbench
+source: {type: local, path: benchmarks/devbench/tasks}
+split: validation
+license: Apache-2.0 AND MIT AND BSD-3-Clause
+redistributable: true
+notes: >-
+  Development benchmark (benchmarks/devbench). Task files are this project's (Apache-2.0); each task's verifier
+  carries a copy of the upstream repository's tests under that repository's licence (MIT or BSD-3-Clause).
+  For development decisions only; not a SWE-bench result and never a training source.

@@ -1,0 +1,11 @@
+--- a/more_itertools/recipes.py
++++ b/more_itertools/recipes.py
+@@ -1430,7 +1430,7 @@
+         running_sum += value
+         if len(window) > n:
+             running_sum -= window.popleft()
+-        yield running_sum / len(window)
++        yield running_sum * len(window)
+ 
+ 
+ def running_mean(iterable, *, maxlen=None):

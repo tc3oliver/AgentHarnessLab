@@ -1,0 +1,14 @@
+--- a/src/tablib/formats/_dbf.py
++++ b/src/tablib/formats/_dbf.py
+@@ -32,9 +32,9 @@
+         first_row = dataset[0]
+         for fieldname, field_value in zip(dataset.headers, first_row):
+             if type(field_value) in [int, float]:
++                new_dbf.add_field(fieldname, 'C', 80)
++            else:
+                 new_dbf.add_field(fieldname, 'N', 10, 8)
+-            else:
+-                new_dbf.add_field(fieldname, 'C', 80)
+ 
+         new_dbf.write(temp_uri)
+ 

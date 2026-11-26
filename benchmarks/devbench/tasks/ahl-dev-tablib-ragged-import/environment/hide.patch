@@ -1,0 +1,61 @@
+diff --git a/tests/test_tablib.py b/tests/test_tablib.py
+index 6e44783..f8de31d 100755
+--- a/tests/test_tablib.py
++++ b/tests/test_tablib.py
+@@ -1040,24 +1040,6 @@ class CSVTests(BaseTestCase):
+         data.csv = csv_text
+         self.assertEqual(data.width, 7)
+ 
+-    def test_csv_import_set_ragged(self):
+-        """Import CSV set when not all rows have the same length."""
+-        csv_text = (
+-            "H1,H2,H3\n"
+-            "A,B\n"
+-            "C,D,E\n"
+-            "\n"
+-            "F\n"
+-        )
+-        dataset = tablib.import_set(csv_text, format="csv")
+-        self.assertEqual(
+-            str(dataset),
+-            'H1|H2|H3\n'
+-            '--|--|--\n'
+-            'A |B |  \n'
+-            'C |D |E \n'
+-            'F |  |  '
+-        )
+ 
+     def test_csv_import_set_skip_lines(self):
+         csv_text = (
+@@ -1334,11 +1316,6 @@ class ODSTests(BaseTestCase):
+         new_data = tablib.Dataset().load(_ods, skip_lines=2)
+         self.assertEqual(new_data.headers, ['id', 'name', 'description'])
+ 
+-    def test_ods_import_set_ragged(self):
+-        ods_source = Path(__file__).parent / 'files' / 'ragged.ods'
+-        with ods_source.open('rb') as fh:
+-            dataset = tablib.Dataset().load(fh, 'ods')
+-        self.assertEqual(dataset.pop(), (1, '', True, ''))
+ 
+     def test_ods_unknown_value_type(self):
+         # The ods file was trafficked to contain:
+@@ -1552,19 +1529,7 @@ class XLSXTests(BaseTestCase):
+         new_data = tablib.Databook().load(_xlsx, 'xlsx')
+         self.assertEqual(new_data.sheets()[0].title, 'bad name -------qwertyuiopasdfg')
+ 
+-    def test_xlsx_import_book_ragged(self):
+-        """Import XLSX file through databook when not all rows have the same length."""
+-        xlsx_source = Path(__file__).parent / 'files' / 'ragged.xlsx'
+-        with xlsx_source.open('rb') as fh:
+-            book = tablib.Databook().load(fh, 'xlsx')
+-        self.assertEqual(book.sheets()[0].pop(), (1.0, ''))
+ 
+-    def test_xlsx_import_set_ragged(self):
+-        """Import XLSX file through dataset when not all rows have the same length."""
+-        xlsx_source = Path(__file__).parent / 'files' / 'ragged.xlsx'
+-        with xlsx_source.open('rb') as fh:
+-            dataset = tablib.Dataset().load(fh, 'xlsx')
+-        self.assertEqual(dataset.pop(), (1.0, ''))
+ 
+     def test_xlsx_wrong_char(self):
+         """Bad characters are not silently ignored. We let the exception bubble up."""

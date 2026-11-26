@@ -1,0 +1,17 @@
+{
+  "runner": "pytest",
+  "tests_dir": "tests",
+  "restore_paths": [
+    "tests",
+    "conftest.py",
+    "pytest.ini",
+    ".pytest.ini"
+  ],
+  "fail_to_pass": [
+    "tests/test_compliance.py::test_error_expression[given127-\"foo-syntax-syntax.json]",
+    "tests/test_parser.py::TestErrorMessages::test_bad_lexer_values",
+    "tests/test_compliance.py::test_error_expression[given75-@(foo)-syntax-syntax.json]"
+  ],
+  "min_passed": 991,
+  "timeout_s": 900
+}

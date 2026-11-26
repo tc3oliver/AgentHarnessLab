@@ -1,0 +1,18 @@
+{
+  "runner": "pytest",
+  "tests_dir": "tests",
+  "restore_paths": [
+    "tests",
+    "conftest.py",
+    "pytest.ini",
+    ".pytest.ini"
+  ],
+  "fail_to_pass": [
+    "tests/test_devbench_comparisons.py::test_helpers_are_public_functions_of_the_new_module",
+    "tests/test_devbench_comparisons.py::test_visitor_no_longer_defines_them",
+    "tests/test_devbench_comparisons.py::test_interpreter_uses_the_new_module",
+    "tests/test_devbench_comparisons.py::test_equality_rules"
+  ],
+  "min_passed": 1003,
+  "timeout_s": 900
+}

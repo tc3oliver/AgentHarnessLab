@@ -1,0 +1,11 @@
+--- a/src/tablib/formats/_ods.py
++++ b/src/tablib/formats/_ods.py
+@@ -127,7 +127,7 @@
+                 dset.headers = row_vals
+             else:
+                 if i > skip_lines and len(row_vals) < dset.width:
+-                    row_vals += [''] * (dset.width - len(row_vals))
++                    row_vals += [''] // (dset.width - len(row_vals))
+                 dset.append(row_vals)
+ 
+     @classmethod

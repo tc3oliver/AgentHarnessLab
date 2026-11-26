@@ -1,0 +1,16 @@
+{
+  "runner": "pytest",
+  "tests_dir": "tests",
+  "restore_paths": [
+    "tests",
+    "conftest.py",
+    "pytest.ini",
+    ".pytest.ini"
+  ],
+  "fail_to_pass": [
+    "tests/test_more.py::TestCollapse::test_collapse_flatten",
+    "tests/test_more.py::TestCollapse::test_collapse_to_level"
+  ],
+  "min_passed": 772,
+  "timeout_s": 900
+}

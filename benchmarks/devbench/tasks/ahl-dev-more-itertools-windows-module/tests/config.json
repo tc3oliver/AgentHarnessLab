@@ -1,0 +1,20 @@
+{
+  "runner": "pytest",
+  "tests_dir": "tests",
+  "restore_paths": [
+    "tests",
+    "conftest.py",
+    "pytest.ini",
+    ".pytest.ini"
+  ],
+  "fail_to_pass": [
+    "tests/test_devbench_windows_module.py::test_functions_live_in_the_new_module",
+    "tests/test_devbench_windows_module.py::test_old_import_paths_still_work",
+    "tests/test_devbench_windows_module.py::test_star_import_still_exports_them",
+    "tests/test_devbench_windows_module.py::test_more_py_no_longer_defines_them",
+    "tests/test_devbench_windows_module.py::test_stubs_moved",
+    "tests/test_devbench_windows_module.py::test_behaviour_unchanged"
+  ],
+  "min_passed": 778,
+  "timeout_s": 900
+}
