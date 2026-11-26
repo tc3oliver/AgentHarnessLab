@@ -55,9 +55,9 @@ Run `devbench/runs/devbench-r4-aiter`, config `devbench/cfg/devbench-r4-aiter.ya
   | OpenCode | 80 | 78 | -2.2 [-11.1, +6.7] | 266 → 115 |
 
 - **OpenCode's round-2 timeouts were not hidden successes.** With AITER, OpenCode had 3 timeouts and 7 wrong
-  answers. Round 2 had 10 timeouts and no wrong answers, so the solve rate is the same. The faster model fails the
-  same tasks sooner.
-- Pi's tool time rose to 47% of agent time, all from four trials with commands that never returned (Pi has no
+  answers. Round 2 had 10 timeouts and no wrong answers, so the solve rate is the same. The faster model fails
+  mostly the same tasks sooner, plus a few single failures on tasks it had always solved.
+- Pi's tool time rose to 47% of agent time, all from five trials with commands that never returned (Pi has no
   command timeout). OpenCode had two runs that ended when the model called the Web Search tool; Harbor recorded one
   as infra. Both behaviours are in COMPATIBILITY.md.
 
@@ -86,7 +86,7 @@ and Pi only. It is paired against round 2's Pi trials. Analysis: `devbench/analy
   adapter gives up or finishes early instead of looping.
 - The adapter regresses on `tablib-dbf-export` (0/3, base 2/3) and wins on `markdown-bogus-declaration`,
   `markdown-md-in-html-hr` and `more-itertools-distinct-permutations` (3/3 each, base 1/3).
-- With 22 of 30 tasks saturated, devbench cannot resolve a gain of this size. More hard tasks are needed before
+- With 19 tasks solved 3/3 under both conditions, devbench cannot resolve a gain of this size. More hard tasks are needed before
   adapter comparisons (Phase B/C) are run on it.
 
 ### 2026-11-26: devbench round 2 (30 tasks × 2 harnesses × 3 attempts)
@@ -108,10 +108,10 @@ Run `devbench/runs/devbench-r2`, config `devbench/cfg/devbench-r2.yaml` (config 
   default attention backend decode slows with context (median request 8.8 tok/s for OpenCode, against 15.8 for
   Pi). The OpenCode failures therefore measure serving speed at least as much as the harness. The backend run
   (Next, item 3) tests this.
-- A failed Pi trial costs 8.8 times the input tokens of a solved one (1.72M against 195k) and runs 78 turns on
-  average.
+- A failed Pi trial costs 8.8 times the input tokens of a solved one (1.73M against 195k) and makes 77 model calls
+  on average.
 - Task tools account for 4% of agent time for both harnesses; the rest is model time.
-- 22 tasks are solved in every attempt by both harnesses, so the set is too easy to separate adapters well. Hard
+- 19 tasks are solved in every attempt by both harnesses, so the set is too easy to separate adapters well. Hard
   tasks: `more-itertools-seekable-index` (0/6), `markdown-bogus-declaration` (1/6), `more-itertools-distinct-permutations` (2/6).
 - The 4-hour wrapper in `run.sh` would have cut the run off (it took 6 h 46 min). The wrapper process was
   stopped by hand and the evaluation continued unaffected. The limit is now 12 hours.

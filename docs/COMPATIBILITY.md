@@ -98,14 +98,14 @@ are in `/data3/users/oliver/experiments/agentlab/devbench/perf-attn/` (not in gi
 - Agent contexts in our runs reach 45k tokens, so this, not the harness, explains the earlier observation of
   decode falling from about 43 to 18 tok/s in long trials.
 - Greedy outputs of the two backends agree for the first few hundred characters and then diverge (bf16 kernel
-  differences). On agent tasks, a paired devbench run gave no measurable change in success, with 2.4 times shorter
-  trials (decision [0009](DECISIONS/0009-aiter-attention-backend.md)). Evaluation and rollouts now use AITER;
+  differences). On agent tasks, a paired devbench run showed no significant difference in success, with about 2.4
+  times shorter median trials (decision [0009](DECISIONS/0009-aiter-attention-backend.md)). Evaluation and rollouts now use AITER;
   `devbench-r2` and earlier runs use the default backend.
 
 ## Harness behaviour seen on devbench (Pi 1.5.2, OpenCode 2.2.7, Harbor 0.27.0)
 
 - **Pi has no per-command timeout in its bash tool.** A command that never returns uses up the whole trial budget.
-  Four trials in `devbench-r4-aiter` lost 790-1780 s each this way; one was `find /` over the whole filesystem,
+  Five trials in `devbench-r4-aiter` lost 786-1777 s each this way; one was `find /` over the whole filesystem,
   and others look like test scripts that loop. The proxy join shows these trials as harness time, not model time.
   Add a command timeout in the harness config before training on Pi rollouts.
 - **OpenCode 2.2.7 offers a Web Search tool.** It asks for approval, which non-interactive runs cancel, so the

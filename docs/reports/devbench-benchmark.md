@@ -14,12 +14,12 @@ tables are in `analysis/` (script `analysis/analyze.py`).
 - **Reference Pi adapter vs base, under Pi:** 80/90 against 74/90, not significant (+6.7 points, CI [-2.2,
   +15.6], p = 0.29). The adapter is much cheaper: 4.7 times fewer tokens per solved task and half the tool calls,
   and its failures end early instead of looping.
-- **Attention backend:** `ROCM_AITER_UNIFIED_ATTN` makes trials 2.4 times shorter with no measurable change in
-  success, and is now the default (decision [0009](../DECISIONS/0009-aiter-attention-backend.md)).
+- **Attention backend:** `ROCM_AITER_UNIFIED_ATTN` cuts median trial time by about 2.4 times (wall time of a full run by 1.55 times) with no significant
+  difference in success, and is now the default (decision [0009](../DECISIONS/0009-aiter-attention-backend.md)).
 - **Reliability:** 0 infra or verifier errors in 270 trials on the default backend. On AITER there were 2 OpenCode
   runs that ended when the model called the Web Search tool (one recorded by Harbor as infra), see Limits.
-- **The benchmark is saturated:** 19-23 of 30 tasks are solved in every attempt under every condition. It
-  cannot resolve differences of about 7 points. More hard tasks are needed before it decides between adapters.
+- **The benchmark is saturated:** 19-25 of 30 tasks are solved in every attempt under each condition, 15 under all
+  five conditions. It cannot resolve differences of about 7 points. More hard tasks are needed before it decides between adapters.
 
 ## Sources and licences
 
@@ -59,7 +59,7 @@ Checks before model runs:
 
 | Run | Condition | Config hash | Code | Wall time |
 |---|---|---|---|---|
-| `devbench-r2` | Pi and OpenCode, base, default `ROCM_ATTN` | `bd1edd4e…` | `6045cb6` | 6 h 46 min |
+| `devbench-r2` | Pi and OpenCode, base, default `ROCM_ATTN` | `bd1edd4e…` | `6045cb6` (manifest `dirty`: the untracked progress log, committed as `84de983`) | 6 h 46 min |
 | `devbench-r3-adapter` | Pi, adapter, default backend | `3b0d3c70…` | `84de983` | 2 h 00 min |
 | `devbench-r4-aiter` | Pi and OpenCode, base, `ROCM_AITER_UNIFIED_ATTN` | `e38f029f…` | `548fb12` | 4 h 22 min |
 
@@ -138,8 +138,8 @@ so the OpenCode-Pi difference is not a statement about either harness alone.
 | refactoring | 4 | 11/12 | 12/12 | 12/12 | 12/12 | 12/12 |
 | test-repair | 7 | 21/21 | 21/21 | 20/21 | 21/21 | 21/21 |
 
-Hard tasks under every condition: `more-itertools-seekable-index` (2 of 15 trials), `markdown-processing-instruction`
-(9/15), `more-itertools-gray-product` (9/15). `tablib-dbf-export` is solved by OpenCode and missed by the adapter
+Hard under every condition: `more-itertools-seekable-index` (2 of 15 trials) and `markdown-processing-instruction`
+(9/15). Hard for Pi only: `more-itertools-gray-product` (3 of 9 Pi trials; OpenCode 6/6). `tablib-dbf-export` is solved by OpenCode and missed by the adapter
 (0/3), the one clear adapter regression.
 
 ### Where the time goes
@@ -156,7 +156,7 @@ rest of agent time (tools, harness overhead).
 | OpenCode, base, AITER | 27,336 | 1,507 | 5.2% | 21.4k | 20.9 |
 
 On the default backend almost all agent time is model time. The 47% for Pi on AITER comes from five trials whose shell
-commands never returned (one `find /`, others looping test scripts) and used up 790-1780 s each; Pi has no command
+commands never returned (one `find /`, others looping test scripts) and used up 786-1777 s each; Pi has no command
 timeout. Without them Pi's tool share on AITER is 11%.
 
 ## Performance
@@ -179,13 +179,15 @@ backend, not by the harness, LoRA or tool latency ([COMPATIBILITY.md](../COMPATI
 - **Contamination:** all six libraries are popular and certainly in the base model's pretraining data; the bugs
   are synthetic but the code around them is not new. Repository overlap was checked against the datasets listed
   above only; SWE-rebench, R2E-Gym and other mined datasets were not checked, and nothing measures memorisation.
-- **Saturation and size:** 30 tasks from six repositories, three attempts. 19-23 tasks are always solved, so
-  effective sample size is the 7-11 tasks that vary. Differences under about 15 points are not resolvable.
+- **Saturation and size:** 30 tasks from six repositories, three attempts. 19-25 tasks are always solved under a
+  given condition (15 under all five), so effective sample size is the 5-11 tasks that vary. Differences under about 15 points are not resolvable.
 - **Bias:** single language (Python), libraries only, mostly local procedural bugs; three of the six repositories
   supply 23 of the 30 tasks. Instructions were written by one person from the failing tests. The adapter was trained for Pi
   on another task distribution; this set says nothing about other harnesses' adapters.
 - **Budget binds differently:** a wall-clock budget makes slow serving look like harness failure. On the default
-  backend all 10 OpenCode failures were timeouts; on AITER the same tasks failed with wrong answers instead.
+  backend all 10 OpenCode failures were timeouts; on AITER the failures were mostly on the same tasks
+  but mostly wrong answers, and three tasks OpenCode had always solved (`tablib-dbf-export`, `tablib-sql-commit`,
+  `markdown-md-in-html-hr`) failed at least once.
 - **Verifier gaps:** it does not restore `pyproject.toml`, `setup.cfg` or `tox.ini` and does not detect edits to
   installed packages. Three earlier gaps were found in review and closed (planted `conftest.py`, `sitecustomize.py`,
   a module shadowing `unittest`).

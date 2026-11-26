@@ -25,8 +25,9 @@ reference.
 
 ## Consequences
 
-- Runs are about 2.4 times faster, so wall-clock budgets now bind later. Runs on the old backend are a separate
+- Median trial time is about 2.4 times shorter (Pi 2.6, OpenCode 2.3), summed agent time about 1.9 times and a full
+  run's wall time 1.55 times, so wall-clock budgets now bind later. Runs on the old backend are a separate
   series.
-- The difference is within noise on a set where 19-23 of 30 tasks are saturated. A small quality effect cannot be
+- The difference is within noise on a set where 19-25 of 30 tasks are saturated per condition. A small quality effect cannot be
   excluded; recheck it when devbench has more hard tasks.
 - Revisit this decision when vLLM or the model changes.
