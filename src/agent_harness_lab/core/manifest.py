@@ -14,6 +14,7 @@ from pydantic import BaseModel, ConfigDict, ValidationError
 from agent_harness_lab import __version__
 from agent_harness_lab.core.config import EvalConfig, canonical_hash
 from agent_harness_lab.dataset.base import LoadedDataset, Provenance
+from agent_harness_lab.dataset.loaders import tasks_hash
 from agent_harness_lab.errors import RunError
 
 MANIFEST_FILE = "manifest.json"
@@ -182,7 +183,7 @@ def new_manifest(
                 revision=d.revision,
                 license=d.config.license,
                 n_tasks=len(d.tasks),
-                tasks_hash=canonical_hash([[t.task_id, t.content_hash] for t in d.tasks]),
+                tasks_hash=tasks_hash(d.tasks),
                 version=d.config.version,
                 **({} if d.provenance is None else _provenance(d.provenance)),
             )

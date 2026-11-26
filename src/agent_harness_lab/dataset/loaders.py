@@ -6,6 +6,7 @@ import os
 import shutil
 import subprocess
 import tomllib
+import uuid
 from collections.abc import Mapping
 from fnmatch import fnmatch
 from pathlib import Path
@@ -72,6 +73,18 @@ def _task_ref(task_dir: Path) -> TaskRef:
     )
 
 
+COMPLETE_MARKER = "agentlab-complete.json"
+"""Written under `.cache` after a download was verified: {file: etag} for every file of the selection."""
+
+
+def _etag_matches(path: Path, etag: str) -> bool:
+    """The Hub's etag is the git blob sha1 of a regular file and the sha256 of an LFS file."""
+    wanted = etag.removeprefix("W/").strip('"')
+    data = path.read_bytes()
+    blob = hashlib.sha1(b"blob %d\0" % len(data) + data, usedforsecurity=False).hexdigest()
+    return wanted in {blob, hashlib.sha256(data).hexdigest()}
+
+
 def _cache_root(cache: Path | None) -> Path:
     if cache is not None:
         return cache
@@ -97,10 +110,29 @@ def tasks_hash(tasks: tuple[TaskRef, ...]) -> str:
     return "sha256:" + canonical_hash([[t.task_id, t.content_hash] for t in tasks])
 
 
-def _select(config: DatasetConfig, root: Path) -> tuple[TaskRef, ...]:
+def _contained(config: DatasetConfig, path: Path, boundary: Path) -> None:
+    """`path` must be real and inside `boundary`: no symlink on the way, and no way out."""
+    base = boundary.resolve()
+    try:
+        parts = path.relative_to(boundary).parts
+    except ValueError:
+        parts = ()
+    current = boundary
+    for part in parts:
+        current = current / part
+        if current.is_symlink():
+            raise ConfigError(f"dataset '{config.name}': {current} is a symlink")
+    if not path.resolve().is_relative_to(base):
+        raise ConfigError(f"dataset '{config.name}': {path} is outside {boundary}")
+
+
+def _select(config: DatasetConfig, root: Path, boundary: Path) -> tuple[TaskRef, ...]:
     if not root.is_dir():
         raise ConfigError(f"dataset '{config.name}': no such directory: {root}")
+    _contained(config, root, boundary)
     dirs = sorted(p.parent for p in root.glob("*/task.toml"))
+    for d in dirs:
+        _contained(config, d, boundary)
     if config.task_names is not None:
         missing = [n for n in config.task_names if not any(fnmatch(d.name, n) for d in dirs)]
         if missing:
@@ -143,9 +175,9 @@ def _verify(config: DatasetConfig, root: Path, tasks: tuple[TaskRef, ...]) -> No
 
 
 def _finish(
-    config: DatasetConfig, root: Path, revision: str | None, location: str, path: str
+    config: DatasetConfig, root: Path, boundary: Path, revision: str | None, location: str, path: str
 ) -> LoadedDataset:
-    tasks = _select(config, root)
+    tasks = _select(config, root, boundary)
     _verify(config, root, tasks)
     provenance = Provenance(
         source_type=config.source.type,
@@ -164,7 +196,9 @@ class LocalDataset:
     def load(self, config: DatasetConfig) -> LoadedDataset:
         if not isinstance(config.source, LocalSource):
             raise ConfigError(f"dataset '{config.name}' is not a local source")
-        return _finish(config, Path(config.source.path), None, config.source.path, ".")
+        return _finish(
+            config, Path(config.source.path), Path(config.source.path), None, config.source.path, "."
+        )
 
 
 class GitDataset:
@@ -222,7 +256,7 @@ class GitDataset:
 
     def _fetch(self, source: GitSource, target: Path) -> None:
         url = self.remotes.get(source.url, source.url)
-        work = target.with_name(f"{target.name}.tmp-{os.getpid()}")
+        work = target.with_name(f"{target.name}.tmp-{os.getpid()}-{uuid.uuid4().hex[:8]}")
         shutil.rmtree(work, ignore_errors=True)
         work.mkdir(parents=True)
         try:
@@ -243,7 +277,11 @@ class GitDataset:
             except ConfigError as exc:
                 raise ConfigError(f"cannot fetch commit {source.commit} from {source.url}: {exc}") from exc
             self._git(work, "checkout", "--quiet", "--detach", source.commit)
-            work.rename(target)
+            try:
+                work.rename(target)
+            except OSError:
+                if not (target / ".git").is_dir():  # otherwise a concurrent fetch won; verify its result
+                    raise
         finally:
             shutil.rmtree(work, ignore_errors=True)
 
@@ -271,7 +309,7 @@ class GitDataset:
             repo.parent.mkdir(parents=True, exist_ok=True)
             self._fetch(source, repo)
         self._check(source, repo)
-        return _finish(config, repo / source.path, source.commit, source.url, source.path)
+        return _finish(config, repo / source.path, repo, source.commit, source.url, source.path)
 
 
 class HuggingFaceDataset:
@@ -295,7 +333,11 @@ class HuggingFaceDataset:
                 "Hugging Face datasets need the 'hf' extra: pip install 'agent-harness-lab[hf]'"
             ) from exc
         prefix = "" if source.path == "." else source.path.strip("/") + "/"
-        patterns = None if config.task_names is None else [f"{prefix}{name}/*" for name in config.task_names]
+        patterns = (
+            None
+            if config.task_names is None
+            else [f"{prefix}{DATASET_MANIFEST}", *(f"{prefix}{name}/*" for name in config.task_names)]
+        )
         key = hashlib.sha256(json.dumps(patterns).encode()).hexdigest()[:12]
         local = self.cache / "huggingface" / source.repo.replace("/", "--") / source.revision / key
         try:
@@ -318,19 +360,36 @@ class HuggingFaceDataset:
             ) from exc
         root = local / source.path
         files = [
-            p.relative_to(local)
-            for p in local.rglob("*")
+            p.relative_to(local).as_posix()
+            for p in sorted(local.rglob("*"))
             if p.is_file() and ".cache" not in p.relative_to(local).parts[:1]
         ]
         if not files:
             raise ConfigError(
                 f"dataset '{config.name}': {source.repo}@{source.revision} has no files for the selection"
             )
+        etags = {}
         for file in files:
-            meta = read_download_metadata(local, file.as_posix())
+            meta = read_download_metadata(local, file)
             if meta is None or meta.commit_hash != source.revision:
                 found = None if meta is None else meta.commit_hash
                 raise ConfigError(
                     f"dataset '{config.name}': {file} comes from commit {found}, expected {source.revision}"
                 )
-        return _finish(config, root, source.revision, source.repo, source.path)
+            if not _etag_matches(local / file, meta.etag):
+                raise ConfigError(f"dataset '{config.name}': {file} does not match its recorded etag")
+            etags[file] = meta.etag
+        marker = local / ".cache" / COMPLETE_MARKER
+        if self.offline:
+            try:
+                complete = json.loads(marker.read_text(encoding="utf-8"))
+            except (OSError, ValueError) as exc:
+                raise ConfigError(
+                    f"dataset '{config.name}': offline and the cached download of {source.repo} is incomplete"
+                ) from exc
+            if complete != etags:
+                raise ConfigError(f"dataset '{config.name}': cached files differ from the completed download")
+        else:
+            marker.parent.mkdir(parents=True, exist_ok=True)
+            marker.write_text(json.dumps(etags, sort_keys=True), encoding="utf-8")
+        return _finish(config, root, local, source.revision, source.repo, source.path)

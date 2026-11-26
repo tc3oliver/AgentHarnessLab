@@ -13,6 +13,10 @@ from agent_harness_lab.dataset.loaders import tasks_hash
 from agent_harness_lab.errors import ConfigError
 
 
+def _digest(body: dict[str, object]) -> str:
+    return "sha256:" + canonical_hash(body)
+
+
 class SplitPart(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -20,9 +24,7 @@ class SplitPart(BaseModel):
     repositories: list[str]
 
 
-class SplitFile(BaseModel):
-    """Immutable record of a split. `hash` covers every other field, so an edited file fails to load."""
-
+class SplitBody(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     dataset: str
@@ -32,19 +34,18 @@ class SplitFile(BaseModel):
     validation_fraction: float
     train: SplitPart
     validation: SplitPart
-    hash: str = ""
 
-    def _digest(self) -> str:
-        return "sha256:" + canonical_hash(self.model_dump(mode="json", exclude={"hash"}))
+
+class SplitFile(SplitBody):
+    """Immutable record of a split. `hash` is required and covers every other field."""
+
+    hash: str
 
     @model_validator(mode="after")
     def _check_hash(self) -> SplitFile:
-        if self.hash and self.hash != self._digest():
+        if self.hash != _digest(self.model_dump(mode="json", exclude={"hash"})):
             raise ValueError("split file hash does not match its content")
         return self
-
-    def sealed(self) -> SplitFile:
-        return self.model_copy(update={"hash": self._digest()})
 
     def write(self, path: Path) -> None:
         path.write_text(self.model_dump_json(indent=2) + "\n", encoding="utf-8")
@@ -87,7 +88,7 @@ def split_by_repository(dataset: LoadedDataset, validation_fraction: float, seed
         parts[task.repository in validation].task_ids.append(task.task_id)
     if not parts[False].task_ids or not parts[True].task_ids:
         raise ConfigError("one split is empty; change the seed or the validation fraction")
-    return SplitFile(
+    body = SplitBody(
         dataset=dataset.config.name,
         revision=dataset.revision,
         tasks_hash=tasks_hash(dataset.tasks),
@@ -95,4 +96,5 @@ def split_by_repository(dataset: LoadedDataset, validation_fraction: float, seed
         validation_fraction=validation_fraction,
         train=parts[False],
         validation=parts[True],
-    ).sealed()
+    )
+    return SplitFile(**dict(body), hash=_digest(body.model_dump(mode="json")))

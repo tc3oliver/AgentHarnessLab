@@ -1,4 +1,6 @@
+import hashlib
 import json
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -11,6 +13,7 @@ from agent_harness_lab.core.config import DatasetConfig, load_dataset_config
 from agent_harness_lab.core.manifest import new_manifest
 from agent_harness_lab.dataset.audit import audit
 from agent_harness_lab.dataset.loaders import (
+    COMPLETE_MARKER,
     GitDataset,
     HuggingFaceDataset,
     LocalDataset,
@@ -22,6 +25,10 @@ from agent_harness_lab.errors import ConfigError
 
 URL = "https://example.invalid/org/tasks"
 GIT_ENV = ("-c", "user.name=t", "-c", "user.email=t@example.invalid", "-c", "commit.gpgsign=false")
+
+
+def blob_sha1(data: bytes) -> str:
+    return hashlib.sha1(b"blob %d\0" % len(data) + data, usedforsecurity=False).hexdigest()
 
 
 def git(cwd: Path, *args: str) -> str:
@@ -191,6 +198,7 @@ def test_version_and_provenance_in_manifest(tmp_path: Path, origin: tuple[Path, 
         commit,
         "tasks",
     )
+    assert info.tasks_hash == tasks_hash(loaded.tasks) and info.tasks_hash.startswith("sha256:")
     assert info.redistributable is True and info.license == "Apache-2.0"
     old = info.model_dump(
         exclude={"version", "source_type", "source", "source_revision", "source_path", "redistributable"}
@@ -285,7 +293,7 @@ def hub(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
             if kw["allow_patterns"] is None or any(fnmatch(name, pat) for pat in kw["allow_patterns"]):
                 (local / name).parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy(file, local / name)
-                write_download_metadata(local, name, state["commit"], "etag")
+                write_download_metadata(local, name, state["commit"], blob_sha1(file.read_bytes()))
         return str(local)
 
     monkeypatch.setattr(huggingface_hub, "snapshot_download", fake)
@@ -315,7 +323,7 @@ def test_hf_load_offline_and_arguments(tmp_path: Path, hub: dict[str, Any]) -> N
 def test_hf_task_names_restrict_download(tmp_path: Path, hub: dict[str, Any]) -> None:
     loaded = HuggingFaceDataset(cache=tmp_path / "cache").load(hf_cfg(task_names=["t1"]))
     assert [t.task_id for t in loaded.tasks] == ["t1"]
-    assert hub["calls"][0]["allow_patterns"] == ["tasks/t1/*"]
+    assert hub["calls"][0]["allow_patterns"] == ["tasks/dataset-manifest.json", "tasks/t1/*"]
     # a different selection never reuses the partial download
     assert (
         len(
@@ -461,3 +469,101 @@ def test_real_huggingface_download(tmp_path: Path) -> None:
     first = HuggingFaceDataset(cache=tmp_path).load(config)
     assert [t.task_id for t in first.tasks] == ["adaptive-rejection-sampler"]
     assert HuggingFaceDataset(cache=tmp_path, offline=True).load(config).tasks == first.tasks
+
+
+# Review fixes
+
+
+def test_git_symlinked_task_dir_or_path_is_rejected(tmp_path: Path, origin: tuple[Path, str]) -> None:
+    repo, _ = origin
+    outside = tmp_path / "outside"
+    make_task(outside, "evil")
+    (repo / "tasks/link").symlink_to(outside / "evil")
+    git(repo, "add", ".")
+    git(repo, "commit", "-qm", "link")
+    commit = git(repo, "rev-parse", "HEAD")
+    with pytest.raises(ConfigError, match="symlink"):
+        loader(tmp_path, repo).load(git_cfg(commit))
+    (repo / "esc").symlink_to(outside)
+    git(repo, "add", ".")
+    git(repo, "commit", "-qm", "path link")
+    config = git_cfg(git(repo, "rev-parse", "HEAD"))
+    config = config.model_copy(update={"source": config.source.model_copy(update={"path": "esc"})})
+    with pytest.raises(ConfigError, match="symlink"):
+        loader(tmp_path, repo).load(config)
+
+
+def test_local_symlinked_task_dir_is_rejected(tasks: Path, tmp_path: Path) -> None:
+    make_task(tmp_path / "outside", "evil")
+    (tasks / "link").symlink_to(tmp_path / "outside/evil")
+    config = DatasetConfig.model_validate(
+        {"name": "l", "source": {"type": "local", "path": str(tasks)}, "split": "smoke"}
+    )
+    with pytest.raises(ConfigError, match=r"symlink|outside"):
+        LocalDataset().load(config)
+
+
+def test_hf_content_tamper_fails(tmp_path: Path, hub: dict[str, Any]) -> None:
+    HuggingFaceDataset(cache=tmp_path / "cache").load(hf_cfg())
+    file = next((tmp_path / "cache/huggingface").rglob("t1/instruction.md"))
+    stat = file.stat()
+    file.write_text("hf X")  # same size, restored mtime: only the content check can notice
+    os.utime(file, ns=(stat.st_atime_ns, stat.st_mtime_ns))
+    with pytest.raises(ConfigError, match="etag"):
+        HuggingFaceDataset(cache=tmp_path / "cache", offline=True).load(hf_cfg())
+
+
+def test_hf_partial_download_fails_offline(tmp_path: Path, hub: dict[str, Any]) -> None:
+    cache = tmp_path / "cache"
+    HuggingFaceDataset(cache=cache).load(hf_cfg())
+    local = next((cache / "huggingface").glob("*/*/*"))
+    (local / "tasks/t2/tests/test.sh").unlink()
+    with pytest.raises(ConfigError, match="differ from the completed download"):
+        HuggingFaceDataset(cache=cache, offline=True).load(hf_cfg())
+    (local / ".cache" / COMPLETE_MARKER).unlink()
+    with pytest.raises(ConfigError, match="incomplete"):
+        HuggingFaceDataset(cache=cache, offline=True).load(hf_cfg())
+
+
+def test_hf_download_without_marker_is_not_trusted_offline(tmp_path: Path, hub: dict[str, Any]) -> None:
+    cache = tmp_path / "cache"
+    local = cache / "huggingface/org--ds" / ("c" * 40)
+    local.mkdir(parents=True)
+    key = hashlib.sha256(json.dumps(None).encode()).hexdigest()[:12]
+    shutil.copytree(hub["remote"], local / key)  # files with no download metadata at all
+    with pytest.raises(ConfigError, match="comes from commit None"):
+        HuggingFaceDataset(cache=cache, offline=True).load(hf_cfg())
+
+
+def test_hf_manifest_is_downloaded_with_task_names(tmp_path: Path, hub: dict[str, Any]) -> None:
+    write_manifest(hub["remote"] / "tasks", t1="0" * 64)
+    with pytest.raises(ConfigError, match="t1: hash differs"):
+        HuggingFaceDataset(cache=tmp_path / "cache").load(hf_cfg(task_names=["t1"]))
+    assert "tasks/dataset-manifest.json" in hub["calls"][0]["allow_patterns"]
+
+
+def test_split_file_hash_is_required(tmp_path: Path) -> None:
+    split = split_by_repository(repo_dataset(tmp_path), 0.4, 1)
+    file = tmp_path / "split.json"
+    split.write(file)
+    data = json.loads(file.read_text())
+    for mutate in (lambda d: d.pop("hash"), lambda d: d.update(hash="")):
+        broken = json.loads(json.dumps(data))
+        mutate(broken)
+        file.write_text(json.dumps(broken))
+        with pytest.raises(ConfigError, match="invalid split file"):
+            SplitFile.read(file)
+
+
+def test_git_concurrent_fetch_winner_is_accepted(tmp_path: Path, origin: tuple[Path, str]) -> None:
+    repo, commit = origin
+
+    class Racing(GitDataset):
+        def _git(self, cwd: Path, *args: str, remote: bool = False) -> str:
+            out = super()._git(cwd, *args, remote=remote)
+            if args[0] == "checkout":  # another process finishes first
+                shutil.copytree(cwd, cwd.with_name(commit), symlinks=True)
+            return out
+
+    racing = Racing(cache=tmp_path / "cache", remotes={URL: str(repo)})
+    assert len(racing.load(git_cfg(commit)).tasks) == 4
