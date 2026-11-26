@@ -11,7 +11,7 @@ never committed.
 | Evaluation | Harbor runner, prebuilt images, Git and Hugging Face dataset loaders (PR #4), devbench (30 tasks), request-level performance monitoring |
 | Models served | Qwen3.8-27B `37561816e66b` with the reference Pi adapter `41396a9f14d9` as a LoRA module, vLLM 0.33.0 ROCm, one MI325X |
 | Harnesses evaluated with a real model | Pi 1.5.2, OpenCode 2.2.7 (Harbor 0.27.0) |
-| Training | pilot rungs 1-3 passed (kernel parity, 27B LoRA steps to 64k on one GPU, LoRA hot-load into vLLM); no training run yet |
+| Training | pilot rungs 1-4 passed (kernel parity, 27B LoRA steps to 64k on one GPU, LoRA hot-load into vLLM, OpenEnv Pi rollout with token capture); no training run yet |
 
 ## Merged pull requests
 
@@ -23,6 +23,25 @@ never committed.
 | #4 | Git and Hugging Face dataset loaders, task-list pins, repository split; smoke task 020 fix | `4d337ee` |
 
 ## Log
+
+### 2026-11-26: RL pilot rung 4, one OpenEnv Pi rollout with token capture
+
+OpenEnv 0.14.0 (resolves Harbor 0.25.0) in its own venv, Docker sandbox, vLLM on GPU 5 with
+`--return-tokens-as-token-ids --logprobs-mode processed_logprobs` (AITER backend). Data: this repository's smoke
+task `ahl-csv-aggregate` (Apache-2.0). Training sources (scale800, termgrade) stay blocked on their licence
+questions (DATASETS.md), and devbench is never trained on. Output `rl/openenv/rollout-pi-0.json`.
+
+- **Criterion:** a graded rollout that is trainable (`rollout_type: train`, token ids and log-probs on every turn).
+  **Met:**
+  - reward 1.0, 4 turns, 72 s, capture level `tokens`;
+  - 897 trainable tokens, each turn with prompt and completion token ids, per-token log-probs and a loss mask;
+  - the ATIF trajectory check matches.
+- **Security fix needed for a shared host:** OpenEnv's capture proxy binds `0.0.0.0` (hard-coded in
+  `CaptureServer.start`), and `--expose direct` advertises `127.0.0.1`, which a Docker sandbox cannot reach.
+  `rl/openenv/rollout_bridge.py` wraps the CLI. It binds the proxy and advertises it on the Docker bridge gateway
+  (172.17.0.1), reachable from local containers but not from other machines, and refuses any expose mode other
+  than `direct`, since `gradio` (the default) and `cloudflare` open public tunnels. OpenEnv itself is unmodified.
+  OpenEnv keeps the real endpoint key in its own process; the agent gets a per-rollout session id instead.
 
 ### 2026-11-26: RL pilot rung 3, LoRA hot-load round trip, trainer to vLLM
 
@@ -218,5 +237,5 @@ base vs adapter on smoke (no difference shown).
    - ~~kernel parity~~ (passed);
    - ~~27B LoRA steps at 16k, 32k and 64k tokens~~ (passed, 132 GB at 64k);
    - ~~LoRA hot-load round trip~~ (passed);
-   - one OpenEnv Pi rollout;
+   - ~~one OpenEnv Pi rollout~~ (passed; capture proxy bound to the Docker bridge);
    - three GRPO steps.
