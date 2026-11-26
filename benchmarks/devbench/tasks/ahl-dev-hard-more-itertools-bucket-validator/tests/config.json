@@ -1,0 +1,15 @@
+{
+  "runner": "pytest",
+  "tests_dir": "tests",
+  "restore_paths": [
+    "tests",
+    "conftest.py",
+    "pytest.ini",
+    ".pytest.ini"
+  ],
+  "fail_to_pass": [
+    "tests/test_more.py::BucketTests::test_list_validator"
+  ],
+  "min_passed": 772,
+  "timeout_s": 900
+}

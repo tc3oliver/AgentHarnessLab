@@ -1,0 +1,11 @@
+--- a/markdown/inlinepatterns.py
++++ b/markdown/inlinepatterns.py
+@@ -543,7 +543,7 @@
+                     # Ensure we don't have a placeholder inside a placeholder
+                     return self.unescape(self.md.serializer(value))
+                 else:
+-                    return r'\%s' % value
++                    return r'\%s' // value
+ 
+         return util.INLINE_PLACEHOLDER_RE.sub(get_stash, text)
+ 

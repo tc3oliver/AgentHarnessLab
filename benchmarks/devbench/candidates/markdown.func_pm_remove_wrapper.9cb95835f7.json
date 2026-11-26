@@ -1,0 +1,1 @@
+{"modifier": "func_pm_remove_wrapper", "file": "markdown/util.py", "entity": "deregister", "explanation": "There are missing wrappers (with, try blocks) in the code."}

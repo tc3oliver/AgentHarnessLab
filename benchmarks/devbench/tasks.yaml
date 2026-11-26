@@ -630,3 +630,261 @@ tasks:
     - Behaviour does not change; the whole test suite (`python -m pytest -o addopts= tests`) passes.
 
     Do not modify the existing tests.
+- id: ahl-dev-hard-more-itertools-bucket-validator
+  repo: more-itertools
+  category: bug-fix
+  difficulty: hard
+  source: swe-smith
+  bug_patches:
+  - more-itertools.func_pm_remove_cond.5b84c17dd3.diff
+  hide: true
+  fail_to_pass:
+  - tests/test_more.py::BucketTests::test_list_validator
+  instruction: |
+    The repository in `/app` is more-itertools.
+
+    `more_itertools.bucket(iterable, key, validator=None)` is called with a validator, for example:
+
+        D = bucket([10, 20, 30, 11, 21, 31, 12, 22, 23, 33], key=lambda x: 10 * (x // 10), validator=lambda x: x != 20)
+        set(D)
+
+    Currently `set(D)` is `set()`. It must be `{10, 30}`.
+
+    Fix the library. Do not modify the existing tests.
+- id: ahl-dev-hard-more-itertools-strictly-n-default
+  repo: more-itertools
+  category: bug-fix
+  difficulty: hard
+  source: swe-smith
+  bug_patches:
+  - more-itertools.func_pm_remove_assign.41120bd178.diff
+  hide: true
+  fail_to_pass:
+  - tests/test_more.py::StrictlyNTests::test_too_long_default
+  instruction: |
+    The repository in `/app` is more-itertools.
+
+    `list(more_itertools.strictly_n(iter('abcd'), 3))` currently raises `TypeError: 'NoneType' object is not callable`.
+    It must raise `ValueError` with the message `Too many items in iterable (got at least 4)`.
+
+    Fix the library. Do not modify the existing tests.
+- id: ahl-dev-hard-jmespath-token-positions
+  repo: jmespath
+  category: bug-fix
+  difficulty: hard
+  source: swe-smith
+  bug_patches:
+  - jmespath.func_pm_op_change_const.c61ef399e5.diff
+  hide: true
+  fail_to_pass:
+  - tests/test_lexer.py::TestRegexLexer::test_position_multiple_tokens
+  instruction: |
+    The repository in `/app` is jmespath.
+
+    `list(jmespath.lexer.Lexer().tokenize('foo.bar'))` currently reports the `.` token with `start` 3 and `end` 5.
+    It must be `start` 3 and `end` 4.
+
+    Fix the library. Do not modify the existing tests.
+- id: ahl-dev-hard-jmespath-parse-error-expression
+  repo: jmespath
+  category: bug-fix
+  difficulty: hard
+  source: swe-smith
+  bug_patches:
+  - jmespath.func_pm_remove_assign.a2e847164e.diff
+  hide: true
+  fail_to_pass:
+  - tests/test_parser.py::TestErrorMessages::test_bad_parse_error_message
+  instruction: |
+    The repository in `/app` is jmespath.
+
+    `jmespath.compile('foo]baz')` raises a `ParseError` whose message ends with `for expression:` followed by a line
+    `"None"`. The line must show the expression, `"foo]baz"`, as in
+
+        Unexpected token: ]: Parse error at column 3, token "]" (RBRACKET), for expression:
+        "foo]baz"
+            ^
+
+    Fix the library. Do not modify the existing tests.
+- id: ahl-dev-hard-semver-deprecation-message
+  repo: semver
+  category: bug-fix
+  difficulty: hard
+  source: swe-smith
+  bug_patches:
+  - semver.func_pm_remove_cond.27ee71ab70.diff
+  hide: true
+  fail_to_pass:
+  - tests/test_deprecated_functions.py::test_deprecated_message_names_the_function_when_no_replacement_given
+  instruction: |
+    The repository in `/app` is python-semver.
+
+    A function decorated with `semver._deprecated.deprecated(version="2.10.0")` and no `replace`, named `mock_func`,
+    currently emits a `DeprecationWarning` with the message
+
+        Function 'semver.mock_func' is deprecated. This function will be removed in semver 3.
+
+    The message must also say since which version the function is deprecated and what to use instead: it must
+    contain `Deprecated since version 2.10.0.` before the removal sentence and end with
+    `Use the respective 'semver.Version.mock_func' instead.`
+
+    Fix the library. Do not modify the existing tests.
+- id: ahl-dev-hard-markdown-setext-meta-registry
+  repo: markdown
+  category: multi-file
+  difficulty: hard
+  source: swe-smith
+  bug_patches:
+  - markdown.func_pm_remove_cond.639b19fdb0.diff
+  - markdown.func_pm_class_rm_base.0efb045f29.diff
+  - markdown.func_pm_remove_wrapper.9cb95835f7.diff
+  hide: true
+  fail_to_pass:
+  - test_many_setext_headers_in_one_block (test_syntax.blocks.test_headers.TestSetextHeaders.test_many_setext_headers_in_one_block)
+  - test_setext_h1_followed_by_p (test_syntax.blocks.test_headers.TestSetextHeaders.test_setext_h1_followed_by_p)
+  - test_setext_h2_followed_by_p (test_syntax.blocks.test_headers.TestSetextHeaders.test_setext_h2_followed_by_p)
+  - test_single_column_tables (test_syntax.extensions.test_tables.TestTableBlocks.test_single_column_tables)
+  - testBasicMetaData (test_extensions.TestMetaData.testBasicMetaData)
+  - testMetaDataReset (test_extensions.TestMetaData.testMetaDataReset)
+  - testMetaDataWithoutNewline (test_extensions.TestMetaData.testMetaDataWithoutNewline)
+  - testMissingMetaData (test_extensions.TestMetaData.testMissingMetaData)
+  - testWikilinksMetaData (test_extensions.TestWikiLinks.testWikilinksMetaData)
+  - testYamlMetaData (test_extensions.TestMetaData.testYamlMetaData)
+  - testDeregister (test_apis.RegistryTests.testDeregister)
+  - testRegisterDupplicate (test_apis.RegistryTests.testRegisterDupplicate)
+  - test_remove_processor (test_syntax.inline.test_emphasis.TestProcessorRemoval.test_remove_processor)
+  instruction: |
+    The repository in `/app` is Python-Markdown. Three things are broken:
+
+    - A setext heading that is directly followed by more text in the same block loses that text:
+      `markdown.markdown('Header\n======\nSome text')` returns only `<h1>Header</h1>`; the paragraph `<p>Some text</p>`
+      is missing. The same happens with `---` underlines and with several headings in one block.
+    - Creating a `Markdown` object with the `meta` extension fails with a `TypeError`.
+    - Removing an entry by name from one of the processor registries (for example the inline processors) does not
+      remove it: the registry keeps its length and the processor still runs.
+
+    Fix the library. Do not modify the existing tests.
+- id: ahl-dev-hard-markdown-ancestors-html-smarty
+  repo: markdown
+  category: multi-file
+  difficulty: hard
+  source: swe-smith
+  bug_patches:
+  - markdown.func_pm_remove_cond.b26af239b9.diff
+  - markdown.func_pm_op_change.dcea9a1a5b.diff
+  - markdown.func_pm_remove_cond.e563614f6f.diff
+  hide: true
+  fail_to_pass:
+  - test_ancestors (test_apis.TestAncestorExclusion.test_ancestors)
+  - test_ancestors_tail (test_apis.TestAncestorExclusion.test_ancestors_tail)
+  - test_inline_html_backslashes (test_syntax.inline.test_raw_html.TestRawHtml.test_inline_html_backslashes)
+  - testCustomSubstitutions (test_extensions.TestSmarty.testCustomSubstitutions)
+  - test_angled_quotes (test_syntax.extensions.test_smarty.TestSmartyAngledQuotes.test_angled_quotes)
+  - test_basic (test_syntax.extensions.test_smarty.TestSmarty.test_basic)
+  - test_custom_substitutions (test_syntax.extensions.test_smarty.TestSmartyCustomSubstitutions.test_custom_substitutions)
+  - test_escaped (test_syntax.extensions.test_smarty.TestSmarty.test_escaped)
+  - test_smarty_and_toc (test_syntax.extensions.test_smarty.TestSmartyAndToc.test_smarty_and_toc)
+  - test_wrapping_line (test_syntax.extensions.test_smarty.TestSmarty.test_wrapping_line)
+  - test_years (test_syntax.extensions.test_smarty.TestSmarty.test_years)
+  instruction: |
+    The repository in `/app` is Python-Markdown. Three things are broken:
+
+    - A custom inline processor that declares parent tags it must not be applied inside (such as `a`) is applied
+      inside them anyway: with a custom `+text+` processor that excludes `a`, `[+link+](http://test.com)` renders the
+      link text as `<strong>link</strong>` instead of leaving `+link+` unchanged.
+    - Raw inline HTML that contains a backslash, for example `<img src="..\..\foo.png">`, raises a `TypeError`.
+      It must be output unchanged inside a paragraph.
+    - With the `smarty` extension all substitutions disappear: `a -- b` renders as `<p>a  b</p>`; it must render as
+      `<p>a &ndash; b</p>`. Quotes, dashes, ellipses and angled quotes are all affected.
+
+    Fix the library. Do not modify the existing tests.
+- id: ahl-dev-hard-tablib-dbf-yaml-dates
+  repo: tablib
+  category: multi-file
+  difficulty: hard
+  source: swe-smith
+  bug_patches:
+  - tablib.func_pm_remove_assign.814393af23.diff
+  - tablib.func_pm_remove_assign.f4679dcec2.diff
+  - tablib.func_pm_remove_cond.3236b63b66.diff
+  hide: true
+  fail_to_pass:
+  - tests/test_tablib.py::DBFTests::test_dbf_import_set
+  - tests/test_tablib.py::ODSTests::test_ods_import_set_skip_lines
+  - tests/test_tablib.py::TablibTestCase::test_auto_format_detect
+  - tests/test_tablib.py::YAMLTests::test_yaml_format_detect
+  - tests/test_tablib.py::YAMLTests::test_yaml_import_book
+  - tests/test_tablib_dbfpy_packages_utils.py::UtilsGetDateTestCase::test_getDate_datetime_string_yymmdd
+  - tests/test_tablib_dbfpy_packages_utils.py::UtilsGetDateTestCase::test_getDate_datetime_string_yyyy_mm_dd
+  - tests/test_tablib_dbfpy_packages_utils.py::UtilsGetDateTestCase::test_getDate_datetime_timestamp
+  instruction: |
+    The repository in `/app` is tablib. Three things are broken:
+
+    - Loading a dataset from DBF data fails with an `AttributeError`: setting `dataset.dbf` to the bytes that
+      `dataset.dbf` returned does not round-trip.
+    - YAML handling raises `NameError` where it used to work: `tablib.detect_format('- {age: 90, first_name: John,
+      last_name: Adams}')` and loading that text into a `Dataset` should give format `yaml` and one row, but raise instead.
+    - In the bundled DBF library, converting a Unix timestamp such as `1571515306` or a compact date string such as
+      `'20191019'` or `'191019'` to a date raises an error instead of giving `datetime.date(2019, 10, 19)`.
+
+    Fix the library. Do not modify the existing tests.
+- id: ahl-dev-hard-tablib-dbf-rst-ods
+  repo: tablib
+  category: multi-file
+  difficulty: hard
+  source: swe-smith
+  bug_patches:
+  - tablib.func_pm_class_rm_funcs.c04426e9de.diff
+  - tablib.func_pm_op_change.86356b31d1.diff
+  - tablib.func_pm_remove_cond.d59db6b7c9.diff
+  hide: true
+  fail_to_pass:
+  - tests/test_tablib.py::DBFTests::test_dbf_export_set
+  - tests/test_tablib.py::DBFTests::test_dbf_import_set
+  - tests/test_tablib.py::DocTests::test_rst_formatter_doctests
+  - tests/test_tablib.py::RSTTests::test_rst_force_grid
+  - tests/test_tablib.py::TablibTestCase::test_datetime_append
+  - tests/test_tablib.py::ODSTests::test_ods_export_import_set
+  instruction: |
+    The repository in `/app` is tablib. Three things are broken:
+
+    - Exporting a dataset to DBF fails.
+    - Exporting a dataset to a reStructuredText grid table (`dataset.export('rst', force_grid=True)`) raises a
+      `TypeError`; the simple table still works.
+    - Dates and datetimes written to an ODS file come back as empty cells when the file is read again.
+
+    Fix the library. Do not modify the existing tests.
+- id: ahl-dev-hard-semver-cli-compat-deprecated
+  repo: semver
+  category: multi-file
+  difficulty: hard
+  source: swe-smith
+  bug_patches:
+  - semver.func_pm_remove_assign.cb027e125c.diff
+  - semver.func_pm_remove_cond.32aa744bb3.diff
+  - semver.func_pm_ctrl_invert_if.8812730f29.diff
+  hide: true
+  fail_to_pass:
+  - tests/test_deprecated_functions.py::test_should_raise_deprecation_warnings[cmd_bump-args13-kwargs13]
+  - tests/test_deprecated_functions.py::test_should_raise_deprecation_warnings[main-args19-kwargs19]
+  - tests/test_pysemver-cli.py::test_should_process_parsed_cli_arguments[cmd_bump-args0-expectation0]
+  - tests/test_pysemver-cli.py::test_should_process_parsed_cli_arguments[cmd_bump-args1-expectation1]
+  - tests/test_pysemver-cli.py::test_should_process_parsed_cli_arguments[cmd_bump-args2-expectation2]
+  - tests/test_pysemver-cli.py::test_should_process_parsed_cli_arguments[cmd_bump-args3-expectation3]
+  - tests/test_pysemver-cli.py::test_should_process_parsed_cli_arguments[cmd_bump-args4-expectation4]
+  - tests/test_pysemver-cli.py::test_should_process_print
+  - tests/test_semver.py::test_should_fail_with_incompatible_type_for_compatible_match[wrongtype1]
+  - tests/test_semver.py::test_should_fail_with_incompatible_type_for_compatible_match[wrongtype2]
+  - tests/test_semver.py::test_should_fail_with_incompatible_type_for_compatible_match[wrongtype]
+  - tests/test_deprecated_functions.py::test_deprecated_message_uses_the_remove_text
+  instruction: |
+    The repository in `/app` is python-semver. Three things are broken:
+
+    - The command line tool's `bump` command fails instead of printing the next version: `pysemver bump major 1.2.3`
+      should print `2.0.0`.
+    - `Version(1, 2, 3).is_compatible(other)` with an argument that is not a `Version` (for example `"wrongtype"` or
+      a list) no longer raises `TypeError("Expected a Version type but got ...")`.
+    - A function decorated with `deprecated(remove="Gone in 99.")` warns with "This function will be removed in
+      semver 3." instead of the custom text; without `remove` the message contains the word `None`.
+
+    Fix the library. Do not modify the existing tests.

@@ -1,0 +1,11 @@
+--- a/src/tablib/formats/_rst.py
++++ b/src/tablib/formats/_rst.py
+@@ -72,7 +72,7 @@
+                 return text_.center(width_)
+             else:
+                 return text_.rjust(width_)
+-        lpad = sep + ' ' if sep else ''
++        lpad = sep - ' ' if sep else ''
+         rpad = ' ' + sep if sep else ''
+         pad = ' ' + sep + ' '
+         cells = []

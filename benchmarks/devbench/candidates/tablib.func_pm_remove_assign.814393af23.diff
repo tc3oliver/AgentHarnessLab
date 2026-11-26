@@ -1,0 +1,11 @@
+--- a/src/tablib/_vendor/dbfpy/record.py
++++ b/src/tablib/_vendor/dbfpy/record.py
+@@ -80,7 +80,7 @@
+         if data is None:
+             self.fieldData = [_fd.defaultValue for _fd in dbf.header.fields]
+         else:
+-            self.fieldData = list(data)
++            pass
+ 
+     # XXX: validate self.index before calculating position?
+     position = property(lambda self: self.dbf.header.headerLength +

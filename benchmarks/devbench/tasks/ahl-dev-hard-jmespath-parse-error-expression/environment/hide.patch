@@ -1,0 +1,18 @@
+diff --git a/tests/test_parser.py b/tests/test_parser.py
+index 8229bde..08541f1 100644
+--- a/tests/test_parser.py
++++ b/tests/test_parser.py
+@@ -131,13 +131,6 @@ class TestErrorMessages(unittest.TestCase):
+         with self.assertRaises(exceptions.ParseError):
+             self.parser.parse('foo]baz')
+ 
+-    def test_bad_parse_error_message(self):
+-        error_message = (
+-            'Unexpected token: ]: Parse error at column 3, '
+-            'token "]" (RBRACKET), for expression:\n'
+-            '"foo]baz"\n'
+-            '    ^')
+-        self.assert_error_message('foo]baz', error_message)
+ 
+     def test_bad_parse_error_message_with_multiselect(self):
+         error_message = (

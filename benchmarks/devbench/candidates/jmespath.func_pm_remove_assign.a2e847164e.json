@@ -1,0 +1,1 @@
+{"modifier": "func_pm_remove_assign", "file": "jmespath/parser.py", "entity": "_do_parse", "explanation": "There is likely a missing assignment in the code."}

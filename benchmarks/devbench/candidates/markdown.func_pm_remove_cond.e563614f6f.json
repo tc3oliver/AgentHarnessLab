@@ -1,0 +1,1 @@
+{"modifier": "func_pm_remove_cond", "file": "markdown/extensions/smarty.py", "entity": "handleMatch", "explanation": "There is one or more missing conditionals that causes the bug."}

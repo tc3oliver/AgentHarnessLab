@@ -1,0 +1,20 @@
+{
+  "runner": "pytest",
+  "tests_dir": "tests",
+  "restore_paths": [
+    "tests",
+    "conftest.py",
+    "pytest.ini",
+    ".pytest.ini"
+  ],
+  "fail_to_pass": [
+    "tests/test_tablib.py::DBFTests::test_dbf_export_set",
+    "tests/test_tablib.py::DBFTests::test_dbf_import_set",
+    "tests/test_tablib.py::DocTests::test_rst_formatter_doctests",
+    "tests/test_tablib.py::RSTTests::test_rst_force_grid",
+    "tests/test_tablib.py::TablibTestCase::test_datetime_append",
+    "tests/test_tablib.py::ODSTests::test_ods_export_import_set"
+  ],
+  "min_passed": 188,
+  "timeout_s": 900
+}

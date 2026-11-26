@@ -1,0 +1,27 @@
+{
+  "runner": "unittest",
+  "tests_dir": "tests",
+  "restore_paths": [
+    "tests",
+    "conftest.py",
+    "pytest.ini",
+    ".pytest.ini"
+  ],
+  "fail_to_pass": [
+    "test_many_setext_headers_in_one_block (test_syntax.blocks.test_headers.TestSetextHeaders.test_many_setext_headers_in_one_block)",
+    "test_setext_h1_followed_by_p (test_syntax.blocks.test_headers.TestSetextHeaders.test_setext_h1_followed_by_p)",
+    "test_setext_h2_followed_by_p (test_syntax.blocks.test_headers.TestSetextHeaders.test_setext_h2_followed_by_p)",
+    "test_single_column_tables (test_syntax.extensions.test_tables.TestTableBlocks.test_single_column_tables)",
+    "testBasicMetaData (test_extensions.TestMetaData.testBasicMetaData)",
+    "testMetaDataReset (test_extensions.TestMetaData.testMetaDataReset)",
+    "testMetaDataWithoutNewline (test_extensions.TestMetaData.testMetaDataWithoutNewline)",
+    "testMissingMetaData (test_extensions.TestMetaData.testMissingMetaData)",
+    "testWikilinksMetaData (test_extensions.TestWikiLinks.testWikilinksMetaData)",
+    "testYamlMetaData (test_extensions.TestMetaData.testYamlMetaData)",
+    "testDeregister (test_apis.RegistryTests.testDeregister)",
+    "testRegisterDupplicate (test_apis.RegistryTests.testRegisterDupplicate)",
+    "test_remove_processor (test_syntax.inline.test_emphasis.TestProcessorRemoval.test_remove_processor)"
+  ],
+  "min_passed": 1119,
+  "timeout_s": 900
+}

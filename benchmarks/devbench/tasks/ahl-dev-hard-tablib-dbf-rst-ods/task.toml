@@ -1,0 +1,31 @@
+schema_version = "1.4"
+
+[task]
+name = "ahl-devbench/ahl-dev-hard-tablib-dbf-rst-ods"
+version = "1.0.0"
+authors = []
+keywords = ["devbench"]
+
+[metadata]
+category = "multi-file"
+source = "swe-smith"
+repository = "jazzband/tablib"
+repository_commit = "b6a75dcbe01cc42b3fd45ae5005901e2639fa7a7"
+repository_license = "MIT"
+hidden_tests = true
+fail_to_pass = 6
+fail_to_pass_visible = 0
+difficulty = "hard"
+swe_smith_modifiers = ["func_pm_class_rm_funcs", "func_pm_op_change", "func_pm_remove_cond"]
+
+[verifier]
+timeout_sec = 1200.0
+
+[agent]
+timeout_sec = 1800.0
+
+[environment]
+build_timeout_sec = 1200.0
+cpus = 2
+memory_mb = 4096
+gpus = 0

@@ -1,10 +1,12 @@
 # devbench: a development coding benchmark
 
-30 Harbor tasks built from six permissively licensed Python repositories at pinned commits. They are for
+30 Harbor tasks (plus a 10-task hard tier, below) built from six permissively licensed Python repositories at pinned commits. They are for
 **development decisions** in this project: comparing harnesses, adapters and serving settings. They are not
 SWE-bench, not a held-out test set, and results on them must not be reported as either. Never train on them.
 
-Dataset config: [`configs/datasets/devbench.yaml`](../../configs/datasets/devbench.yaml) (split `validation`).
+Dataset configs (split `validation`): [`devbench.yaml`](../../configs/datasets/devbench.yaml) is the original 30 tasks
+(named explicitly and hash-pinned, so earlier results stay comparable);
+[`devbench-hard.yaml`](../../configs/datasets/devbench-hard.yaml) is the hard tier.
 
 ## Sources and licences
 
@@ -41,6 +43,52 @@ written by hand from the behaviour the failing tests check.
 
 The full list with fail-to-pass counts is in [`tasks.yaml`](tasks.yaml) and each `task.toml`.
 
+## Hard tier
+
+Ten tasks (`ahl-dev-hard-*`, `difficulty = "hard"` in `tasks.yaml` and `task.toml`) added because test-repair and
+refactoring were solved in almost all trials, so they no longer separated harness or adapter conditions.
+
+**Chosen by construction, not by model outcome.** No model was run on any candidate. The rules below were fixed
+first, applied to the candidate pool (SWE-smith patches validated in the base images; `val` records), and the list
+frozen. Only the oracle (must pass) and nop (must fail) checks may remove a task. Choosing patches that the base
+model fails would bias later base-versus-adapter comparisons (regression to the mean).
+
+Rules, applied in this order with ties broken by `sha256("devbench-hard:" + patch name)`:
+
+1. Patches and functions: not used by any of the first 30 tasks (same file and function name), and not a
+   non-source file (`test_tools.py`, `__meta__.py`, package `__init__.py`).
+2. Failing-test record must be complete (the validator's failed list matches the failed count of the run; pytest
+   subtest failures and truncated parametrised ids do not qualify), ids must not contain backslashes, and
+   generated compliance tests (jmespath `test_compliance.py`) are excluded because they cannot be hidden.
+3. Repositories: no new repository; at most 2 tasks per repository; lark is not cleared and not used.
+   itsdangerous has no qualifying candidate (its patches break hundreds of tests, or are already used).
+4. 5 `bug-fix`: one patch, at most 2 fail-to-pass tests, modifier in `func_pm_remove_cond`,
+   `func_pm_op_change_const`, `func_pm_remove_assign`, `func_pm_ctrl_shuffle` (edge-case behaviour). The
+   instruction gives one concrete input, the wrong output and the expected behaviour.
+5. 5 `multi-file`: three patches in three different source files of one repository, at most 8 failing tests per
+   patch, failing-test sets of the three patches disjoint (each patch alone breaks at least one fail-to-pass
+   test), no two patches in the same function; files are not reused between the two multi-file tasks of a
+   repository. The instruction describes user-visible symptoms only, with no file, function or class names.
+6. All fail-to-pass tests are hidden from the agent's copy.
+
+| Task | Repository | Category | Patches |
+|---|---|---|---|
+| `ahl-dev-hard-more-itertools-bucket-validator` | more-itertools | bug-fix | `more-itertools.func_pm_remove_cond.5b84c17dd3` |
+| `ahl-dev-hard-more-itertools-strictly-n-default` | more-itertools | bug-fix | `more-itertools.func_pm_remove_assign.41120bd178` |
+| `ahl-dev-hard-jmespath-token-positions` | jmespath | bug-fix | `jmespath.func_pm_op_change_const.c61ef399e5` |
+| `ahl-dev-hard-jmespath-parse-error-expression` | jmespath | bug-fix | `jmespath.func_pm_remove_assign.a2e847164e` |
+| `ahl-dev-hard-semver-deprecation-message` | semver | bug-fix | `semver.func_pm_remove_cond.27ee71ab70` |
+| `ahl-dev-hard-markdown-setext-meta-registry` | markdown | multi-file | `markdown.func_pm_remove_cond.639b19fdb0`, `markdown.func_pm_class_rm_base.0efb045f29`, `markdown.func_pm_remove_wrapper.9cb95835f7` |
+| `ahl-dev-hard-markdown-ancestors-html-smarty` | markdown | multi-file | `markdown.func_pm_remove_cond.b26af239b9`, `markdown.func_pm_op_change.dcea9a1a5b`, `markdown.func_pm_remove_cond.e563614f6f` |
+| `ahl-dev-hard-tablib-dbf-yaml-dates` | tablib | multi-file | `tablib.func_pm_remove_assign.814393af23`, `tablib.func_pm_remove_assign.f4679dcec2`, `tablib.func_pm_remove_cond.3236b63b66` |
+| `ahl-dev-hard-tablib-dbf-rst-ods` | tablib | multi-file | `tablib.func_pm_class_rm_funcs.c04426e9de`, `tablib.func_pm_op_change.86356b31d1`, `tablib.func_pm_remove_cond.d59db6b7c9` |
+| `ahl-dev-hard-semver-cli-compat-deprecated` | semver | multi-file | `semver.func_pm_remove_assign.cb027e125c`, `semver.func_pm_remove_cond.32aa744bb3`, `semver.func_pm_ctrl_invert_if.8812730f29` |
+
+Known overlap: the semver bug-fix task and the semver multi-file task both patch the inner `wrapper` of
+`semver._deprecated.deprecated` (different lines, different tests); semver has too few qualifying candidates to
+avoid it. The same limits as for the first 30 apply (popular libraries, synthetic local bugs, six repositories);
+`difficulty` is a label by construction, not a measured pass rate.
+
 ## How a task is built
 
 `python benchmarks/devbench/tools/make_task.py` rebuilds every task directory from `tasks.yaml`
@@ -72,6 +120,7 @@ there by an agent would apply; it does not detect edits to installed third-party
 ## Checks run
 
 - Oracle 30/30 and nop 0/30 with `check_task.sh`; Harbor 0.27.0 oracle 10/10 and nop 0/10 on the first ten tasks.
+- Hard tier: oracle 10/10 and nop 0/10 with `check_task.sh`; rebuilding all 40 tasks twice leaves `git status` clean.
 - `tools/overlap.py`: no benchmark repository appears in the scale800 task names (22 repositories, from the
   Hugging Face file listing; no data downloaded), the SWE-smith Python profiles (133), SWE-bench (12),
   SWE-bench Pro (11) or the part of SWE-Gym that could be listed (7 of its repositories; the listing was rate

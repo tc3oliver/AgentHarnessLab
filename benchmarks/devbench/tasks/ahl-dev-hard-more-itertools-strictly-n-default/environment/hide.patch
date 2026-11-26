@@ -1,0 +1,21 @@
+diff --git a/tests/test_more.py b/tests/test_more.py
+index 4a5d7fc..6b8c654 100644
+--- a/tests/test_more.py
++++ b/tests/test_more.py
+@@ -5865,16 +5865,6 @@ class StrictlyNTests(TestCase):
+             'Too few items in iterable (got 4)', exc.exception.args[0]
+         )
+ 
+-    def test_too_long_default(self):
+-        iterable = ['a', 'b', 'c', 'd']
+-        n = 3
+-        with self.assertRaises(ValueError) as cm:
+-            list(mi.strictly_n(iter(iterable), n))
+-
+-        self.assertEqual(
+-            'Too many items in iterable (got at least 4)',
+-            cm.exception.args[0],
+-        )
+ 
+     def test_too_short_custom(self):
+         call_count = 0

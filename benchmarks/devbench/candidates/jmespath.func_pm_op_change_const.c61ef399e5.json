@@ -1,0 +1,1 @@
+{"modifier": "func_pm_op_change_const", "file": "jmespath/lexer.py", "entity": "tokenize", "explanation": "The constants in an expression might be incorrect."}

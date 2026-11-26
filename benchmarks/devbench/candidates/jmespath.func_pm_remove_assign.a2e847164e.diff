@@ -1,0 +1,10 @@
+--- a/jmespath/parser.py
++++ b/jmespath/parser.py
+@@ -112,7 +112,6 @@
+             e.set_expression(expression)
+             raise
+         except exceptions.ParseError as e:
+-            e.expression = expression
+             raise
+ 
+     def _parse(self, expression):

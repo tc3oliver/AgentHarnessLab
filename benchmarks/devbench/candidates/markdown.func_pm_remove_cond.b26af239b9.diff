@@ -1,0 +1,23 @@
+--- a/markdown/treeprocessors.py
++++ b/markdown/treeprocessors.py
+@@ -274,8 +274,7 @@
+         new_style = isinstance(pattern, inlinepatterns.InlineProcessor)
+ 
+         for exclude in pattern.ANCESTOR_EXCLUDES:
+-            if exclude.lower() in self.ancestors:
+-                return data, False, 0
++            pass
+ 
+         if new_style:
+             match = None
+@@ -315,10 +314,6 @@
+                                 child.text, patternIndex + 1
+                             )
+                             self.ancestors.pop()
+-                        if child.tail:
+-                            child.tail = self.__handleInline(
+-                                child.tail, patternIndex
+-                            )
+ 
+         placeholder = self.__stashNode(node, pattern.type())
+ 

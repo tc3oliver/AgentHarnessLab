@@ -1,0 +1,387 @@
+diff --git a/tests/test_apis.py b/tests/test_apis.py
+index d9c1239..0c269fb 100644
+--- a/tests/test_apis.py
++++ b/tests/test_apis.py
+@@ -287,23 +287,6 @@ class RegistryTests(unittest.TestCase):
+         repr(r)
+         self.assertIs(r._is_sorted, True)
+ 
+-    def testDeregister(self):
+-        r = markdown.util.Registry()
+-        r.register(Item('a'), 'a',  20)
+-        r.register(Item('b'), 'b', 30)
+-        r.register(Item('c'), 'c', 40)
+-        self.assertEqual(len(r), 3)
+-        r.deregister('b')
+-        self.assertEqual(len(r), 2)
+-        r.deregister('c', strict=False)
+-        self.assertEqual(len(r), 1)
+-        # deregister non-existent item with `strict=False`
+-        r.deregister('d', strict=False)
+-        self.assertEqual(len(r), 1)
+-        with self.assertRaises(ValueError):
+-            # deregister non-existent item with `strict=True`
+-            r.deregister('e')
+-        self.assertEqual(list(r), ['a'])
+ 
+     def testRegistryContains(self):
+         r = markdown.util.Registry()
+@@ -371,15 +354,6 @@ class RegistryTests(unittest.TestCase):
+         with self.assertRaises(ValueError):
+             r.get_index_for_name('c')
+ 
+-    def testRegisterDupplicate(self):
+-        r = markdown.util.Registry()
+-        r.register(Item('a'), 'a', 20)
+-        r.register(Item('b1'), 'b', 10)
+-        self.assertEqual(list(r), ['a', 'b1'])
+-        self.assertEqual(len(r), 2)
+-        r.register(Item('b2'), 'b', 30)
+-        self.assertEqual(len(r), 2)
+-        self.assertEqual(list(r), ['b2', 'a'])
+ 
+ 
+ class TestErrors(unittest.TestCase):
+diff --git a/tests/test_extensions.py b/tests/test_extensions.py
+index b8bc3c8..593ae04 100644
+--- a/tests/test_extensions.py
++++ b/tests/test_extensions.py
+@@ -80,79 +80,10 @@ class TestMetaData(unittest.TestCase):
+     def setUp(self):
+         self.md = markdown.Markdown(extensions=['meta'])
+ 
+-    def testBasicMetaData(self):
+-        """ Test basic metadata. """
+ 
+-        text = '''Title: A Test Doc.
+-Author: Waylan Limberg
+-        John Doe
+-Blank_Data:
+ 
+-The body. This is paragraph one.'''
+-        self.assertEqual(
+-            self.md.convert(text),
+-            '<p>The body. This is paragraph one.</p>'
+-        )
+-        self.assertEqual(
+-            self.md.Meta, {
+-                'author': ['Waylan Limberg', 'John Doe'],
+-                'blank_data': [''],
+-                'title': ['A Test Doc.']
+-            }
+-        )
+-
+-    def testYamlMetaData(self):
+-        """ Test metadata specified as simple YAML. """
+ 
+-        text = '''---
+-Title: A Test Doc.
+-Author: [Waylan Limberg, John Doe]
+-Blank_Data:
+----
+ 
+-The body. This is paragraph one.'''
+-        self.assertEqual(
+-            self.md.convert(text),
+-            '<p>The body. This is paragraph one.</p>'
+-        )
+-        self.assertEqual(
+-            self.md.Meta, {
+-                'author': ['[Waylan Limberg, John Doe]'],
+-                'blank_data': [''],
+-                'title': ['A Test Doc.']
+-            }
+-        )
+-
+-    def testMissingMetaData(self):
+-        """ Test document without Meta Data. """
+-
+-        text = '    Some Code - not extra lines of meta data.'
+-        self.assertEqual(
+-            self.md.convert(text),
+-            '<pre><code>Some Code - not extra lines of meta data.\n'
+-            '</code></pre>'
+-        )
+-        self.assertEqual(self.md.Meta, {})
+-
+-    def testMetaDataWithoutNewline(self):
+-        """ Test document with only metadata and no newline at end."""
+-        text = 'title: No newline'
+-        self.assertEqual(self.md.convert(text), '')
+-        self.assertEqual(self.md.Meta, {'title': ['No newline']})
+-
+-    def testMetaDataReset(self):
+-        """ Test that reset call remove Meta entirely """
+-
+-        text = '''Title: A Test Doc.
+-Author: Waylan Limberg
+-        John Doe
+-Blank_Data:
+-
+-The body. This is paragraph one.'''
+-        self.md.convert(text)
+-
+-        self.md.reset()
+-        self.assertEqual(self.md.Meta, {})
+ 
+ 
+ class TestWikiLinks(unittest.TestCase):
+@@ -216,27 +147,6 @@ class TestWikiLinks(unittest.TestCase):
+             '<a href="http://example.com/WikiLink.html">WikiLink</a>.</p>'
+         )
+ 
+-    def testWikilinksMetaData(self):
+-        """ test `MetaData` with `Wikilinks` Extension. """
+-
+-        text = """wiki_base_url: http://example.com/
+-wiki_end_url:   .html
+-wiki_html_class:
+-
+-Some text with a [[WikiLink]]."""
+-        md = markdown.Markdown(extensions=['meta', 'wikilinks'])
+-        self.assertEqual(
+-            md.convert(text),
+-            '<p>Some text with a '
+-            '<a href="http://example.com/WikiLink.html">WikiLink</a>.</p>'
+-        )
+-
+-        # `MetaData` should not carry over to next document:
+-        self.assertEqual(
+-            md.convert("No [[MetaData]] here."),
+-            '<p>No <a class="wikilink" href="/MetaData/">MetaData</a> '
+-            'here.</p>'
+-        )
+ 
+     def testURLCallback(self):
+         """ Test used of a custom URL builder. """
+diff --git a/tests/test_syntax/blocks/test_headers.py b/tests/test_syntax/blocks/test_headers.py
+index fe865e6..02ef907 100644
+--- a/tests/test_syntax/blocks/test_headers.py
++++ b/tests/test_syntax/blocks/test_headers.py
+@@ -73,39 +73,7 @@ class TestSetextHeaders(TestCase):
+             '<h2>This is an H2</h2>'
+         )
+ 
+-    def test_setext_h1_followed_by_p(self):
+-        self.assertMarkdownRenders(
+-            self.dedent(
+-                """
+-                This is an H1
+-                =============
+-                Followed by a Paragraph with no blank line.
+-                """
+-            ),
+-            self.dedent(
+-                """
+-                <h1>This is an H1</h1>
+-                <p>Followed by a Paragraph with no blank line.</p>
+-                """
+-            )
+-        )
+ 
+-    def test_setext_h2_followed_by_p(self):
+-        self.assertMarkdownRenders(
+-            self.dedent(
+-                """
+-                This is an H2
+-                -------------
+-                Followed by a Paragraph with no blank line.
+-                """
+-            ),
+-            self.dedent(
+-                """
+-                <h2>This is an H2</h2>
+-                <p>Followed by a Paragraph with no blank line.</p>
+-                """
+-            )
+-        )
+ 
+     # TODO: fix this
+     # see https://johnmacfarlane.net/babelmark2/?normalize=1&text=Paragraph%0AAn+H1%0A%3D%3D%3D%3D%3D
+@@ -161,16 +129,6 @@ class TestSetextHeaders(TestCase):
+             )
+         )
+ 
+-    def test_many_setext_headers_in_one_block(self):
+-        """
+-        Each header returns the rest of the block to be parsed again, so testing
+-        the rest of the block for other kinds of headers should not rescan it.
+-        """
+-        count = 2000
+-        self.assertMarkdownRenders(
+-            'Header\n------\n' * count,
+-            '<h2>Header</h2>\n' * (count - 1) + '<h2>Header</h2>'
+-        )
+ 
+     @unittest.skip('This is broken in Python-Markdown')
+     def test_p_followed_by_setext_h1(self):
+diff --git a/tests/test_syntax/extensions/test_tables.py b/tests/test_syntax/extensions/test_tables.py
+index f07118e..98c3baa 100644
+--- a/tests/test_syntax/extensions/test_tables.py
++++ b/tests/test_syntax/extensions/test_tables.py
+@@ -710,138 +710,6 @@ Content Cell  |  
+             extensions=['tables']
+         )
+ 
+-    def test_single_column_tables(self):
+-        self.assertMarkdownRenders(
+-            self.dedent(
+-                """
+-                Single column tables
+-
+-                | Is a Table |
+-                | ---------- |
+-
+-                | Is a Table
+-                | ----------
+-
+-                Is a Table |
+-                ---------- |
+-
+-                | Is a Table |
+-                | ---------- |
+-                | row        |
+-
+-                | Is a Table
+-                | ----------
+-                | row
+-
+-                Is a Table |
+-                ---------- |
+-                row        |
+-
+-                | Is not a Table
+-                --------------
+-                | row
+-
+-                Is not a Table |
+-                --------------
+-                row            |
+-
+-                | Is not a Table
+-                | --------------
+-                row
+-
+-                Is not a Table |
+-                -------------- |
+-                row
+-                """),
+-            self.dedent(
+-                """
+-                <p>Single column tables</p>
+-                <table>
+-                <thead>
+-                <tr>
+-                <th>Is a Table</th>
+-                </tr>
+-                </thead>
+-                <tbody>
+-                <tr>
+-                <td></td>
+-                </tr>
+-                </tbody>
+-                </table>
+-                <table>
+-                <thead>
+-                <tr>
+-                <th>Is a Table</th>
+-                </tr>
+-                </thead>
+-                <tbody>
+-                <tr>
+-                <td></td>
+-                </tr>
+-                </tbody>
+-                </table>
+-                <table>
+-                <thead>
+-                <tr>
+-                <th>Is a Table</th>
+-                </tr>
+-                </thead>
+-                <tbody>
+-                <tr>
+-                <td></td>
+-                </tr>
+-                </tbody>
+-                </table>
+-                <table>
+-                <thead>
+-                <tr>
+-                <th>Is a Table</th>
+-                </tr>
+-                </thead>
+-                <tbody>
+-                <tr>
+-                <td>row</td>
+-                </tr>
+-                </tbody>
+-                </table>
+-                <table>
+-                <thead>
+-                <tr>
+-                <th>Is a Table</th>
+-                </tr>
+-                </thead>
+-                <tbody>
+-                <tr>
+-                <td>row</td>
+-                </tr>
+-                </tbody>
+-                </table>
+-                <table>
+-                <thead>
+-                <tr>
+-                <th>Is a Table</th>
+-                </tr>
+-                </thead>
+-                <tbody>
+-                <tr>
+-                <td>row</td>
+-                </tr>
+-                </tbody>
+-                </table>
+-                <h2>| Is not a Table</h2>
+-                <p>| row</p>
+-                <h2>Is not a Table |</h2>
+-                <p>row            |</p>
+-                <p>| Is not a Table
+-                | --------------
+-                row</p>
+-                <p>Is not a Table |
+-                -------------- |
+-                row</p>
+-                """
+-            ),
+-            extensions=['tables']
+-        )
+ 
+     def test_many_lines_in_one_block(self):
+         """
+diff --git a/tests/test_syntax/inline/test_emphasis.py b/tests/test_syntax/inline/test_emphasis.py
+index d6d1515..8aed34a 100644
+--- a/tests/test_syntax/inline/test_emphasis.py
++++ b/tests/test_syntax/inline/test_emphasis.py
+@@ -954,22 +954,3 @@ class TestEmphasisRuleOfThree(TestCase):
+         )
+ 
+ 
+-class TestProcessorRemoval(TestCase):
+-
+-    def test_remove_processor(self):
+-
+-        import markdown
+-        from markdown.inlinepatterns import DelimiterProcessor
+-
+-        # Remove all delimiter processors
+-        md = markdown.Markdown()
+-
+-        self.assertTrue(md.delimiters is not None)
+-        self.assertTrue(isinstance(md.delimiters, DelimiterProcessor))
+-
+-        md.inlinePatterns.deregister('em_strong')
+-
+-        # Call reset which will cause them to remove themselves from being registered
+-        md.reset()
+-
+-        self.assertTrue(md.delimiters is None)

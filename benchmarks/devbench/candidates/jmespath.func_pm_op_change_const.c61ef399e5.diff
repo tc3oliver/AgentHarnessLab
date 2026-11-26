@@ -1,0 +1,29 @@
+--- a/jmespath/lexer.py
++++ b/jmespath/lexer.py
+@@ -29,7 +29,7 @@
+             if self._current in self.SIMPLE_TOKENS:
+                 yield {'type': self.SIMPLE_TOKENS[self._current],
+                        'value': self._current,
+-                       'start': self._position, 'end': self._position + 1}
++                       'start': self._position, 'end': self._position + 2}
+                 self._next()
+             elif self._current in self.START_IDENTIFIER:
+                 start = self._position
+@@ -50,7 +50,7 @@
+                 elif next_char == '?':
+                     self._next()
+                     yield {'type': 'filter', 'value': '[?',
+-                           'start': start, 'end': start + 2}
++                           'start': start, 'end': start + 1}
+                 else:
+                     yield {'type': 'lbracket', 'value': '[',
+                            'start': start, 'end': start + 1}
+@@ -98,7 +98,7 @@
+                         # it back one location.
+                         position = self._position
+                     else:
+-                        position = self._position - 1
++                        position = self._position - 2
+                     raise LexerError(
+                         lexer_position=position,
+                         lexer_value='=',

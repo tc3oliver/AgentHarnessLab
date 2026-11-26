@@ -1,0 +1,17 @@
+[
+ ".gitattributes",
+ ".github",
+ ".gitignore",
+ ".readthedocs.yaml",
+ "LICENSE",
+ "MANIFEST.in",
+ "Makefile",
+ "README.rst",
+ "docs",
+ "more_itertools",
+ "pyproject.toml",
+ "requirements",
+ "setup.cfg",
+ "tests",
+ "tox.ini"
+]

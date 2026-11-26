@@ -1,0 +1,10 @@
+--- a/src/tablib/formats/_yaml.py
++++ b/src/tablib/formats/_yaml.py
+@@ -55,7 +55,6 @@
+     def detect(cls, stream):
+         """Returns True if given stream is valid YAML."""
+         try:
+-            _yaml = yaml.safe_load(stream)
+             if isinstance(_yaml, (list, tuple, dict)):
+                 return True
+             else:

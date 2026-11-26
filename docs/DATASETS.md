@@ -12,6 +12,7 @@ Facts (revisions, counts) come from [UPSTREAM.md](UPSTREAM.md#datasets). This fi
 | `ScaleAI/SWE-bench_Pro` (Harbor tasks in `scaleapi/SWE-bench_Pro-os`) | `2d52cb3df914a3fcf80c7f66738b3a88ae37fc50` | tooling MIT; task content keeps upstream repository licences | test | test |
 | `harborframework/terminal-bench-2.1` | `3e235dff6880252a587fa479c09bcb1e16edf2eb` | Apache-2.0 | test | test (never train) |
 | devbench (`benchmarks/devbench`, this repository) | tasks hash `sha256:fffb77f8…` | task files Apache-2.0; upstream excerpts MIT or BSD-3-Clause per repository | development decisions (harness, adapter, serving); [report](reports/devbench-benchmark.md) | validation (never train) |
+| devbench-hard (`benchmarks/devbench`, hard tier of the above) | tasks hash `sha256:25ad61a9…` | same as devbench | development decisions; 10 tasks chosen by construction rules, not by model outcome | validation (never train) |
 
 Every Hugging Face or git dataset, and the model of a real run, is pinned by a full 40-character revision in the experiment config; `core/config.py` rejects branches and tags (implemented). The config also rejects non-train splits in training datasets and train splits in evaluation. Loaders for all three source types exist (next section, issue [019](issues/019-huggingface-and-git-dataset-loaders.md)).
 

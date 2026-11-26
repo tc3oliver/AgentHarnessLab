@@ -1,0 +1,26 @@
+{
+  "runner": "pytest",
+  "tests_dir": "tests",
+  "restore_paths": [
+    "tests",
+    "conftest.py",
+    "pytest.ini",
+    ".pytest.ini"
+  ],
+  "fail_to_pass": [
+    "tests/test_deprecated_functions.py::test_should_raise_deprecation_warnings[cmd_bump-args13-kwargs13]",
+    "tests/test_deprecated_functions.py::test_should_raise_deprecation_warnings[main-args19-kwargs19]",
+    "tests/test_pysemver-cli.py::test_should_process_parsed_cli_arguments[cmd_bump-args0-expectation0]",
+    "tests/test_pysemver-cli.py::test_should_process_parsed_cli_arguments[cmd_bump-args1-expectation1]",
+    "tests/test_pysemver-cli.py::test_should_process_parsed_cli_arguments[cmd_bump-args2-expectation2]",
+    "tests/test_pysemver-cli.py::test_should_process_parsed_cli_arguments[cmd_bump-args3-expectation3]",
+    "tests/test_pysemver-cli.py::test_should_process_parsed_cli_arguments[cmd_bump-args4-expectation4]",
+    "tests/test_pysemver-cli.py::test_should_process_print",
+    "tests/test_semver.py::test_should_fail_with_incompatible_type_for_compatible_match[wrongtype1]",
+    "tests/test_semver.py::test_should_fail_with_incompatible_type_for_compatible_match[wrongtype2]",
+    "tests/test_semver.py::test_should_fail_with_incompatible_type_for_compatible_match[wrongtype]",
+    "tests/test_deprecated_functions.py::test_deprecated_message_uses_the_remove_text"
+  ],
+  "min_passed": 532,
+  "timeout_s": 900
+}

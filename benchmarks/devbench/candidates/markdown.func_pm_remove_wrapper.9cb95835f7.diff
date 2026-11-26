@@ -1,0 +1,16 @@
+--- a/markdown/util.py
++++ b/markdown/util.py
+@@ -391,13 +391,6 @@
+ 
+         Set `strict=False` to fail silently. Otherwise a [`ValueError`][] is raised for an unknown `name`.
+         """
+-        try:
+-            index = self.get_index_for_name(name)
+-            del self._priority[index]
+-            del self._data[name]
+-        except ValueError:
+-            if strict:
+-                raise
+ 
+     def _sort(self) -> None:
+         """

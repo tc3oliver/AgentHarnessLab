@@ -1,0 +1,25 @@
+diff --git a/tests/test_lexer.py b/tests/test_lexer.py
+index fbae060..e82fc32 100644
+--- a/tests/test_lexer.py
++++ b/tests/test_lexer.py
+@@ -117,20 +117,6 @@ class TestRegexLexer(unittest.TestCase):
+               {'type': 'eof', 'value': '', 'start': 3, 'end': 3}]
+         )
+ 
+-    def test_position_multiple_tokens(self):
+-        tokens = list(self.lexer.tokenize('foo.bar'))
+-        self.assertEqual(
+-            tokens,
+-            [{'type': 'unquoted_identifier', 'value': 'foo',
+-              'start': 0, 'end': 3},
+-             {'type': 'dot', 'value': '.',
+-              'start': 3, 'end': 4},
+-             {'type': 'unquoted_identifier', 'value': 'bar',
+-              'start': 4, 'end': 7},
+-             {'type': 'eof', 'value': '',
+-              'start': 7, 'end': 7},
+-             ]
+-        )
+ 
+     def test_adds_quotes_when_invalid_json(self):
+         tokens = list(self.lexer.tokenize('`{{}`'))
