@@ -107,11 +107,14 @@ are in `/data3/users/oliver/experiments/agentlab/devbench/perf-attn/` (not in gi
 - **Pi has no per-command timeout in its bash tool.** A command that never returns uses up the whole trial budget.
   Five trials in `devbench-r4-aiter` lost 786-1777 s each this way; one was `find /` over the whole filesystem,
   and others look like test scripts that loop. The proxy join shows these trials as harness time, not model time.
-  Add a command timeout in the harness config before training on Pi rollouts.
+  Pi stays unmodified; the trial and rollout time limits bound this (decision
+  [0010](DECISIONS/0010-unmodified-harnesses-for-rollouts.md)).
 - **OpenCode 2.2.7 offers a Web Search tool.** It asks for approval, which non-interactive runs cancel, so the
   run ends with an error. The sandbox has no network either way. Harbor 0.27.0 classified one such trial as
-  `ApiRateLimitError` (infra) and another as an agent error; both are agent failures. Disable the tool in the
-  OpenCode config.
+  `ApiRateLimitError` (infra) and another as an agent error (`devbench-r4-aiter/results.jsonl`, the `error` field of
+  the `markdown-bogus-declaration` and `more-itertools-distinct-permutations` attempt-1 OpenCode rows); both are
+  agent failures. Use
+  `configs/harnesses/opencode-v2-noweb.yaml` (Harbor's `disable_web_search`), decision 0010.
 - **Harbor 0.27.0 passes the endpoint API key as `docker compose exec -e OPENAI_API_KEY=...` on the command
   line**, so other users of a shared host can read it with `ps`. Use a key that only works on the local endpoint,
   and rotate it after shared-host runs.

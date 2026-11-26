@@ -1,0 +1,10 @@
+# OpenCode v2 (`@opencode/cli`) 2.2.7 with its native web tools (websearch, webfetch) denied by policy.
+# Use for evaluation and rollouts from 2026-11-26: the Web Search tool asks for approval, which a
+# non-interactive run cancels, so the trial ends with an error (COMPATIBILITY.md). The sandbox has no network
+# either way. `opencode-v2.yaml` stays unchanged for reproducing earlier runs. Needs Harbor 0.27.0.
+name: opencode-v2
+version: 2.2.7
+timeout_s: 3600
+setup_timeout_s: 1800
+options:
+  disable_web_search: true

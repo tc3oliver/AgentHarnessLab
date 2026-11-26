@@ -217,3 +217,53 @@ def test_proxy_forwards_streams_and_asks_for_identity_encoding(tmp_path):
     [record] = [json.loads(line) for line in (tmp_path / "log.jsonl").read_text().splitlines()]
     assert record["completion_tokens"] == 1 and record["first_token"] is not None
     assert "secret-token" not in (tmp_path / "log.jsonl").read_text()
+
+
+def test_proxy_refuses_paths_outside_the_allowlist(tmp_path):
+    import asyncio
+
+    from aiohttp import ClientSession, web
+
+    from agent_harness_lab.monitoring.proxy import Proxy
+
+    hits: list[str] = []
+
+    async def upstream(request: web.Request) -> web.Response:
+        hits.append(request.path)
+        return web.json_response({"data": []})
+
+    async def main() -> list[int]:
+        up = web.Application()
+        up.router.add_route("*", "/{tail:.*}", upstream)
+        up_runner = web.AppRunner(up)
+        await up_runner.setup()
+        await web.TCPSite(up_runner, "127.0.0.1", 0).start()
+        proxy = Proxy(f"http://127.0.0.1:{up_runner.addresses[0][1]}", tmp_path / "log.jsonl")
+        app = web.Application()
+        app.on_startup.append(proxy.start)
+        app.on_cleanup.append(proxy.stop)
+        app.router.add_route("*", "/{tail:.*}", proxy.handle)
+        runner = web.AppRunner(app)
+        await runner.setup()
+        await web.TCPSite(runner, "127.0.0.1", 0).start()
+        base = f"http://127.0.0.1:{runner.addresses[0][1]}"
+        statuses = []
+        async with ClientSession() as client:
+            for method, path in [
+                ("GET", "/v1/models"),
+                ("POST", "/v1/load_lora_adapter"),
+                ("POST", "/v1/unload_lora_adapter"),
+                ("POST", "/collective_rpc"),
+                ("GET", "/server_info"),
+                ("POST", "/v1/models/../load_lora_adapter"),
+            ]:
+                async with client.request(method, base + path, json={}) as resp:
+                    statuses.append(resp.status)
+        await runner.cleanup()
+        await up_runner.cleanup()
+        return statuses
+
+    assert asyncio.run(main()) == [200, 403, 403, 403, 403, 403]
+    assert hits == ["/v1/models"]
+    log = [json.loads(line) for line in (tmp_path / "log.jsonl").read_text().splitlines()]
+    assert [r["status"] for r in log].count(403) == 5

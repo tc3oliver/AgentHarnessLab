@@ -11,3 +11,4 @@
 | [0007](0007-development-benchmark.md) | A generated development benchmark instead of more smoke tasks |
 | [0008](0008-default-attention-backend-for-evaluation.md) | Keep the default attention backend for evaluation until quality is compared (superseded by 0009) |
 | [0009](0009-aiter-attention-backend.md) | Use `ROCM_AITER_UNIFIED_ATTN` for evaluation and rollouts |
+| [0010](0010-unmodified-harnesses-for-rollouts.md) | Roll out with unmodified harnesses; bound hung commands with the trial budget |

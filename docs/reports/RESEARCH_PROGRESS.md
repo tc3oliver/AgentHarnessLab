@@ -11,7 +11,7 @@ never committed.
 | Evaluation | Harbor runner, prebuilt images, Git and Hugging Face dataset loaders (PR #4), devbench (30 tasks), request-level performance monitoring |
 | Models served | Qwen3.8-27B `37561816e66b` with the reference Pi adapter `41396a9f14d9` as a LoRA module, vLLM 0.33.0 ROCm, one MI325X |
 | Harnesses evaluated with a real model | Pi 1.5.2, OpenCode 2.2.7 (Harbor 0.27.0) |
-| Training | pilot rung 1 (kernel parity) passed; no training run yet |
+| Training | pilot rungs 1-4 passed (kernel parity, 27B LoRA steps to 64k on one GPU, LoRA hot-load into vLLM, OpenEnv Pi rollout with token capture); no training run yet |
 
 ## Merged pull requests
 
@@ -23,6 +23,80 @@ never committed.
 | #4 | Git and Hugging Face dataset loaders, task-list pins, repository split; smoke task 020 fix | `4d337ee` |
 
 ## Log
+
+### 2026-11-26: RL pilot rung 4, one OpenEnv Pi rollout with token capture
+
+OpenEnv 0.14.0 (resolves Harbor 0.25.0) in its own venv, Docker sandbox, vLLM on GPU 5 with
+`--return-tokens-as-token-ids --logprobs-mode processed_logprobs` (AITER backend). Data: this repository's smoke
+task `ahl-csv-aggregate` (Apache-2.0). Training sources (scale800, termgrade) stay blocked on their licence
+questions (DATASETS.md), and devbench is never trained on. Output `rl/openenv/rollout-pi-0.json`.
+
+- **Criterion:** a graded rollout that is trainable (`rollout_type: train`, token ids and log-probs on every turn).
+  **Met:**
+  - reward 1.0, 4 turns, 72 s, capture level `tokens`;
+  - 897 trainable tokens, each turn with prompt and completion token ids, per-token log-probs and a loss mask;
+  - the ATIF trajectory check matches.
+- **Security fix needed for a shared host:** OpenEnv's capture proxy binds `0.0.0.0` (hard-coded in
+  `CaptureServer.start`), and `--expose direct` advertises `127.0.0.1`, which a Docker sandbox cannot reach.
+  `rl/openenv/rollout_bridge.py` wraps the CLI. It binds the proxy and advertises it on the Docker bridge gateway
+  (172.17.0.1), reachable from local containers but not from other machines, and refuses any expose mode other
+  than `direct`, since `gradio` (the default) and `cloudflare` open public tunnels. OpenEnv itself is unmodified.
+  OpenEnv keeps the real endpoint key in its own process; the agent gets a per-rollout session id instead.
+
+### 2026-11-26: RL pilot rung 3, LoRA hot-load round trip, trainer to vLLM
+
+Trainer on GPU 4 (`rl/parity/lora_roundtrip.py`), vLLM on GPU 5 (AITER backend, `scripts/serve_vllm_rocm.sh` with
+the new `LORA_DIR`, which enables `/v1/load_lora_adapter`), sampling script `rl/parity/rt_vllm.py`. Adapters are in
+`rl/adapters/rt-step{1,2}`, not in git.
+
+- **Hypothesis:** an adapter saved by the trainer (PEFT, r 32, all linear) can be hot-loaded and replaced by name in
+  vLLM, and vLLM's log-probs of its own samples match the trainer's.
+- **Criteria:** the replacement takes effect immediately, and the mean absolute log-prob difference is < 0.05.
+  **Met:**
+  - Two adapters were trained to visibly different behaviour: one on code with "The answer to everything is 42",
+    the other on "The capital of France is Berlin".
+  - After `unload` and `load` under the same name, vLLM's completions switched at once, from "Paris" to "Berlin".
+    The prompts were 5-7 tokens, shorter than a cache block, so a stale prefix cache after a same-name swap is not
+    excluded. TRL avoids the question by loading every version under a new name.
+  - On 4 prompts × 48 sampled tokens at temperature 1, the trainer's log-probs (TRL tree-attention path) against
+    vLLM's:
+
+    | Adapter | Mean abs diff | Max abs diff | Importance ratio range |
+    |---|---|---|---|
+    | step 1 | 0.007 | 0.20 | 0.82-1.10 |
+    | step 2 | 0.012 | 0.20 | 0.82-1.14 |
+- The first attempt trained both adapters on the same text, so they were indistinguishable on the sampled tokens
+  and could not show that the swap took effect. The second adapter was retrained on different text.
+- The trainer forward needs `use_cache=False` on the tree path (otherwise transformers' recurrent cache update
+  fails).
+
+### 2026-11-26: RL pilot rung 2, local FlashAttention and 27B LoRA steps up to 64k tokens
+
+GPU 4, image `agentlab-trainer:trl1.19.0`, no network. Scripts and outputs are in `rl/parity/`.
+
+- **Attention kernel:** TRL 1.19.0's tree attention fetches `kernels-community/aiter-flash-attn` from the Hub at
+  run time, but the image has no `kernels` package. We use the image's own ROCm `flash_attn` 2.8.3 instead, with no
+  binary downloaded at run time. `fa_parity.py` (`fa-gpu4.jsonl`), varlen, causal, 24 query and 4 KV heads, head
+  dim 256, against fp32 SDPA:
+  - output 0.20-0.21%, dq 0.27-0.28%, dk 0.33%, dv 0.32% at 1k, 8k and 16k tokens;
+  - 64k forward and backward finite in 0.78 s.
+- **LoRA steps** (`lora_step.py`, `lora-gpu4-v2.jsonl`):
+  - setup: Qwen3.8-27B in bf16, LoRA r 32 on all linear layers (233M trainable), gradient checkpointing, TRL tree
+    attention and tree Gated DeltaNet and conv, chunked loss, AdamW;
+  - **criterion:** one finite forward, backward and optimizer step at 64k tokens on one GPU. **Met**, on random
+    tokens in a single tree segment: this shows memory and numerics, not multi-branch tree packing.
+
+  | Tokens | Step s | Peak GB |
+  |---|---|---|
+  | 4k (first step, includes warm-up) | 46 | 65 |
+  | 16k | 16 | 75 |
+  | 32k | 26 | 93 |
+  | 64k | 52 | 132 |
+
+  Loss on random tokens is 12.4, about ln(vocabulary size), as expected.
+- **First attempt failed:** out of memory at 16k tokens, 182 GB at 4k. The test left the model in eval mode, so
+  gradient checkpointing was off, and it built full-vocabulary fp32 logits. Both are fixed in the script.
+  TRL's trainer scores only sampled tokens.
 
 ### 2026-11-26: RL pilot rung 1, kernel parity on gfx942
 
@@ -161,10 +235,10 @@ base vs adapter on smoke (no difference shown).
 ## Next
 
 1. More hard tasks: most of the set no longer separates conditions.
-2. Harness config fixes before rollouts: a Pi command timeout, and the OpenCode Web Search tool disabled.
+2. Harness configs for rollouts (decision 0010): OpenCode web tools denied (`opencode-v2-noweb.yaml`); Pi unmodified.
 3. RL pilot on GPUs 4 and 5:
    - ~~kernel parity~~ (passed);
-   - 27B LoRA steps at 16k, 32k and 64k tokens;
-   - LoRA hot-load round trip;
-   - one OpenEnv Pi rollout;
+   - ~~27B LoRA steps at 16k, 32k and 64k tokens~~ (passed, 132 GB at 64k);
+   - ~~LoRA hot-load round trip~~ (passed);
+   - ~~one OpenEnv Pi rollout~~ (passed; capture proxy bound to the Docker bridge);
    - three GRPO steps.
