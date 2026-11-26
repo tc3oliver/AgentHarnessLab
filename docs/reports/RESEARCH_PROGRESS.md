@@ -56,6 +56,8 @@ the new `LORA_DIR`, which enables `/v1/load_lora_adapter`), sampling script `rl/
   - Two adapters were trained to visibly different behaviour: one on code with "The answer to everything is 42",
     the other on "The capital of France is Berlin".
   - After `unload` and `load` under the same name, vLLM's completions switched at once, from "Paris" to "Berlin".
+    The prompts were 5-7 tokens, shorter than a cache block, so a stale prefix cache after a same-name swap is not
+    excluded. TRL avoids the question by loading every version under a new name.
   - On 4 prompts × 48 sampled tokens at temperature 1, the trainer's log-probs (TRL tree-attention path) against
     vLLM's:
 
@@ -81,7 +83,8 @@ GPU 4, image `agentlab-trainer:trl1.19.0`, no network. Scripts and outputs are i
 - **LoRA steps** (`lora_step.py`, `lora-gpu4-v2.jsonl`):
   - setup: Qwen3.8-27B in bf16, LoRA r 32 on all linear layers (233M trainable), gradient checkpointing, TRL tree
     attention and tree Gated DeltaNet and conv, chunked loss, AdamW;
-  - **criterion:** one finite forward, backward and optimizer step at 64k tokens on one GPU. **Met.**
+  - **criterion:** one finite forward, backward and optimizer step at 64k tokens on one GPU. **Met**, on random
+    tokens in a single tree segment: this shows memory and numerics, not multi-branch tree packing.
 
   | Tokens | Step s | Peak GB |
   |---|---|---|

@@ -18,14 +18,19 @@ first. A Pi command timeout would need a custom Pi extension that rewrites tool 
 
 - **OpenCode** runs with `disable_web_search: true` (`configs/harnesses/opencode-v2-noweb.yaml`) for evaluation and
   rollouts. This is a supported Harbor option, and the sandbox has no network anyway, so the tool could never
-  have worked. Checked in `devbench/runs/noweb-check` (6 trials on the two tasks where the tool had ended runs):
-  the model still called `websearch` twice, and both calls returned "Blocked by configuration policy". Every run
-  continued, 6/6 were solved and there were 0 errors.
+  have worked. Checked in `devbench/runs/noweb-check` (6 trials on `markdown-bogus-declaration` and
+  `more-itertools-distinct-permutations`, where the tool had ended runs): the model still called `websearch`
+  twice, and both calls returned "Blocked by configuration policy" (`grep '"tool":"websearch"'` over the trials'
+  `agent/opencode-v2.txt`). Every run continued, 6/6 were solved and there were 0 errors. This config keeps the
+  harness name and version of `opencode-v2.yaml` (Harbor's agent name and the image tags depend on them), so
+  result rows look the same; the run's config hash in the manifest is what tells the two apart.
 - **Pi** stays unmodified. The reference Pi adapter was trained with stock Pi, and harness-specific adaptation is
-  what this project studies, so changing Pi's tools would change the object of study. Hung commands are bounded by
-  the per-trial (evaluation) and per-rollout (training) wall-clock limits, which are set in every config.
-- The hung-command rate is reported per run from the proxy join (trials whose harness time exceeds model time
-  by more than 500 s).
+  what this project studies, so changing Pi's tools would change the object of study. Today hung commands are
+  bounded by the trial limit (`timeout_s`: 3600 s in the shipped config, 1800 s in the devbench runs). A
+  rollout limit for training (`agent_timeout_sec` in OpenEnv's session factory) does not exist yet in a project
+  config. It must be set when the first training config is written, and shorter than the evaluation budget.
+- The hung-command rate is counted in run analyses from `perf.jsonl` (trials with more than 500 s of harness
+  time); it is not yet a report metric in `src/`.
 
 ## Consequences
 

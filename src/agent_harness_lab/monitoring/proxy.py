@@ -4,6 +4,11 @@ One JSON line per request: client address, start, first byte of the response bod
 end, prompt and completion tokens (from the response `usage` when present) and the number of streamed
 chunks. Request and response bodies are never written; the `Authorization` header is forwarded, not logged.
 
+Only inference paths are forwarded (`ALLOWED_PATHS`); anything else gets 403 and is logged. The proxy
+listens where agent sandboxes can reach it, and agents hold the endpoint key (Harbor passes it into the
+trial), so it must not pass on server administration such as `/v1/load_lora_adapter`, nor vLLM's
+unauthenticated non-`/v1` routes.
+
 Run: `python -m agent_harness_lab.monitoring.proxy --listen 127.0.0.1:8100 --listen 172.17.0.1:8100
 --upstream http://127.0.0.1:8110 --log requests.jsonl` (needs the `monitor` extra).
 """
@@ -32,6 +37,18 @@ HOP_BY_HOP = {
     "content-length",
     "content-encoding",
 }
+
+
+ALLOWED_PATHS = frozenset(
+    {
+        "/v1/chat/completions",
+        "/v1/completions",
+        "/v1/responses",
+        "/v1/models",
+        "/health",
+        "/version",
+    }
+)
 
 
 class StreamStats:
@@ -94,8 +111,9 @@ def _has_output(part: dict[str, Any]) -> bool:
 
 
 class Proxy:
-    def __init__(self, upstream: str, log: Path) -> None:
+    def __init__(self, upstream: str, log: Path, allowed_paths: frozenset[str] = ALLOWED_PATHS) -> None:
         self.upstream = upstream.rstrip("/")
+        self.allowed_paths = allowed_paths
         self.log = log.open("a", encoding="utf-8")
         self.in_flight = 0
         self.session: ClientSession | None = None
@@ -112,6 +130,22 @@ class Proxy:
         if self.session is None:
             raise RuntimeError("proxy not started")
         start = time.time()
+        if request.path not in self.allowed_paths:
+            self.log.write(
+                json.dumps(
+                    {
+                        "client": request.remote,
+                        "method": request.method,
+                        "path": request.path,
+                        "start": start,
+                        "status": 403,
+                        "error": "path not allowed",
+                    }
+                )
+                + "\n"
+            )
+            self.log.flush()
+            return web.Response(status=403, text="path not allowed by the monitoring proxy")
         body = await request.read()
         model = stream = None
         if request.content_type == "application/json" and body:

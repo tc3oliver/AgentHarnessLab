@@ -111,7 +111,9 @@ are in `/data3/users/oliver/experiments/agentlab/devbench/perf-attn/` (not in gi
   [0010](DECISIONS/0010-unmodified-harnesses-for-rollouts.md)).
 - **OpenCode 2.2.7 offers a Web Search tool.** It asks for approval, which non-interactive runs cancel, so the
   run ends with an error. The sandbox has no network either way. Harbor 0.27.0 classified one such trial as
-  `ApiRateLimitError` (infra) and another as an agent error; both are agent failures. Use
+  `ApiRateLimitError` (infra) and another as an agent error (`devbench-r4-aiter/results.jsonl`, the `error` field of
+  the `markdown-bogus-declaration` and `more-itertools-distinct-permutations` attempt-1 OpenCode rows); both are
+  agent failures. Use
   `configs/harnesses/opencode-v2-noweb.yaml` (Harbor's `disable_web_search`), decision 0010.
 - **Harbor 0.27.0 passes the endpoint API key as `docker compose exec -e OPENAI_API_KEY=...` on the command
   line**, so other users of a shared host can read it with `ps`. Use a key that only works on the local endpoint,
