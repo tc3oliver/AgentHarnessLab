@@ -57,3 +57,14 @@ Checked with Harbor 0.25.0 (the project pin) and 0.27.0. Use `-i 'ahl-fix-*'` to
 | `ahl-log-top-5xx` | log-analysis | medium | summarise an access log: top client IPs by 5xx responses |
 | `ahl-refactor-report` | refactoring | medium | split a monolithic `main` into importable functions, same output |
 | `ahl-git-revert` | git | medium | undo a bad commit with `git revert`, keep history |
+
+## Changes
+
+### Dataset version 2 (2026-11-26)
+
+- `ahl-fix-duration-parse` is now version 1.1.0. Its instruction states that numbers are non-negative integers, so
+  `1.5h` and `-1s` must raise `ValueError`. The hidden test already required this; before, the instruction did not
+  say it (issue 020).
+- `configs/datasets/smoke.yaml` declares `version: "2"`, which is recorded in the run manifest.
+- The change alters the content hash of that task and therefore the task-list hash of the dataset. **Results from
+  dataset version 1 are not comparable with version 2**; `agentlab compare` treats them as different setups.

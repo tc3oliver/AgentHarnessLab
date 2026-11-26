@@ -21,12 +21,16 @@ dependencies = [
 harbor = [
     { name = "harbor" },
 ]
+hf = [
+    { name = "huggingface-hub" },
+]
 parquet = [
     { name = "pyarrow" },
 ]
 
 [package.dev-dependencies]
 dev = [
+    { name = "huggingface-hub" },
     { name = "mypy" },
     { name = "pyarrow" },
     { name = "pytest" },
@@ -38,15 +42,17 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "harbor", marker = "extra == 'harbor'", specifier = "==0.25.0" },
+    { name = "huggingface-hub", marker = "extra == 'hf'", specifier = ">=2.4,<3" },
     { name = "pyarrow", marker = "extra == 'parquet'", specifier = ">=18" },
     { name = "pydantic", specifier = ">=2.12,<3" },
     { name = "pyyaml", specifier = ">=6.0.2,<7" },
     { name = "typer", specifier = ">=0.16,<1" },
 ]
-provides-extras = ["parquet", "harbor"]
+provides-extras = ["parquet", "harbor", "hf"]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "huggingface-hub", specifier = ">=2.4" },
     { name = "mypy", specifier = ">=1.15" },
     { name = "pyarrow", specifier = ">=18" },
     { name = "pytest", specifier = ">=8.3" },

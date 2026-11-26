@@ -22,12 +22,14 @@ parquet = ["pyarrow>=18"]
 # Pinned to the version openenv[harbor]==0.14.0 resolves to (docs/UPSTREAM.md, constraint 1).
 # The Harbor integration is not implemented yet; the extra only fixes the version.
 harbor = ["harbor==0.25.0"]
+# Hugging Face dataset downloads (agent_harness_lab.dataset.loaders.HuggingFaceDataset). Tested with 2.4.0.
+hf = ["huggingface-hub>=2.4,<3"]
 
 [project.scripts]
 agentlab = "agent_harness_lab.cli:main"
 
 [dependency-groups]
-dev = ["mypy>=1.15", "pyarrow>=18", "pytest>=8.3", "pytest-cov>=6", "ruff>=0.11", "types-pyyaml>=6"]
+dev = ["huggingface-hub>=2.4", "mypy>=1.15", "pyarrow>=18", "pytest>=8.3", "pytest-cov>=6", "ruff>=0.11", "types-pyyaml>=6"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/agent_harness_lab"]
@@ -62,8 +64,9 @@ ignore_errors = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-ra --strict-markers -m 'not gpu and not docker'"
+addopts = "-ra --strict-markers -m 'not gpu and not docker and not network'"
 markers = [
   "gpu: needs a GPU; never runs in default CI",
   "docker: needs Docker and the harbor extra",
+  "network: downloads from github.com or huggingface.co",
 ]

@@ -14,6 +14,7 @@ from agent_harness_lab.core.manifest import Manifest
 from agent_harness_lab.core.registry import DATASETS, TRAINERS
 from agent_harness_lab.dataset.audit import audit as run_audit
 from agent_harness_lab.dataset.base import LoadedDataset
+from agent_harness_lab.dataset.splits import split_by_repository
 from agent_harness_lab.errors import AgentLabError, ConfigError, LeakageError
 from agent_harness_lab.evaluation.compare import compare as compare_runs
 from agent_harness_lab.evaluation.images import build_images
@@ -109,7 +110,7 @@ def audit(
     train: Annotated[list[Path], typer.Option(help="Training dataset YAML; repeatable.")],
     evaluation: Annotated[list[Path], typer.Option("--eval", help="Evaluation dataset YAML; repeatable.")],
 ) -> None:
-    """Look for train/evaluation leakage. Only local datasets can be loaded today."""
+    """Look for train/evaluation leakage in local, git and Hugging Face datasets."""
 
     def load(paths: list[Path]) -> list[LoadedDataset]:
         configs = [load_dataset_config(p) for p in paths]
@@ -121,6 +122,24 @@ def audit(
         raise LeakageError("leakage found")
     if not report.repository_check_complete:
         typer.echo("warning: some tasks declare no repository; the repository check is incomplete", err=True)
+
+
+@app.command()
+def split(
+    dataset: Path,
+    validation_fraction: Annotated[
+        float, typer.Option(help="Approximate share of repositories for validation.")
+    ],
+    seed: Annotated[int, typer.Option(help="Seed of the repository hash.")],
+    output: Annotated[Path, typer.Option("--output", "-o", help="Write the split file here.")],
+) -> None:
+    """Split a dataset by repository into train and validation and write a hashed split file."""
+    config = load_dataset_config(dataset)
+    result = split_by_repository(DATASETS.get(config.source.type)().load(config), validation_fraction, seed)
+    result.write(output)
+    for name, part in (("train", result.train), ("validation", result.validation)):
+        typer.echo(f"{name}: {len(part.task_ids)} tasks in {len(part.repositories)} repositories")
+    typer.echo(f"Wrote {output} ({result.hash})")
 
 
 def _terminate(signum: int, frame: object) -> None:

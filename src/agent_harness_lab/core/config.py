@@ -40,6 +40,13 @@ def _require_commit(value: str) -> str:
     return value
 
 
+def _relative_path(value: str) -> str:
+    parts = value.split("/")
+    if value.startswith("/") or ".." in parts or "\\" in value:
+        raise ValueError("must be a relative path inside the repository, without '..'")
+    return value
+
+
 def _clean_url(value: str, schemes: set[str]) -> str:
     url = urlsplit(value)
     if url.scheme not in schemes or not url.hostname:
@@ -124,7 +131,10 @@ class HuggingFaceSource(Strict):
     repo: str
     revision: str
     config_name: str | None = None
+    path: str = "."
+    """Subdirectory that holds the task directories."""
 
+    _path = field_validator("path")(_relative_path)
     _revision = field_validator("revision")(_require_commit)
 
 
@@ -133,6 +143,9 @@ class GitSource(Strict):
     url: str
     commit: str
     path: str = "."
+    """Subdirectory that holds the task directories."""
+
+    _path = field_validator("path")(_relative_path)
 
     @field_validator("url")
     @classmethod
@@ -147,6 +160,8 @@ type DatasetSource = Annotated[LocalSource | HuggingFaceSource | GitSource, Fiel
 
 class DatasetConfig(Strict):
     name: str
+    version: str | None = None
+    """Free-text dataset version (for example after editing tasks); recorded in the manifest and compared."""
     source: DatasetSource
     split: Literal["train", "validation", "test", "smoke"]
     license: str | None = None
@@ -155,6 +170,8 @@ class DatasetConfig(Strict):
     notes: str = ""
     task_names: list[str] | None = None
     n_tasks: int | None = Field(None, gt=0)
+    tasks_hash: str | None = Field(None, pattern=r"^sha256:[0-9a-f]{64}$")
+    """Expected hash of the loaded task list; a different list is an error."""
 
 
 class HarnessConfig(Strict):
