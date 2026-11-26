@@ -24,6 +24,27 @@ never committed.
 
 ## Log
 
+### 2026-11-26: attention backend, paired on devbench
+
+Run `devbench/runs/devbench-r4-aiter`, config `devbench/cfg/devbench-r4-aiter.yaml`. It is round 2 with
+`--attention-backend ROCM_AITER_UNIFIED_ATTN`, and nothing else changed. Analysis:
+`devbench/analysis/devbench-r4-aiter-vs-default.md`.
+
+- **Hypothesis:** the faster backend does not change task success. **Criterion:** the paired difference CI
+  contains 0 for both harnesses. **Met**, and decision 0009 adopts AITER:
+
+  | Harness | Default solved / 90 | AITER | Paired difference (95% CI) | Median agent s |
+  |---|---|---|---|---|
+  | Pi | 74 | 75 | +1.1 [-7.8, +10.0] | 139 → 54 |
+  | OpenCode | 80 | 78 | -2.2 [-11.1, +6.7] | 266 → 115 |
+
+- **OpenCode's round-2 timeouts were not hidden successes.** With AITER, OpenCode had 3 timeouts and 7 wrong
+  answers. Round 2 had 10 timeouts and no wrong answers, so the solve rate is the same. The faster model fails the
+  same tasks sooner.
+- Pi's tool time rose to 47% of agent time, all from four trials with commands that never returned (Pi has no
+  command timeout). OpenCode had two runs that ended when the model called the Web Search tool; Harbor recorded one
+  as infra. Both behaviours are in COMPATIBILITY.md.
+
 ### 2026-11-26: Pi base vs the reference Pi adapter on devbench
 
 Run `devbench/runs/devbench-r3-adapter`, config `devbench/cfg/devbench-r3-adapter.yaml`. It is the same as round 2
@@ -123,9 +144,8 @@ base vs adapter on smoke (no difference shown).
 
 ## Next
 
-1. Attention backend: the same tasks with `ROCM_AITER_UNIFIED_ATTN`, paired against round 2 (`devbench-r4-aiter`,
-   running). Decides the rollout backend.
-2. More hard tasks: most of the set no longer separates conditions.
+1. More hard tasks: most of the set no longer separates conditions.
+2. Harness config fixes before rollouts: a Pi command timeout, and the OpenCode Web Search tool disabled.
 3. RL pilot on GPUs 4 and 5:
    - kernel parity (`rl/parity/kernel_parity.py`);
    - 27B LoRA steps at 16k, 32k and 64k tokens;

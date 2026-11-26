@@ -1,6 +1,6 @@
 # 0008: Keep the default attention backend for evaluation until quality is compared
 
-Status: accepted. Date: 2026-11-26.
+Status: superseded by [0009](0009-aiter-attention-backend.md). Date: 2026-11-26.
 
 ## Context
 
