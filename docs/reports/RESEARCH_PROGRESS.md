@@ -11,7 +11,7 @@ never committed.
 | Evaluation | Harbor runner, prebuilt images, Git and Hugging Face dataset loaders (PR #4), devbench (30 tasks), request-level performance monitoring |
 | Models served | Qwen3.8-27B `37561816e66b` with the reference Pi adapter `41396a9f14d9` as a LoRA module, vLLM 0.33.0 ROCm, one MI325X |
 | Harnesses evaluated with a real model | Pi 1.5.2, OpenCode 2.2.7 (Harbor 0.27.0) |
-| Training | pilot rungs 1-4 passed (kernel parity, 27B LoRA steps to 64k on one GPU, LoRA hot-load into vLLM, OpenEnv Pi rollout with token capture); no training run yet |
+| Training | pilot rungs 1-5 passed (kernel parity, 27B LoRA steps to 64k on one GPU, LoRA hot-load into vLLM, OpenEnv Pi rollout with token capture, three async GRPO steps); no training run that is meant to improve the model yet |
 
 ## Merged pull requests
 
@@ -21,8 +21,61 @@ never committed.
 | #2 | Prebuilt harness images | `879501a` |
 | #3 | Fixes from the first real runs, overnight report | `d7dddbe` |
 | #4 | Git and Hugging Face dataset loaders, task-list pins, repository split; smoke task 020 fix | `4d337ee` |
+| #5 | devbench, request monitoring, verifier v4, benchmark report, ADR 0009 | `d764ce6` |
+| #6 | Rollout harness configs (ADR 0010), proxy path allowlist, LoRA serving options | `a2b51a5` |
 
 ## Log
+
+### 2026-11-26: RL pilot rung 5, three async GRPO steps through OpenEnv
+
+TRL 1.19.0 `HarnessAsyncGRPOTrainer` (image `agentlab-trainer:trl1.19.0-openenv0.14.0`) on GPU 4 with Qwen3.8-27B
+plus a fresh LoRA. Rollouts come from vLLM on GPU 5 through OpenEnv 0.14.0 (Pi harness, Docker sandbox, capture proxy
+on the Docker bridge as in rung 4). Script and log: `rl/grpo-pilot/` (`grpo_pilot.py`, `run.sh`, `pilot.log`).
+Adapters and `log_history.json`: `rl/adapters/grpo-pilot/`. OpenEnv server log: `rl/openenv/serve.log`.
+
+- **Hypothesis:** the stack completes GRPO steps end to end. This rung tests plumbing, not learning.
+- **Data:** this repository's 12 smoke tasks (Apache-2.0), as in rung 4.
+- **Settings:**
+  - 4 generations per task, 3 steps, lr 1e-6, temperature 1.0, `max_staleness` 1;
+  - LoRA r 32, alpha 64, on `q,k,v,o,gate,up,down`;
+  - `agent_timeout_sec` 600, 30 agent steps, 90-minute wall limit (not enforced, see below).
+- **Reward:** the verifier's 0/1 plus 0.3 × clip(1 − tool calls / 15, 0, 1) when solved. Without the bonus, every
+  group of 4 on the smoke tasks scored the same and gave no advantage. Rewards above 1 come from this bonus.
+- **Criteria:** three optimiser steps, each followed by an adapter sync that vLLM serves (`trl-policy-v1..v3`),
+  token capture on every rollout, finite loss, no crash. **Met.**
+
+| Step | Loss | Grad norm | Reward (rollout mean) | Group std | IS ratio min / mean / max | Clip region | Sync |
+|---|---|---|---|---|---|---|---|
+| 1 | −0.111 | 0.069 | 1.110 | 0.167 | 0.27 / 1.000 / 2.82 | 0.10 % | 1.02 s |
+| 2 | −0.128 | 0.073 | 1.152 | 0.155 | 0.48 / 1.000 / 4.47 | 0.11 % | 0.97 s |
+| 3 | −0.130 | 0.053 | 1.099 | 0.164 | 0.29 / 1.000 / 1.62 | 0.09 % | 1.12 s |
+
+- 51–68 trained samples per step (about 92k–98k trained tokens out of 127k–131k forwarded), 25–26 minutes per
+  step for steps 2 and 3, 105 minutes of training time in total (`train_runtime`).
+- Rollout drift tokens were 0 in all three logged steps. Staleness was at most 1. The final summary row of
+  `log_history.json` (drift max 261, mean 0.96) also counts the rollouts cancelled at shutdown.
+- The OpenEnv server probed each adapter (v1, v2, v3) as `capture_level=tokens rollout_type=train`.
+- 4 rollouts failed with `rollout produced no capture`. All 4 came after `Stopping AsyncRolloutWorker`: they were
+  in flight when training ended and were cancelled. None failed during the three steps.
+- The rewards do not show learning, and three steps at lr 1e-6 are not expected to. Most of the signal is the
+  tool-call bonus. Mean group std is 0.16, because the smoke tasks are nearly always solved. A real run needs a
+  training set with a licence cleared for training and a solve rate well below 1.
+- **Workarounds** (in `grpo_pilot.py`, none in TRL or OpenEnv):
+  - TRL's async trainer calls the vLLM dev routes `/server_info`, `/pause` and `/resume`. vLLM serves those only
+    in dev mode, unauthenticated, so dev mode stays off. The pilot returns a fixed server info and makes
+    pause/resume no-ops. That is safe here only because LoRA sync is a hot-load, not an in-place weight write.
+  - Tree attention uses the image's own `flash_attn` 2.8.3 instead of the Hub kernel (rung 2).
+  - The LoRA targets name the language-model projections explicitly. `all-linear` also matches the vision tower,
+    whose modules vLLM rejects.
+- **Wall limit not enforced:** `timeout 5400 docker run ...` killed only the Docker client at 90 minutes, and the
+  container trained on to 105 minutes of training time. This is the same mistake as the round 2 wrapper. `run.sh` now runs
+  `timeout` inside the container (`--init`, entrypoint `timeout -s TERM -k 60 $LIMIT python3 ...`, checked: exit
+  124 on a 2 s limit). A host watchdog also runs `docker stop` LIMIT + 300 s after launch. Every later training
+  or eval container needs its limit enforced the same way.
+- **OpenEnv quirk:** a session's `api_key` overrides the server's own. TRL's factory passes an empty one by
+  default, so the capability probe got a 401. The server then cached the endpoint as `capture_level=text`
+  (evaluation only), and every rollout came back untrainable. Passing the key fixes the probe. The cache lasts as
+  long as the server, so the server has to be restarted after a failed probe.
 
 ### 2026-11-26: RL pilot rung 4, one OpenEnv Pi rollout with token capture
 
@@ -241,4 +294,6 @@ base vs adapter on smoke (no difference shown).
    - ~~27B LoRA steps at 16k, 32k and 64k tokens~~ (passed, 132 GB at 64k);
    - ~~LoRA hot-load round trip~~ (passed);
    - ~~one OpenEnv Pi rollout~~ (passed; capture proxy bound to the Docker bridge);
-   - three GRPO steps.
+   - ~~three GRPO steps~~ (passed; plumbing only, no learning signal on the smoke tasks).
+4. A training set with a licence cleared for training and a solve rate well below 1. Scale800 and termgrade are
+   still blocked on their licence questions (DATASETS.md).
