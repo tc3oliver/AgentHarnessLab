@@ -95,10 +95,10 @@ Known overlaps (not excluded by the rules, which look at functions, not test ids
 - The semver bug-fix and the semver multi-file task both patch the inner `wrapper` of `semver._deprecated.deprecated`
   (different lines, different tests); semver has too few qualifying candidates to avoid it.
 - Some fail-to-pass tests are also fail-to-pass tests of one of the first 30 tasks, through different functions:
-- `ahl-dev-hard-markdown-setext-meta-registry`: `testWikilinksMetaData (test_extensions.TestWikiLinks.testWikilinksMetaData)`
-- `ahl-dev-hard-tablib-dbf-yaml-rst`: `tests/test_tablib.py::DBFTests::test_dbf_import_set`
-- `ahl-dev-hard-tablib-dbf-df-ods`: `tests/test_tablib.py::DBFTests::test_dbf_export_set`, `tests/test_tablib.py::DBFTests::test_dbf_import_set`, `tests/test_tablib.py::ODSTests::test_ods_export_import_set`
-- `ahl-dev-hard-semver-cli-compat-deprecated`: `tests/test_pysemver-cli.py::test_should_process_print`
+  - `ahl-dev-hard-markdown-setext-meta-registry`: `testWikilinksMetaData (test_extensions.TestWikiLinks.testWikilinksMetaData)`
+  - `ahl-dev-hard-tablib-dbf-yaml-rst`: `tests/test_tablib.py::DBFTests::test_dbf_import_set`
+  - `ahl-dev-hard-tablib-dbf-df-ods`: `tests/test_tablib.py::DBFTests::test_dbf_export_set`, `tests/test_tablib.py::DBFTests::test_dbf_import_set`, `tests/test_tablib.py::ODSTests::test_ods_export_import_set`
+  - `ahl-dev-hard-semver-cli-compat-deprecated`: `tests/test_pysemver-cli.py::test_should_process_print`
 - In `ahl-dev-hard-markdown-ancestors-html-smarty` the patch for the ancestor exclusion also removes the handling
   of a child's tail text. `test_ancestors_tail` passes with the ancestor check restored alone (checked), so the
   instruction describes only the ancestor symptom; the tail removal is not observable through the tests.
